@@ -148,7 +148,7 @@ alias cp="cp -f"
 alias less="less -R"
 
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
-alias ls="ls $LS_OPTIONS"
+alias ls="ls -A $LS_OPTIONS"
 alias ll="ls -AlF"
 alias lh="ls -AlFh"
 alias la="ls -alF"
