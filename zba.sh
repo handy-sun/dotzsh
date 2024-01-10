@@ -195,6 +195,10 @@ elif [[ -n "$ZSH_VERSION" ]]; then
         setopt promptsubst
         PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
         RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
+        setopt hist_ignore_all_dups
+        setopt hist_ignore_space
+        setopt hist_reduce_blanks
+        setopt hist_fcntl_lock 2>/dev/null
     fi
 fi
 
@@ -213,6 +217,3 @@ if [ -d $local_inc ]; then
 fi
 unset local_inc
 
-local_lib=$HOME/.local/lib
-[[ -d $local_lib && ! $LD_LIBRARY_PATH =~ $local_lib ]] && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$local_lib
-unset local_lib
