@@ -47,7 +47,7 @@ _prompt_cmd(){
 
 if [[ -n "$BASH_VERSION" ]]; then
     PROMPT_COMMAND=_prompt_cmd
-    HISTCONTROL=ignoredups:erasedups # no duplicate entries
+    HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
     shopt -s histappend
 fi
 

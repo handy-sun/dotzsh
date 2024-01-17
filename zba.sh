@@ -160,7 +160,7 @@ alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
 
 _get_short_pwd(){
     # echo -n `pwd | sed -e "s!$HOME!~!" | sed "s:\([^/]\)[^/]*/:\1/:g"`
-    split=4
+    split=5
     W=$(pwd | sed -e "s!$HOME!~!")
     # W=${PWD/#"$HOME"/~}
     total_cnt=$(echo $W | grep -o '/' | wc -l)
@@ -187,24 +187,24 @@ _prompt_cmd(){
 if [[ -n "$BASH_VERSION" ]]; then
     # PROMPT_DIRTRIM=2
     PROMPT_COMMAND=_prompt_cmd
-    HISTCONTROL=ignoredups:erasedups # no duplicate entries
+    HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
     shopt -s histappend
+    # history format only worked for bash; zsh can use 'history -i', see 'man zshoptions'
+    export HISTTIMEFORMAT='%F %T '
 elif [[ -n "$ZSH_VERSION" ]]; then
     setopt | grep promptsubst >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         setopt promptsubst
-        PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
-        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
         setopt hist_ignore_all_dups
         setopt hist_ignore_space
         setopt hist_reduce_blanks
         setopt hist_fcntl_lock 2>/dev/null
+        PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
+        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
     fi
 fi
 
 # ----------------------- export some env var -------------------------
-# history format only worked for bash; zsh can use 'history -i', see 'man zshoptions'
-export HISTTIMEFORMAT='%F %T '
 export HISTSIZE=3000
 export SAVEHIST=3000
 export VISUAL=vim
