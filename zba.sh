@@ -89,6 +89,7 @@ alias gstag="git restore --staged"
 
 alias glg="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color"
 alias glp="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color --graph"
+alias glh="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color --graph | head -30"
 
 alias gdf="git diff"
 alias gdfh="git diff HEAD"
@@ -122,6 +123,9 @@ alias cmkd="cmake -B${BUILD_DIR} -G 'Ninja' -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
 alias cmb="cmake --build ${BUILD_DIR} -t"
 
+# docker
+alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
+alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 # docker-compose
 if type docker-compose >/dev/null 2>&1; then
     export CPO_YML="/var/dkcmpo/docker-compose.yml"
