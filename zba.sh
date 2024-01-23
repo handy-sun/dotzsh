@@ -209,6 +209,7 @@ elif [[ -n "$ZSH_VERSION" ]]; then
 fi
 
 # ----------------------- export some env var -------------------------
+export HISTIGNORE='ls:curl:history'
 export HISTSIZE=3000
 export SAVEHIST=3000
 export VISUAL=vim
