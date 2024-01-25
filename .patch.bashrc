@@ -8,6 +8,15 @@ rlip4(){
     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1
 }
 
+# get pid of a process, avoid some Linux system cannot use 'pgrep' command
+pgre(){
+    ps -ef | grep "${1}" | grep -v grep | awk '{print$2;}'
+}
+# print all info
+ppre(){
+    ps -ef | grep "${1}" | grep -v grep
+}
+
 [ -z "$LS_OPTIONS" ] && export LS_OPTIONS="--color=auto"
 alias ls="ls $LS_OPTIONS"
 alias ll='ls -AlF'
@@ -51,6 +60,9 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s histappend
 fi
 
+export HISTIGNORE='ls:curl:history'
+export HISTSIZE=3000
+export SAVEHIST=3000
 export HISTTIMEFORMAT='%F %T '
 export TERM=xterm-256color
 
