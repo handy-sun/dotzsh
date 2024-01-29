@@ -153,11 +153,11 @@ alias less="less -R"
 
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
 alias ls="ls -A $LS_OPTIONS"
-alias ll="ls -AlF"
-alias lh="ls -AlFh"
+alias ll="ls -AlFh"
+alias l="ls -AlF"
 alias la="ls -alF"
 
-type trash >/dev/null 2>&1 && alias rm="trash"
+type trash >/dev/null 2>&1 && alias rm="trash" && alias rrm="/bin/rm -rf"
 type xclip >/dev/null 2>&1 && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
 
 alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
