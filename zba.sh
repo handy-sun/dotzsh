@@ -58,11 +58,16 @@ jfxe(){
     journalctl -n 100 -fxeu $1
 }
 dkcid(){
-    docker ps | grep " $1" | awk '{print$1}'
+    docker ps -qf "name= $1\$"
 }
 dktty(){
-    local container_id=`dkcid $1`
-    docker exec -ti $container_id /bin/bash
+    local ctn_id=`dkcid $1`
+    [[ -z "$ctn_id" ]] && { echo "ERROR:no such container: $1!"; return 1; }
+
+    local ctn_count=`echo $ctn_id | wc -l`
+    [ $ctn_count -gt 1 ] && { echo "ERROR: $ctn_count containers found, cannot exec shell!"; return 1; }
+
+    docker exec -ti $ctn_id /bin/bash 2>/dev/null || docker exec -ti $ctn_id /bin/sh
 }
 # ----------------------- alias ----------------------
 # git
@@ -145,20 +150,22 @@ if type pacman >/dev/null 2>&1; then
     alias pkgql="pacman -Ql"
 fi
 
-# other shell
-alias pingk="ping -c 4"
-alias gdb="gdb -q"
-alias cp="cp -f"
-alias less="less -R"
-
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
 alias ls="ls -A $LS_OPTIONS"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
 
+# other shell
+alias pingk="ping -c 4"
+alias gdb="gdb -q"
+alias cp="cp -arvf"
+alias less="less -R"
+alias df="df -Th"
+
 type trash >/dev/null 2>&1 && alias rm="trash" && alias rrm="/bin/rm -rf"
 type xclip >/dev/null 2>&1 && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
+type fd >/dev/null 2>&1 && alias fd="fd -H"
 
 alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
 
@@ -199,13 +206,14 @@ elif [[ -n "$ZSH_VERSION" ]]; then
     setopt | grep promptsubst >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         setopt promptsubst
-        setopt hist_ignore_all_dups
-        setopt hist_ignore_space
-        setopt hist_reduce_blanks
-        setopt hist_fcntl_lock 2>/dev/null
         PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
         RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
     fi
+
+    setopt hist_ignore_all_dups
+    setopt hist_ignore_space
+    setopt hist_reduce_blanks
+    setopt hist_fcntl_lock 2>/dev/null
 fi
 
 # ----------------------- export some env var -------------------------
