@@ -99,7 +99,8 @@ alias glh="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(b
 alias gdf="git diff"
 alias gdfh="git diff HEAD"
 alias gdfc="git diff --cached"
-alias gbr="git branch -a"
+alias gbr="git branch"
+alias gba="git branch -a"
 alias gtl="git tag --list"
 alias gck="git checkout"
 alias grt="git remote -v"
@@ -113,12 +114,13 @@ alias tarz="tar zcf"
 alias syta="systemctl status"
 alias syst="sudo systemctl start"
 alias syrs="sudo systemctl restart"
-alias systo="sudo systemctl stop"
+alias syte="sudo systemctl stop"
 alias syrld="sudo systemctl reload"
 alias syen="sudo systemctl enable"
 alias syenw="sudo systemctl enable --now"
 alias sydis="sudo systemctl disable"
 alias sydisw="sudo systemctl disable --now"
+alias sydmrld="sudo systemctl daemon-reload"
 
 # cmake
 export BUILD_DIR="./build"
@@ -140,7 +142,7 @@ fi
 
 # pacman (archlinux/manjaro)
 if type pacman >/dev/null 2>&1; then
-    alias pkgins="sudo pacman -S"
+    alias pkgins="sudo pacman -Sy"
     alias pkguni="sudo pacman -R"
     alias pkgss="pacman -Ss"
     alias pkgsi="pacman -Si"
@@ -148,6 +150,7 @@ if type pacman >/dev/null 2>&1; then
     alias pkgqs="pacman -Qs"
     alias pkgqi="pacman -Qi"
     alias pkgql="pacman -Ql"
+    alias pkgqo="pacman -Qo"
 fi
 
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
@@ -201,23 +204,24 @@ if [[ -n "$BASH_VERSION" ]]; then
     HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
     shopt -s histappend
     # history format only worked for bash; zsh can use 'history -i', see 'man zshoptions'
-    export HISTTIMEFORMAT='%F %T '
+    export HISTTIMEFORMAT='%F %T `whoami` '
 elif [[ -n "$ZSH_VERSION" ]]; then
-    setopt | grep promptsubst >/dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
-        setopt promptsubst
-        PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
-        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
-    fi
-
+    setopt promptsubst
     setopt hist_ignore_all_dups
     setopt hist_ignore_space
     setopt hist_reduce_blanks
     setopt hist_fcntl_lock 2>/dev/null
+    # modify default PROMPT
+    if [[ "$PROMPT" =~ "^# " ]]; then
+        PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
+    fi
+    if [[ ! -n "$RPROMPT" ]]; then
+        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
+    fi
 fi
 
 # ----------------------- export some env var -------------------------
-export HISTIGNORE='ls:curl:history'
+# export HISTIGNORE='ls:curl:history'
 export HISTSIZE=3000
 export SAVEHIST=3000
 export VISUAL=vim
