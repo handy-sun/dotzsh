@@ -36,7 +36,7 @@ txpz(){
     tar --no-same-owner -xf ${1} -I pigz
 }
 dus(){
-    du $1 -alh -d1 | sort -rh | head -n 11
+    du $1 -alh -d1 "$(2>/dev/null >&2 du --apparent-size /dev/null && printf '%s\n' --apparent-size || printf '%s\n' --)" | sort -rh | head -n 21
 }
 # get real network device local ipv4 address
 rlip4(){
@@ -68,6 +68,9 @@ dktty(){
     [ $ctn_count -gt 1 ] && { echo "ERROR: $ctn_count containers found, cannot exec shell!"; return 1; }
 
     docker exec -ti $ctn_id /bin/bash 2>/dev/null || docker exec -ti $ctn_id /bin/sh
+}
+qipjq(){
+    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
 # ----------------------- alias ----------------------
 # git
@@ -168,9 +171,11 @@ alias df="df -Th"
 
 type trash >/dev/null 2>&1 && alias rm="trash" && alias rrm="/bin/rm -rf"
 type xclip >/dev/null 2>&1 && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
-type fd >/dev/null 2>&1 && alias fd="fd -H"
+type fd >/dev/null 2>&1 && alias fd="fd -HI"
+type tree >/dev/null 2>&1 && alias trelh="tree -AlFh"
 
 alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
+alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
 _get_short_pwd(){
     # echo -n `pwd | sed -e "s!$HOME!~!" | sed "s:\([^/]\)[^/]*/:\1/:g"`
@@ -190,18 +195,17 @@ _ssh_addr(){
     echo $SSH_CLIENT | awk '{print$1}'
 }
 
-_prompt_cmd(){
+_bash_prompt_cmd(){
     [[ $? -eq 0 ]] && local ps1ArrowFgColor="92" || local ps1ArrowFgColor="91"
     local shortPwd=`_get_short_pwd`
-    # local shortPwd=`p=${PWD/#\"$HOME\"/~};((${#p}>30)) && echo \"${p::10}…${p:(-19)}\" || echo \"\w\"`
     PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${ps1ArrowFgColor}m\]\\$\[\e[0m\] "
-    # PS1='\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]w \[\e[0;${ps1ArrowFgColor}m\]\$\[\e[0m\] '
 }
 
 if [[ -n "$BASH_VERSION" ]]; then
     # PROMPT_DIRTRIM=2
-    PROMPT_COMMAND=_prompt_cmd
-    HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
+    PROMPT_COMMAND=_bash_prompt_cmd
+    # HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
+    HISTCONTROL=ignoreboth
     shopt -s histappend
     # history format only worked for bash; zsh can use 'history -i', see 'man zshoptions'
     export HISTTIMEFORMAT='%F %T `whoami` '
@@ -233,4 +237,3 @@ if [ -d $local_inc ]; then
     [[ ! $CPLUS_INCLUDE_PATH =~ $local_inc ]] && export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$local_inc
 fi
 unset local_inc
-
