@@ -1,39 +1,42 @@
 ## define some func,alias,variable in zsh/bash shell script
 # ----------------------- shell function ----------------------
 # about git stash
+cmd_exists() {
+    command -v "$@" > /dev/null 2>&1
+}
 shpo(){
-    git stash pop stash@{${1}};
+    git stash pop stash@{$1};
 }
 shap(){
-    git stash apply stash@{${1}};
+    git stash apply stash@{$1};
 }
 shsw(){
-    git stash show -p stash@{${1}};
+    git stash show -p stash@{$1};
 }
 shdr(){
-    git stash drop stash@{${1}};
+    git stash drop stash@{$1};
 }
 # get pid of a process, avoid some Linux system cannot use 'pgrep' command
 pgre(){
-    ps -ef | grep "${1}" | grep -v grep | awk '{print$2;}'
+    ps -ef | grep "$1" | grep -v grep | awk '{print$2;}'
 }
 # print all info
 ppre(){
-    ps -ef | grep "${1}" | grep -v grep
+    ps -ef | grep "$1" | grep -v grep
 }
 # final location of which command
 fwhich(){
-    local whi=`which ${1} 2>/dev/null`
+    local whi=`which $1 2>/dev/null`
     [ $? -eq 0 -a -x ${whi} 2>/dev/null ] && readlink -f ${whi} || echo "Error:${whi}"
 }
 # tar compress/uncompress gzip with pigz
 tcpzf(){
     type pigz >/dev/null 2>&1 || { echo "Not install pigz !"; return 1; }
-    tar cf - ${2} | pigz --fast > ${1}
+    tar cf - $2 | pigz --fast > $1
 }
 txpz(){
     type pigz >/dev/null 2>&1 || { echo "Not install pigz !"; return 1; }
-    tar --no-same-owner -xf ${1} -I pigz
+    tar --no-same-owner -xf $1 -I pigz
 }
 dus(){
     du $1 -alh -d1 "$(2>/dev/null >&2 du --apparent-size /dev/null && printf '%s\n' --apparent-size || printf '%s\n' --)" | sort -rh | head -n 21
@@ -62,7 +65,7 @@ gitur(){
 jnl(){
     journalctl -eu $1 | less +G
 }
-jfxe(){
+jfxeu(){
     journalctl -n 100 -fxeu $1
 }
 dkcid(){
@@ -95,6 +98,11 @@ cdt() {
         return 1
     fi
 }
+cpv() {
+    rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
+}
+# compdef _files cpv
+
 # ----------------------- alias ----------------------
 # git
 alias gta="git status"
@@ -154,20 +162,26 @@ alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
 alias cmkr="cmake -B${BUILD_DIR} -G 'Ninja' -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B${BUILD_DIR} -G 'Ninja' -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
-alias cmb="cmake --build ${BUILD_DIR} -t"
+alias cmbt="cmake --build ${BUILD_DIR} -t"
 
 # docker
-alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
+if cmd_exists perl; then
+    alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/, :::.*?p//g'"
+else
+    alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
+fi
+
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+
 # docker-compose
-if type docker-compose >/dev/null 2>&1; then
+if cmd_exists docker-compose; then
     export CPO_YML="/var/dkcmpo/docker-compose.yml"
     alias dkcpo="docker-compose -f $CPO_YML"
     alias dkcps="docker-compose -f $CPO_YML ps"
 fi
 
 # pacman (archlinux/manjaro)
-if type pacman >/dev/null 2>&1; then
+if cmd_exists pacman; then
     alias pkgins="sudo pacman -Sy"
     alias pkguni="sudo pacman -R"
     alias pkgss="pacman -Ss"
@@ -186,16 +200,16 @@ alias l="ls -AlF"
 alias la="ls -alF"
 
 # other shell
-alias pingk="ping -c 4"
+alias pingk="ping -c4"
 alias gdb="gdb -q"
 alias cp="cp -arvf"
 alias less="less -R"
 alias df="df -Th"
 
-type trash >/dev/null 2>&1 && alias rm="trash" && alias rrm="/bin/rm -rf"
-type xclip >/dev/null 2>&1 && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
-type fd >/dev/null 2>&1 && alias fd="fd -HI"
-type tree >/dev/null 2>&1 && alias trelh="tree -AlFh"
+cmd_exists trash && alias rm="trash" && alias rrm="\rm -rf"
+cmd_exists xclip && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
+cmd_exists fd && alias fd="fd -HI"
+cmd_exists tree && alias trelh="tree -AlFh" && alias treds="tree -hF --du --sort=size | more"
 
 alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
@@ -228,16 +242,18 @@ if [[ -n "$BASH_VERSION" ]]; then
     export HISTTIMEFORMAT='%F %T `whoami` '
 elif [[ -n "$ZSH_VERSION" ]]; then
     setopt promptsubst
-    setopt hist_ignore_all_dups
+    # 不保存重复的历史记录项
+    setopt hist_save_no_dups
+    setopt hist_ignore_dups
     setopt hist_ignore_space
     setopt hist_reduce_blanks
     setopt hist_fcntl_lock 2>/dev/null
     # modify default PROMPT
     if [[ "$PROMPT" =~ "^# " ]]; then
-        PROMPT='%f%F{6}%(5~|%-1~/…/%3~|%4~)%f %F{green}>%f '
+        PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
     fi
     if [[ ! -n "$RPROMPT" ]]; then
-        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{15}%*%f'
+        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{white}%*%f'
     fi
 fi
 
