@@ -42,14 +42,22 @@ dus(){
 rlip4(){
     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1
 }
-# quickly update git repo between remote and local
+# quickly update(rebase) git repo between local with all remotes
 gitur(){
     set -x
     git add `git status -s | grep -vE '^\?\?|  ' | awk '{print$2;}'`
     [ $? -eq 0 ] || return 1
 
     git commit
-    git pull --rebase && git push || echo 'handle conflicts first!'
+    if ! git pull --rebase; then
+        echo 'handle conflicts first!'
+        return 1
+    fi
+
+    remote_arr=(`git remote`)
+    for var in ${remote_arr[*]}; do
+        git push --all $var
+    done
 }
 jnl(){
     journalctl -eu $1 | less +G
@@ -71,6 +79,21 @@ dktty(){
 }
 qipjq(){
     curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
+}
+cdt() {
+    if [[ ! -e $1 ]]; then
+        echo "Error: The file or directory does not exist."
+        return 1
+    fi
+
+    if [[ -d $1 ]]; then
+        cd "$1"
+    elif [[ -f $1 ]]; then
+        cd "$(dirname "$1")"
+    else
+        echo "Error: Not a file or directory."
+        return 1
+    fi
 }
 # ----------------------- alias ----------------------
 # git
@@ -191,10 +214,6 @@ _get_short_pwd(){
     fi
 }
 
-_ssh_addr(){
-    echo $SSH_CLIENT | awk '{print$1}'
-}
-
 _bash_prompt_cmd(){
     [[ $? -eq 0 ]] && local ps1ArrowFgColor="92" || local ps1ArrowFgColor="91"
     local shortPwd=`_get_short_pwd`
@@ -204,10 +223,8 @@ _bash_prompt_cmd(){
 if [[ -n "$BASH_VERSION" ]]; then
     # PROMPT_DIRTRIM=2
     PROMPT_COMMAND=_bash_prompt_cmd
-    # HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
     HISTCONTROL=ignoreboth
     shopt -s histappend
-    # history format only worked for bash; zsh can use 'history -i', see 'man zshoptions'
     export HISTTIMEFORMAT='%F %T `whoami` '
 elif [[ -n "$ZSH_VERSION" ]]; then
     setopt promptsubst
@@ -225,9 +242,8 @@ elif [[ -n "$ZSH_VERSION" ]]; then
 fi
 
 # ----------------------- export some env var -------------------------
-# export HISTIGNORE='ls:curl:history'
-export HISTSIZE=3000
-export SAVEHIST=3000
+export HISTSIZE=10000
+export SAVEHIST=10000
 export VISUAL=vim
 export EDITOR=vim
 
