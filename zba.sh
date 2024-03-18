@@ -72,13 +72,15 @@ dkcid(){
     docker ps -qf "name= $1\$"
 }
 dktty(){
-    local ctn_id=`dkcid $1`
-    [[ -z "$ctn_id" ]] && { echo "ERROR:no such container: $1!"; return 1; }
-
-    local ctn_count=`echo $ctn_id | wc -l`
-    [ $ctn_count -gt 1 ] && { echo "ERROR: $ctn_count containers found, cannot exec shell!"; return 1; }
-
-    docker exec -ti $ctn_id /bin/bash 2>/dev/null || docker exec -ti $ctn_id /bin/sh
+    ctner_count=`dkcid $1 | wc -l`
+    if [ $ctner_count -ne 1 ]; then
+        echo "ERROR: $ctner_count container(s) found, cannot exec shell!";
+        return 1
+    fi
+    shell_arr=("bash" "sh" "zsh" "fish" "ash")
+    for var in ${shell_arr[*]}; do
+        docker exec -ti $1 /bin/$var && return 0
+    done
 }
 qipjq(){
     curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
