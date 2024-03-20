@@ -176,11 +176,42 @@ fi
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
 # docker-compose
-if cmd_exists docker-compose; then
-    export CPO_YML="/var/dkcmpo/docker-compose.yml"
-    alias dkcpo="docker-compose -f $CPO_YML"
-    alias dkcps="docker-compose -f $CPO_YML ps"
-fi
+# if cmd_exists docker-compose; then
+#     export CPO_YML="/var/dkcmpo/docker-compose.yml"
+#     alias dkcpo="docker-compose -f $CPO_YML"
+#     alias dkcps="docker-compose -f $CPO_YML ps"
+# fi
+
+export DKCP_DIR="/var/dkcmpo"
+
+_get_dcp_file() {
+    if [[ -z "$1" ]]; then
+        echo "input para"
+        return 1
+    fi
+    if [[ -z "$DKCP_DIR" ]]; then
+        local DKCP_DIR=`pwd`
+    fi
+    local ext1=docker-compose.yml
+    local ext2=docker-compose.yaml
+
+    if [[ -e "$DKCP_DIR/$1/$ext1" ]]; then
+        echo "$DKCP_DIR/$1/$ext1"
+        return 0
+    fi
+    if [[ -e "$DKCP_DIR/$1/$ext2" ]]; then
+        echo "$DKCP_DIR/$1/$ext2"
+        return 0
+    fi
+    ## try to grep
+    local matched_file=`find $DKCP_DIR -maxdepth 3 -type f -name $ext1 -o -name $ext2 | xargs grep -El "[ ]+$1:$" | head -1`
+    if [ $? -ne 0 ]; then
+        echo "cannot find any y(a)ml files matched this service"
+        return 1
+    fi
+
+    echo $matched_file
+}
 
 # pacman (archlinux/manjaro)
 if cmd_exists pacman; then
