@@ -175,13 +175,6 @@ fi
 
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
-# docker-compose
-# if cmd_exists docker-compose; then
-#     export CPO_YML="/var/dkcmpo/docker-compose.yml"
-#     alias dkcpo="docker-compose -f $CPO_YML"
-#     alias dkcps="docker-compose -f $CPO_YML ps"
-# fi
-
 export DKCP_DIR="/var/dkcmpo"
 
 _get_dcp_file() {
@@ -213,18 +206,78 @@ _get_dcp_file() {
     echo $matched_file
 }
 
+dcpupd() {
+    svc_arr=("$@")
+    svcs_len=${#svc_arr[*]}
+    if [ $svcs_len -gt 0 ]; then
+        for svc in ${svc_arr[*]}; do
+            dcp_file=`_get_dcp_file $svc`
+            if [ $? -eq 0 ]; then
+                docker-compose -f $dcp_file up -d
+            else
+                echo "cannot determine service: $svc"
+                continue
+            fi
+        done
+    else # find all services restart: always/unless-stopped
+        if [[ -z "$DKCP_DIR" ]]; then
+            local DKCP_DIR=`pwd`
+        fi
+        local matched_arr=(`find $DKCP_DIR -maxdepth 3 -type f -name docker-compose.yml -o -name docker-compose.yaml | \
+            xargs grep -El "[^#][ ]+restart:[ ]+always$|[^#][ ]+restart:[ ]+unless-stopped$"`)
+        for dcp_file in ${matched_arr[*]}; do
+            docker-compose -f $dcp_file up -d
+        done
+    fi
+}
+
+dcpdown() {
+    svc_arr=("$@")
+    svcs_len=${#svc_arr[*]}
+    if [ $svcs_len -gt 0 ]; then
+        for svc in ${svc_arr[*]}; do
+            dcp_file=`_get_dcp_file $svc`
+            if [ $? -eq 0 ]; then
+                docker-compose -f $dcp_file down
+            else
+                echo "cannot determine service: $svc"
+                continue
+            fi
+        done
+    else # find all services restart: always/unless-stopped
+        if [[ -z "$DKCP_DIR" ]]; then
+            local DKCP_DIR=`pwd`
+        fi
+        local matched_arr=(`find $DKCP_DIR -maxdepth 3 -type f -name docker-compose.yml -o -name docker-compose.yaml`)
+        for dcp_file in ${matched_arr[*]}; do
+            docker-compose -f $dcp_file down
+        done
+    fi
+}
+
 # pacman (archlinux/manjaro)
 if cmd_exists pacman; then
-    alias pkgins="sudo pacman -Sy"
-    alias pkguni="sudo pacman -R"
-    alias pkgss="pacman -Ss"
-    alias pkgsi="pacman -Si"
-    alias pkgssq="pacman -Ssq"
-    alias pkgqs="pacman -Qs"
-    alias pkgqi="pacman -Qi"
-    alias pkgql="pacman -Ql"
-    alias pkgqo="pacman -Qo"
+    if [ $(id -u) -eq 0 ]; then
+        _cmd=pacman
+    else
+        if cmd_exists yay; then
+            _cmd=yay
+        else
+            _cmd=pacman
+        fi
+    fi
+
+    alias pkgsy="$_cmd -Sy"
+    alias pkgr="$_cmd -R"
+    alias pkgssq="$_cmd -Ssq"
+    alias pkgss="$_cmd -Ss"
+    alias pkgsi="$_cmd -Si"
+    alias pkgqs="$_cmd -Qs"
+    alias pkgqi="$_cmd -Qi"
+    alias pkgql="$_cmd -Ql"
+    alias pkgqo="$_cmd -Qo"
 fi
+unset _cmd
 
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
 alias ls="ls -A $LS_OPTIONS"
