@@ -65,6 +65,6 @@ unset real_dir plugins plug_arr plugsfile i
 # export _ZL_DATA=~/.local/zlua.list
 
 ### config
-source ${cur_dir}/zsh-config
+source ${cur_dir}/zsh-config.sh
 source ${cur_dir}/zba.sh
 unset cur_dir 
