@@ -331,26 +331,5 @@ if [[ -n "$BASH_VERSION" ]]; then
     HISTCONTROL=ignoreboth
     shopt -s histappend
     export HISTTIMEFORMAT='%F %T `whoami` '
-elif [[ -n "$ZSH_VERSION" ]]; then
-    setopt promptsubst
-    # 不保存重复的历史记录项
-    setopt hist_save_no_dups
-    setopt hist_ignore_dups
-    setopt hist_ignore_space
-    setopt hist_reduce_blanks
-    setopt hist_fcntl_lock 2>/dev/null
-    # modify default PROMPT
-    if [[ "$PROMPT" =~ "# $" ]]; then
-        PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
-    fi
-    if [[ ! -n "$RPROMPT" ]]; then
-        RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{white}%*%f'
-    fi
 fi
-
-# ----------------------- export some env var -------------------------
-export HISTSIZE=10000
-export SAVEHIST=10000
-export VISUAL=vim
-export EDITOR=vim
 

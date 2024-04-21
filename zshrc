@@ -1,17 +1,15 @@
-# export TERM=xterm-256color
 
-## source: manjaro-zsh-prompt [begin]
-#set -x
 real_location=`readlink -f "$0"`
 
 cur_dir=`cd $(dirname "$real_location");pwd`
-plugins=$cur_dir/plugins
 
+# zsh-prompt {{{1
+plugins=$cur_dir/plugins
 plug_arr=(
-"$plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
-"$plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+  "$plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  "$plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
 )
-# "$plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
 for i in ${plug_arr[*]}; do
   if [ -r $i ]; then
     source $i
@@ -29,11 +27,7 @@ fi
 
 unset real_dir plugins plug_arr plugsfile i
 
-# exit
-
 () {
-  emulate -L zsh
-
   # Determine terminal capabilities.
   {
     if ! zmodload zsh/langinfo zsh/terminfo ||
@@ -57,14 +51,10 @@ unset real_dir plugins plug_arr plugsfile i
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=246'
   fi
 }
-## source: manjaro-zsh-prompt [end]
-
-
-## https://github.com/skywind3000/z.lua depend: lua
-# eval "$(lua /usr/local/src/z.lua/z.lua --init zsh enhanced once echo)"
-# export _ZL_DATA=~/.local/zlua.list
+# zsh-prompt }}}1
 
 ### config
 source ${cur_dir}/zsh-config.sh
 source ${cur_dir}/zba.sh
 unset cur_dir 
+# vim:fdm=marker

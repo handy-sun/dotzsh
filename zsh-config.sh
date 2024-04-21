@@ -11,6 +11,41 @@ setopt histignorealldups                                        # If a new comma
 setopt autocd                                                   # if only directory path is entered, cd there.
 setopt inc_append_history                                       # save commands are added to the history immediately, otherwise only when shell exits.
 setopt histignorespace                                          # Don't save commands that start with space
+## Options section patch
+setopt interactive_comments                                     # Allow comments in interactive mode
+
+# auto remember dir stack
+setopt auto_pushd
+setopt pushd_ignore_dups
+setopt pushd_minus
+
+# resume process after disown
+setopt auto_continue
+setopt extended_glob
+
+setopt rc_quotes                                                # single quotes '' think as ' (same to Vimscript)
+setopt listpacked                                               # identifier=path argu suggestion
+setopt magic_equal_subst
+
+setopt hist_ignore_space
+# donnot save same history
+setopt hist_save_no_dups
+setopt hist_ignore_dups
+
+# zsh 4.3.6 doesn't have this option
+setopt hist_fcntl_lock 2>/dev/null
+if [[ $_has_re -eq 1 && ! ( $ZSH_VERSION =~ '^[0-4]\.' || $ZSH_VERSION =~ '^5\.0\.[0-4]' ) ]]; then
+  setopt hist_reduce_blanks
+else
+  # This may cause the command messed up due to a memcpy bug
+fi
+
+# print options
+setopt ksh_option_print
+setopt no_bg_nice
+setopt noflowcontrol
+# stty -ixon
+
 
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' # Case insensitive tab completion
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"         # Colored completion (different colors for dirs/files/etc)
@@ -20,13 +55,16 @@ zstyle ':completion:*' menu select                              # Highlight menu
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path ~/.zsh/cache
-HISTFILE=~/.zhistory
-HISTSIZE=10000
-SAVEHIST=10000
-#export EDITOR=/usr/bin/nano
-#export VISUAL=/usr/bin/nano
-WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
+## zstyle patch
+# current user's process completions
+# zstyle ':completion:*:processes' command 'ps -afu$USER'
+# zstyle ':completion:*:*:*:*:processes' force-list always
 
+# warnings (red color)
+zstyle ':completion:*:warnings' format $'\e[91m -- No Matches Found --\e[0m'
+# descriptions is light color
+zstyle ':completion:*:descriptions' format $'\e[2m -- %d --\e[0m'
+zstyle ':completion:*:corrections' format $'\e[93m -- %d (errors: %e) --\e[0m'
 
 ## Keybindings section
 bindkey -e
@@ -35,12 +73,13 @@ bindkey '^[[H' beginning-of-line                                # Home key
 if [[ "${terminfo[khome]}" != "" ]]; then
   bindkey "${terminfo[khome]}" beginning-of-line                # [Home] - Go to beginning of line
 fi
+
 bindkey '^[[8~' end-of-line                                     # End key
-bindkey '^[[F' end-of-line                                     # End key
+bindkey '^[[F' end-of-line                                      # End key
 if [[ "${terminfo[kend]}" != "" ]]; then
   bindkey "${terminfo[kend]}" end-of-line                       # [End] - Go to end of line
 fi
-#--# bindkey '^[[2~' overwrite-mode                                  # Insert key
+
 bindkey '^[[3~' delete-char                                     # Delete key
 bindkey '^[[C'  forward-char                                    # Right key
 bindkey '^[[D'  backward-char                                   # Left key
@@ -59,12 +98,6 @@ bindkey '^[[Z' undo                                             # Shift+tab undo
 bindkey -s '\eo'   'cd ..\n'    # ALT+O => 'cd ..'
 bindkey -s '\e;'   'ls -l\n'    # ALT+; => 'ls -AlhF'
 
-## Alias section
-alias cp="cp -i"                                                # Confirm before overwriting something
-alias df='df -h'                                                # Human-readable sizes
-alias free='free -m'                                            # Show sizes in MB
-alias gitu='git add . && git commit && git push'
-
 # Theming section  
 autoload -U compinit colors zcalc
 compinit -d
@@ -80,20 +113,7 @@ export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;36m'
 export LESS=-R
 
-## Plugins section: Enable fish style features
-# Use syntax highlighting
-## if [ -e /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-##     source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-## fi
-#--# [[ -e /usr/local/share/zsh-plugins/z.sh ]] && source /usr/local/share/zsh-plugins/z.sh
-# Use history substring search
-#--# source /usr/share/zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
-# bind UP and DOWN arrow keys to history substring search
 zmodload zsh/terminfo
-#--# bindkey "$terminfo[kcuu1]" history-substring-search-up
-#--# bindkey "$terminfo[kcud1]" history-substring-search-down
-#--# bindkey '^[[A' history-substring-search-up			
-#--# bindkey '^[[B' history-substring-search-down
 
 # Set terminal window and tab/icon title
 # usage: title short_tab_title [long_window_title]
@@ -282,5 +302,19 @@ add-zsh-hook precmd mzc_termsupport_cwd
 # File and Dir colors for ls and other outputs
 export LS_OPTIONS='--color=auto'
 eval "$(dircolors -b)"
-alias ls='ls $LS_OPTIONS'
+
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zhistory
+export EDITOR=/usr/bin/vim
+export VISUAL=/usr/bin/vim
+WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
+
+# modify default PROMPT
+if [[ "$PROMPT" =~ "# $" ]]; then
+  PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
+fi
+if [[ ! -n "$RPROMPT" ]]; then
+  RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{white}%*%f'
+fi
 
