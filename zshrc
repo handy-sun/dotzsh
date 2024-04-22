@@ -3,6 +3,27 @@ real_location=`readlink -f "$0"`
 
 cur_dir=`cd $(dirname "$real_location");pwd`
 
+if [[ $_en_xtrc -eq 1 ]]; then
+  zmodload zsh/datetime
+  PS4='+$EPOCHREALTIME %N:%i> '
+
+  logfile=$(mktemp /tmp/zsh_xtrace.$$.XXXXXX.log)
+  echo "Logging to $logfile"
+  exec 3>&2 2>$logfile
+
+  setopt XTRACE
+fi
+
+# local pre
+localpre=$cur_dir/localpre
+if [ -d $localpre ]; then
+  for i in $localpre/*sh; do
+    if [ -r $i ]; then
+      source $i
+    fi
+  done
+fi
+
 # zsh-prompt {{{1
 plugins=$cur_dir/plugins
 plug_arr=(
@@ -57,4 +78,9 @@ unset real_dir plugins plug_arr plugsfile i
 source ${cur_dir}/zsh-config.sh
 source ${cur_dir}/zba.sh
 unset cur_dir 
+
+if [[ $_en_xtrc -eq 1 ]]; then
+  unsetopt XTRACE
+  exec 2>&3 3>&-
+fi
 # vim:fdm=marker
