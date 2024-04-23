@@ -1,9 +1,10 @@
 ## define some func,alias,variable in zsh/bash shell script
 # ----------------------- shell function ----------------------
-# about git stash
+# Determine whether a command exists
 cmd_exists() {
-    command -v "$@" > /dev/null 2>&1
+    command -v "$@" &>/dev/null
 }
+# about git stash
 shpo() {
     git stash pop stash@{$1};
 }
@@ -16,7 +17,7 @@ shsw() {
 shdr() {
     git stash drop stash@{$1};
 }
-# get pid of a process, avoid some Linux system cannot use 'pgrep' command
+# get pid of a process, avoid some Linux system cannot use 'pgrep' program
 pgre() {
     ps -ef | grep "$1" | grep -v grep | awk '{print$2;}'
 }
@@ -25,9 +26,26 @@ ppre() {
     ps -ef | grep "$1" | grep -v grep
 }
 # final location of which command
-fwhich() {
+fwh() {
     local whi=`which $1 2>/dev/null`
-    [ $? -eq 0 -a -x ${whi} 2>/dev/null ] && readlink -f ${whi} || echo "Error:${whi}"
+    # is aliased to?
+    if echo $whi | grep -q ' aliased '; then
+        local real_cmd=`echo $whi | cut -d' ' -f4`
+        local argu="`echo $whi | cut -d' ' -f5-`"
+        if [[ "$1" == "$real_cmd" ]]; then
+            [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd with arguments: $argu"
+        else
+            fwh $real_cmd "$argu"
+        fi
+    else
+        if [ -x ${whi} 2>/dev/null ]; then
+            readlink -f ${whi} | xargs -I{} echo {} `test -n "$2" && echo "with arguments: $2"`
+        elif echo $whi | grep -qE '}$'; then
+            echo -e "## function ##:\n${whi}"
+        else
+            echo 'ERROR ${whi}'
+        fi
+    fi
 }
 # tar compress/uncompress gzip with pigz
 tcpzf() {
@@ -45,7 +63,7 @@ dus() {
 rlip4() {
     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1
 }
-# quickly update(rebase) git repo between local with all remotes
+# quickly update(rebase) git repo between local and all remotes
 gitur() {
     set -x
     git add `git status -s | grep -vE '^\?\?|  ' | awk '{print$2;}'`
@@ -82,7 +100,7 @@ dktty() {
         docker exec -ti $1 /bin/$var && return 0
     done
 }
-qipjq() {
+qip() {
     curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
 cdt() {
@@ -259,7 +277,6 @@ alias syenw="sudo systemctl enable --now"
 alias sydis="sudo systemctl disable"
 alias sydisw="sudo systemctl disable --now"
 alias sydrld="sudo systemctl daemon-reload"
-alias syed="sudo systemctl edit"
 
 # cmake
 export BUILD_DIR="./build"
@@ -286,6 +303,8 @@ if cmd_exists pacman; then
     else
         if cmd_exists yay; then
             _cmd=yay
+        elif cmd_exists paru; then
+            _cmd=paru
         else
             _cmd=pacman
         fi
@@ -310,6 +329,7 @@ alias l="ls -AlF"
 alias la="ls -alF"
 
 # other shell
+alias r="fc -s"
 alias pingk="ping -c4"
 alias gdb="gdb -q"
 alias cp="cp -arvf"
@@ -322,11 +342,11 @@ cmd_exists xclip && alias pbcopy="xclip -selection clipboard" && alias pbpaste="
 cmd_exists fd && alias fd="fd -HI"
 cmd_exists tree && alias trelh="tree -AlFh" && alias treds="tree -hF --du --sort=size | more"
 
-alias grep >/dev/null 2>&1 || alias grep="grep --color=auto"
+alias grep &>/dev/null || alias grep="grep --color=auto"
+alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
 if [[ -n "$BASH_VERSION" ]]; then
-    # PROMPT_DIRTRIM=2
     PROMPT_COMMAND=_bash_prompt_cmd
     HISTCONTROL=ignoreboth
     shopt -s histappend

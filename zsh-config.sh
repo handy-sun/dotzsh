@@ -212,7 +212,7 @@ function mzc_termsupport_preexec {
 
 autoload -U add-zsh-hook
 add-zsh-hook precmd mzc_termsupport_precmd
-#--# add-zsh-hook preexec mzc_termsupport_preexec
+add-zsh-hook preexec mzc_termsupport_preexec
 
 
 # Required for $langinfo
@@ -317,4 +317,12 @@ fi
 if [[ ! -n "$RPROMPT" ]]; then
   RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{white}%*%f'
 fi
+
+# only zsh alias
+alias -g ...='../..'
+alias -g ....='../../..'
+alias -g .....='../../../..'
+alias -g ......='../../../../..'
+
+alias -- -='cd -'
 
