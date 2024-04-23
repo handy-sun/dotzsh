@@ -27,23 +27,28 @@ ppre() {
 }
 # final location of which command
 fwh() {
+    local yellow='\e[0;33m'
+    local reset='\e[m'
     local whi=`which $1 2>/dev/null`
     # is aliased to?
     if echo $whi | grep -q ' aliased '; then
         local real_cmd=`echo $whi | cut -d' ' -f4`
         local argu="`echo $whi | cut -d' ' -f5-`"
         if [[ "$1" == "$real_cmd" ]]; then
-            [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd with arguments: $argu"
+            [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd ${yellow}with arguments:${reset} $argu $2"
         else
             fwh $real_cmd "$argu"
         fi
     else
         if [ -x ${whi} 2>/dev/null ]; then
             readlink -f ${whi} | xargs -I{} echo {} `test -n "$2" && echo "with arguments: $2"`
-        elif echo $whi | grep -qE '}$'; then
-            echo -e "## function ##:\n${whi}"
+        elif echo $whi | grep -qE '}$'; then # shell function
+            type $1
+            echo "$whi"
+        elif echo $whi | grep -q 'built-in'; then # shell built-in
+            echo -e "${yellow}$whi${reset}"
         else
-            echo 'ERROR ${whi}'
+            echo -e "ERROR\n $whi"
         fi
     fi
 }
@@ -346,10 +351,15 @@ alias grep &>/dev/null || alias grep="grep --color=auto"
 alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
+_PRE=%{$'\033['
+_SUFF='m%}'
+
+PS4="${_PRE}1;2${_SUFF}+${_PRE}0;33${_SUFF}%N:${_PRE}0;92${_SUFF}%i$_PRE$_SUFF${_PRE}1;2${_SUFF}>$_PRE$_SUFF"
+unset _PRE _SUFF
+
 if [[ -n "$BASH_VERSION" ]]; then
     PROMPT_COMMAND=_bash_prompt_cmd
     HISTCONTROL=ignoreboth
     shopt -s histappend
     export HISTTIMEFORMAT='%F %T `whoami` '
 fi
-
