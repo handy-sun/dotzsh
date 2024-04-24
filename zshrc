@@ -75,7 +75,7 @@ unset real_dir plugins plug_arr plugsfile i
 # zsh-prompt }}}1
 
 ### config
-source ${cur_dir}/zsh-config.sh
+source ${cur_dir}/zsh-config.zsh
 source ${cur_dir}/zba.sh
 unset cur_dir 
 
