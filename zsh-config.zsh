@@ -7,10 +7,7 @@ setopt nocheckjobs                                              # Don't warn abo
 setopt numericglobsort                                          # Sort filenames numerically when it makes sense
 setopt nobeep                                                   # No beep
 setopt appendhistory                                            # Immediately append history instead of overwriting
-setopt histignorealldups                                        # If a new command is a duplicate, remove the older one
 setopt autocd                                                   # if only directory path is entered, cd there.
-setopt inc_append_history                                       # save commands are added to the history immediately, otherwise only when shell exits.
-setopt histignorespace                                          # Don't save commands that start with space
 ## Options section patch
 setopt interactive_comments                                     # Allow comments in interactive mode
 
@@ -21,16 +18,19 @@ setopt pushd_minus
 
 # resume process after disown
 setopt auto_continue
-setopt extended_glob
 
 setopt rc_quotes                                                # single quotes '' think as ' (same to Vimscript)
 setopt listpacked                                               # identifier=path argu suggestion
 setopt magic_equal_subst
 
-setopt hist_ignore_space
-# donnot save same history
+# history file
+setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
+setopt histignorealldups      # If a new command is a duplicate, remove the older one
 setopt hist_save_no_dups
-setopt hist_ignore_dups
+setopt hist_ignore_dups       # ignore duplicated commands history list
+setopt hist_ignore_space      # Don't save commands that start with space
+# setopt hist_verify            # show command with history expansion to user before running it
+# setopt share_history          # share command history data
 
 # zsh 4.3.6 doesn't have this option
 setopt hist_fcntl_lock 2>/dev/null
@@ -44,7 +44,6 @@ fi
 setopt ksh_option_print
 setopt no_bg_nice
 setopt noflowcontrol
-# stty -ixon
 
 
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' # Case insensitive tab completion
@@ -93,10 +92,6 @@ bindkey '^[[1;5D' backward-word                                 #
 bindkey '^[[1;5C' forward-word                                  #
 bindkey '^H' backward-kill-word                                 # delete previous word with ctrl+backspace
 bindkey '^[[Z' undo                                             # Shift+tab undo last action
-
-## other custom key
-bindkey -s '\eo'   'cd ..\n'    # ALT+O => 'cd ..'
-bindkey -s '\e;'   'ls -l\n'    # ALT+; => 'ls -AlhF'
 
 # Theming section  
 autoload -U compinit colors zcalc
@@ -299,8 +294,28 @@ function mzc_termsupport_cwd {
 # will be called the output may be swallowed by the script or function.
 add-zsh-hook precmd mzc_termsupport_cwd
 
+function sudo-command-line {
+  [[ -z $BUFFER ]] && zle up-history
+  [[ $BUFFER != sudo\ * && $UID -ne 0 ]] && {
+    typeset -a bufs
+    bufs=(${(z)BUFFER})
+    while (( $+aliases[$bufs[1]] )); do
+      local expanded=(${(z)aliases[$bufs[1]]})
+      bufs[1,1]=($expanded)
+      if [[ $bufs[1] == $expanded[1] ]]; then
+        break
+      fi
+    done
+    bufs=(sudo $bufs)
+    BUFFER=$bufs
+  }
+  zle end-of-line
+}
+zle -N sudo-command-line
+bindkey "\e\e" sudo-command-line # Esc Esc or Ctrl [ [
+
 # File and Dir colors for ls and other outputs
-export LS_OPTIONS='--color=auto'
+export LS_OPTIONS=--color=auto
 eval "$(dircolors -b)"
 
 HISTSIZE=10000
@@ -309,6 +324,10 @@ HISTFILE=~/.zhistory
 export EDITOR=/usr/bin/vim
 export VISUAL=/usr/bin/vim
 WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
+
+## other custom key
+bindkey -s '\eo' 'cd ..\n'    # ALT+O
+bindkey -s '\e;' 'll\n'       # ALT+;
 
 # modify default PROMPT
 if [[ "$PROMPT" =~ "# $" ]]; then
