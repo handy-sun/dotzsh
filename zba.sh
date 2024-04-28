@@ -27,8 +27,8 @@ ppre() {
 }
 # final location of which command
 fwh() {
-    local yellow='\e[0;33m'
-    local reset='\e[m'
+    local yellow=$'\E[0;33m'
+    local reset=$'\E[m'
     local whi=`which $1 2>/dev/null`
     # is aliased to?
     if echo $whi | grep -q ' aliased '; then
@@ -50,6 +50,25 @@ fwh() {
         else
             echo -e "ERROR\n $whi"
         fi
+    fi
+}
+htdel() {
+    set -x
+    if [[ -n "$HISTFILE" ]]; then
+        local file=$HISTFILE
+    elif [[ -n "$ZSH_VERSION" ]] && [ -e ~/.zhistory ]; then
+        local file=~/.zhistory
+    elif [[ -n "$BASH_VERSION" ]] && [ -e ~/.bash_history ]; then
+        local file=~/.bash_history
+    else
+        return 1
+    fi
+
+    if [[ "$1" =~ "/" ]]; then
+        transfer=`printf "$1" | sed 's#\/#\\\/#g'`
+        sed -i "/$transfer/d" $file
+    else
+        sed -i "/$1/d" $file
     fi
 }
 # tar compress/uncompress gzip with pigz
@@ -351,15 +370,19 @@ alias grep &>/dev/null || alias grep="grep --color=auto"
 alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
-_PRE=%{$'\033['
+_PRE=%{$'\E['
 _SUFF='m%}'
 
-PS4="${_PRE}1;2${_SUFF}+${_PRE}0;33${_SUFF}%N:${_PRE}0;92${_SUFF}%i$_PRE$_SUFF${_PRE}1;2${_SUFF}>$_PRE$_SUFF"
+PS2="${_PRE}0;33${_SUFF}%_>${_PRE}0${_SUFF}"
+PS4="${_PRE}1;2${_SUFF}+${_PRE}0;33${_SUFF}%N:${_PRE}0;92${_SUFF}%i${_PRE}0${_SUFF}${_PRE}1;2${_SUFF}>${_PRE}0${_SUFF}"
 unset _PRE _SUFF
 
 if [[ -n "$BASH_VERSION" ]]; then
     PROMPT_COMMAND=_bash_prompt_cmd
     HISTCONTROL=ignoreboth
     shopt -s histappend
+    shopt -s autocd
+    shopt -s checkwinsize
+    shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T `whoami` '
 fi
