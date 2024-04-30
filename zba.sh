@@ -29,7 +29,7 @@ ppre() {
 fwh() {
     local yellow=$'\E[0;33m'
     local reset=$'\E[m'
-    local whi=`\which --read-alias --show-dot --show-tilde $1 2>/dev/null`
+    local whi=`\which $1 2>/dev/null`
     # is aliased to?
     if echo $whi | grep -q ' aliased '; then
         local real_cmd=`echo $whi | cut -d' ' -f4`
