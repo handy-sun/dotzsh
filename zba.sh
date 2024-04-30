@@ -29,7 +29,7 @@ ppre() {
 fwh() {
     local yellow=$'\E[0;33m'
     local reset=$'\E[m'
-    local whi=`which $1 2>/dev/null`
+    local whi=`\which --read-alias --show-dot --show-tilde $1 2>/dev/null`
     # is aliased to?
     if echo $whi | grep -q ' aliased '; then
         local real_cmd=`echo $whi | cut -d' ' -f4`
@@ -37,7 +37,7 @@ fwh() {
         if [[ "$1" == "$real_cmd" ]]; then
             [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd ${yellow}with arguments:${reset} $argu $2"
         else
-            fwh $real_cmd "$argu"
+            fwh $real_cmd "$argu $2"
         fi
     else
         if [ -x ${whi} 2>/dev/null ]; then
@@ -370,12 +370,11 @@ alias grep &>/dev/null || alias grep="grep --color=auto"
 alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
-_PRE=%{$'\E['
-_SUFF='m%}'
+_PRE=$'\E['
 
-PS2="${_PRE}0;33${_SUFF}%_>${_PRE}0${_SUFF}"
-PS4="${_PRE}1;2${_SUFF}+${_PRE}0;33${_SUFF}%N:${_PRE}0;92${_SUFF}%i${_PRE}0${_SUFF}${_PRE}1;2${_SUFF}>${_PRE}0${_SUFF}"
-unset _PRE _SUFF
+PS2="${_PRE}0;33m>${_PRE}0m"
+PS4="${_PRE}1;2m+${_PRE}0;33m$0:${_PRE}0;92m$LINENO${_PRE}m${_PRE}1;2m> ${_PRE}m"
+unset _PRE
 
 if [[ -n "$BASH_VERSION" ]]; then
     PROMPT_COMMAND=_bash_prompt_cmd
