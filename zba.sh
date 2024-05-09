@@ -71,21 +71,9 @@ htdel() {
         sed -i "/$1/d" $file
     fi
 }
-# tar compress/uncompress gzip with pigz
-tcpzf() {
-    type pigz >/dev/null 2>&1 || { echo "Not install pigz !"; return 1; }
-    tar cf - $2 | pigz --fast > $1
-}
-txpz() {
-    type pigz >/dev/null 2>&1 || { echo "Not install pigz !"; return 1; }
-    tar --no-same-owner -xf $1 -I pigz
-}
-dus() {
-    du $1 -alh -d1 "$(2>/dev/null >&2 du --apparent-size /dev/null && printf '%s\n' --apparent-size || printf '%s\n' --)" | sort -rh | head -n 21
-}
 # get real network device local ipv4 address
 rlip4() {
-    ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1
+    ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
 }
 # quickly update(rebase) git repo between local and all remotes
 gitur() {
@@ -142,10 +130,6 @@ cdt() {
         return 1
     fi
 }
-cpv() {
-    rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
-}
-# compdef _files cpv
 
 # docker-compose env and function
 export DKCP_DIR="/var/dkcmpo"
@@ -246,7 +230,32 @@ _bash_prompt_cmd() {
     local shortPwd=`_get_short_pwd`
     PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${ps1ArrowFgColor}m\]\\$\[\e[0m\] "
 }
+# ----------------------- condition shell function ----------------------
+if du --apparent-size /dev/null &>/dev/null; then
+    dus() {
+        du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
+    }
+else
+    dus() {
+        du $1 -- -alh -d1 | sort -rh | head -n 21
+    }
+fi
 
+# tar compress/uncompress gzip with pigz
+if cmd_exists pigz; then
+    tcpzf() {
+        tar cf - $2 | pigz --fast > $1
+    }
+    txpz() {
+        tar --no-same-owner -xf $1 -I pigz
+    }
+fi
+
+if cmd_exists rsync; then
+    cpv() {
+        rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
+    }
+fi
 # ----------------------- alias ----------------------
 # git
 alias gta="git status"
@@ -360,8 +369,9 @@ alias cp="cp -arvf"
 alias less="less -R"
 alias df="df -Th"
 alias free="free -h"
+alias rrm="\rm -rf"
 
-cmd_exists trash && alias rm="trash" && alias rrm="\rm -rf"
+cmd_exists trash && alias rm="trash"
 cmd_exists xclip && alias pbcopy="xclip -selection clipboard" && alias pbpaste="xclip -selection clipboard -o"
 cmd_exists fd && alias fd="fd -HI"
 cmd_exists tree && alias trelh="tree -AlFh" && alias treds="tree -hF --du --sort=size | more"
