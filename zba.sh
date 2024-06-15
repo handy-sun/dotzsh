@@ -265,6 +265,7 @@ alias gtun="git status uno"
 alias gcm="git commit"
 alias gcmm="git commit -m"
 alias gcma="git commit -a"
+alias gcmam="git commit -a -m"
 alias gcmn="git commit --amend"
 alias gcman="git commit -a --amend"
 
@@ -273,6 +274,7 @@ alias gplrb="git pull --rebase"
 
 alias gsh="git stash"
 alias gshl="git stash list"
+alias gshp="git stash pop"
 
 alias grs="git reset"
 alias grsh="git reset --hard"
@@ -393,5 +395,5 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s autocd
     shopt -s checkwinsize
     shopt -s expand_aliases
-    export HISTTIMEFORMAT='%F %T `whoami` '
+    export HISTTIMEFORMAT='%F %T '
 fi
