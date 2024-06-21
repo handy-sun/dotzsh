@@ -109,7 +109,7 @@ dktty() {
     fi
     shell_arr=("bash" "sh" "zsh" "fish" "ash")
     for var in ${shell_arr[*]}; do
-        docker exec -ti $1 /bin/$var && return 0
+        docker exec -ti $1 /bin/$var -i && return 0
     done
 }
 qip() {
@@ -130,6 +130,25 @@ cdt() {
         return 1
     fi
 }
+swap2file() {
+    if [[ ! -f "$1" || ! -f "$2" ]]; then
+        echo "$1 or $2 is not existed." >&2
+        exit 1
+    fi
+
+    if [[ "$1" -ef "$2" ]]; then
+        echo "$1 and $2 is same file" >&2
+        exit 2
+    fi
+
+    tempfile=`mktemp ./swap2file.$$.XXXXXXXXXX`
+    mv '$1' $tempfile
+    mv '$2' '$1'
+    mv $tempfile '$2'
+}
+dus() {
+    du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
+}
 
 # about bash prompt
 _get_short_pwd() {
@@ -144,22 +163,24 @@ _get_short_pwd() {
     fi
 }
 
-_bash_prompt_cmd() {
-    [[ $? -eq 0 ]] && local ps1ArrowFgColor="92" || local ps1ArrowFgColor="91"
-    local shortPwd=`_get_short_pwd`
-    PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${ps1ArrowFgColor}m\]\\$\[\e[0m\] "
+# TODO: multi
+_get_jobs_idx() {
+    local job_arr=(`jobs | awk '{print$1}' | grep -oE '[0-9]+'`)
+    local content
+    for var in ${job_arr[*]}; do
+        content+="%$var "
+    done
+    echo $content
 }
-# ----------------------- condition shell function ----------------------
-if du --apparent-size /dev/null &>/dev/null; then
-    dus() {
-        du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
-    }
-else
-    dus() {
-        du $1 -- -alh -d1 | sort -rh | head -n 21
-    }
-fi
 
+_bash_prompt_cmd() {
+    [[ $? -eq 0 ]] && local promFg="92" || local promFg="91"
+    local shortPwd=`_get_short_pwd`
+    local jobIdx=`_get_jobs_idx`
+    PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${promFg}m\]\\$\[\e[0m\] \[\e[0;34m\]${jobIdx}\[\e[0m\] "
+}
+
+# ----------------------- condition shell function ----------------------
 # tar compress/uncompress gzip with pigz
 if cmd_exists pigz; then
     tcpzf() {
