@@ -142,9 +142,9 @@ swap2file() {
     fi
 
     tempfile=`mktemp ./swap2file.$$.XXXXXXXXXX`
-    mv '$1' $tempfile
-    mv '$2' '$1'
-    mv $tempfile '$2'
+    mv "$1" $tempfile
+    mv "$2" "$1"
+    mv $tempfile "$2"
 }
 dus() {
     du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
@@ -163,20 +163,19 @@ _get_short_pwd() {
     fi
 }
 
-# TODO: multi
-_get_jobs_idx() {
-    local job_arr=(`jobs | awk '{print$1}' | grep -oE '[0-9]+'`)
-    local content
+_get_jobs_name() {
+    local job_arr=(`jobs | tr -d '+' | awk '$2 == "Stopped" || $2 == "suspended" {print$3}'`)
+    local content=
     for var in ${job_arr[*]}; do
-        content+="%$var "
+        content="${content}%${var} "
     done
-    echo $content
+    echo "${content}"
 }
 
 _bash_prompt_cmd() {
     [[ $? -eq 0 ]] && local promFg="92" || local promFg="91"
     local shortPwd=`_get_short_pwd`
-    local jobIdx=`_get_jobs_idx`
+    local jobIdx=`_get_jobs_name`
     PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${promFg}m\]\\$\[\e[0m\] \[\e[0;34m\]${jobIdx}\[\e[0m\] "
 }
 
@@ -196,7 +195,7 @@ if cmd_exists rsync; then
         rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
     }
 fi
-# ----------------------- alias ----------------------
+# ----------------------- alias ---------------------- {{{1
 # git
 alias gta="git status"
 alias gts="git status -s"
@@ -321,6 +320,7 @@ cmd_exists tree && alias trelh="tree -AlFh" && alias treds="tree -hF --du --sort
 alias grep &>/dev/null || alias grep="grep --color=auto"
 alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
+# alias }}}1
 
 _PRE=$'\E['
 
@@ -337,3 +337,5 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T '
 fi
+
+# vim:fdm=marker
