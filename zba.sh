@@ -130,6 +130,15 @@ cdt() {
         return 1
     fi
 }
+upd() {
+    local dir=""
+    local limit="$1"
+    for ((i=1; i <= limit; i++)); do
+        dir="../$dir"
+    done
+    cd "$dir"
+}
+
 swap2file() {
     if [[ ! -f "$1" || ! -f "$2" ]]; then
         echo "$1 or $2 is not existed." >&2
@@ -176,7 +185,7 @@ _bash_prompt_cmd() {
     [[ $? -eq 0 ]] && local promFg="92" || local promFg="91"
     local shortPwd=`_get_short_pwd`
     local jobIdx=`_get_jobs_name`
-    PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;${promFg}m\]\\$\[\e[0m\] \[\e[0;34m\]${jobIdx}\[\e[0m\] "
+    PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;34m\]${jobIdx}\[\e[0m\]\[\e[0;${promFg}m\]\\$\[\e[0m\] "
 }
 
 # ----------------------- condition shell function ----------------------
