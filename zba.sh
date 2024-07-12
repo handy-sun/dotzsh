@@ -158,6 +158,9 @@ swap2file() {
 dus() {
     du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
 }
+qlibc() {
+    strings $1 | grep -E '^GLIBC_'
+}
 
 # about bash prompt
 _get_short_pwd() {
