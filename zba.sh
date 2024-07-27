@@ -247,6 +247,10 @@ alias gck="git checkout"
 alias grt="git remote -v"
 alias gblm="git blame -L"
 alias gaprj="git apply --reject"
+
+alias gchp="git cherry-pick"
+alias gcln="git clean -n"
+alias gclfd="git clean -fd"
 # tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
