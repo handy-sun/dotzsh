@@ -1,6 +1,6 @@
 # docker-compose handy functions
 if ! command -v docker-compose &>/dev/null; then
-	exit 1
+	return 1
 fi
 
 [[ -z "$DKCP_DIR" ]] && export DKCP_DIR="/var/dkcmpo"

@@ -318,9 +318,11 @@ bindkey "\e\e" sudo-command-line # Esc Esc or Ctrl [ [
 export LS_OPTIONS=--color=auto
 eval "$(dircolors -b)"
 
+! test -d ~/.cache && mkdir -p ~/.cache
+
 HISTSIZE=10000
 SAVEHIST=10000
-HISTFILE=~/.zhistory
+HISTFILE=~/.cache/.zhistory
 export EDITOR=/usr/bin/vim
 export VISUAL=/usr/bin/vim
 WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
