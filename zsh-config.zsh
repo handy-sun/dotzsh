@@ -336,7 +336,7 @@ if [[ "$PROMPT" =~ "# $" ]]; then
   PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
 fi
 if [[ ! -n "$RPROMPT" ]]; then
-  RPROMPT='%F{red}%(?..%?)%f %F{yellow}%n@%l %F{white}%*%f'
+  RPROMPT='%F{red}%(?..%?)%f %#%F{yellow}%j %F{grey}%*%f'
 fi
 
 # only zsh alias

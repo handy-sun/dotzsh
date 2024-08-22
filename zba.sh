@@ -18,12 +18,12 @@ shdr() {
     git stash drop stash@{$1};
 }
 # get pid of a process, avoid some Linux system cannot use 'pgrep' program
-pgre() {
-    ps -ef | grep "$1" | grep -v grep | awk '{print$2;}'
+qpid() {
+    ps -eo pid,cmd | grep "$1" | grep -vE 'grep|\]$' | awk '{print$1;}'
 }
-# print all info
+# print all info, and search insensitive
 ppre() {
-    ps -ef | grep "$1" | grep -v grep
+    ps -ef | grep -i "$1" | grep -vE 'grep|\]$'
 }
 # final location of which command
 fwh() {
