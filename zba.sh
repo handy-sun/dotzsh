@@ -53,7 +53,7 @@ fwh() {
     fi
 }
 htdel() {
-    set -x
+    # set -x
     if [[ -n "$HISTFILE" ]]; then
         local file=$HISTFILE
     elif [[ -n "$ZSH_VERSION" ]] && [ -e ~/.zhistory ]; then
@@ -77,7 +77,7 @@ rlip4() {
 }
 # quickly update(rebase) git repo between local and all remotes
 gitur() {
-    set -x
+    # set -x
     git add `git status -s | grep -vE '^\?\?|  ' | awk '{print$2;}'`
     [ $? -eq 0 ] || return 1
 
@@ -233,9 +233,9 @@ alias grss="git reset --soft"
 alias gro="git restore"
 alias grog="git restore --staged"
 
-alias glg="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color"
-alias glp="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color --graph"
-alias glh="git log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %C(yellow)%d' --abbrev-commit --color --graph | head -30"
+alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
+alias glp="glg --graph"
+alias glh="glp | head -30"
 
 alias gdf="git diff"
 alias gdfh="git diff HEAD"
@@ -336,6 +336,7 @@ cmd_exists tree && alias trelh="tree -AlFh" && alias treds="tree -hF --du --sort
 alias grep &>/dev/null || alias grep="grep --color=auto"
 alias diff &>/dev/null || alias diff="diff --color=auto"
 alias thupipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
+alias surl="curl --proto '=https' --tlsv1.2 -Lv "
 # alias }}}1
 
 _PRE=$'\E['
