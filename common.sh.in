@@ -1,0 +1,218 @@
+#!/bin/bash -e
+
+OS_TYPE=$(uname)
+
+if [ "$OS_TYPE" == "Linux" ]; then
+    is_linux=1
+elif [ "$OS_TYPE" == "Darwin" ]; then
+    is_macos=1
+else
+    echo "Unknown operating system: $OS_TYPE"
+    return 1
+fi
+
+real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+current_dir=`cd $(dirname "$real_location");pwd`
+generate_file=$current_dir/common.sh
+
+cat > $generate_file << 'EOF'
+cmd_exists() {
+    command -v "$@" &>/dev/null
+}
+# about git stash
+shpo() {
+    git stash pop stash@{$1};
+}
+shap() {
+    git stash apply stash@{$1};
+}
+shsw() {
+    git stash show -p stash@{$1};
+}
+shdr() {
+    git stash drop stash@{$1};
+}
+# get pid of a process, avoid some Linux system cannot use 'pgrep' program
+qpid() {
+    ps -eo pid,cmd | grep "$1" | grep -vE 'grep|\]$' | awk '{print$1;}'
+}
+# print all info, and search insensitive
+ppre() {
+    ps -ef | grep -i "$1" | grep -vE 'grep|\]$'
+}
+htdel() {
+    # set -x
+    if [[ -n "$HISTFILE" ]]; then
+        local file=$HISTFILE
+    elif [[ -n "$ZSH_VERSION" ]] && [ -e ~/.zhistory ]; then
+        local file=~/.zhistory
+    elif [[ -n "$BASH_VERSION" ]] && [ -e ~/.bash_history ]; then
+        local file=~/.bash_history
+    else
+        return 1
+    fi
+
+    if [[ "$1" =~ "/" ]]; then
+        transfer=`printf "$1" | sed 's#\/#\\\/#g'`
+        sed -i "/$transfer/d" $file
+    else
+        sed -i "/$1/d" $file
+    fi
+}
+# quickly update(rebase) git repo between local and all remotes
+gitur() {
+    # set -x
+    git add `git status -s | grep -vE '^\?\?|  ' | awk '{print$2;}'`
+    [ $? -eq 0 ] || return 1
+
+    git commit
+    if ! git pull --rebase; then
+        echo 'handle conflicts first!'
+        return 1
+    fi
+
+    remote_arr=(`git remote`)
+    for var in ${remote_arr[*]}; do
+        git push --all $var
+    done
+}
+dkcid() {
+    docker ps -qf "name= $1\$"
+}
+dktty() {
+    ctner_count=`dkcid $1 | wc -l`
+    if [ $ctner_count -ne 1 ]; then
+        echo "ERROR: $ctner_count container(s) found, cannot exec shell!";
+        return 1
+    fi
+    shell_arr=("bash" "sh" "zsh" "fish" "ash")
+    for var in ${shell_arr[*]}; do
+        docker exec -ti $1 /bin/$var -i && return 0
+    done
+}
+qip() {
+    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
+}
+cdt() {
+    if [[ ! -e $1 ]]; then
+        echo "Error: The file or directory does not exist."
+        return 1
+    fi
+
+    if [[ -d $1 ]]; then
+        cd "$1"
+    elif [[ -f $1 ]]; then
+        cd "$(dirname "$1")"
+    else
+        echo "Error: Not a file or directory."
+        return 1
+    fi
+}
+upd() {
+    local dir=""
+    local limit="$1"
+    for ((i=1; i <= limit; i++)); do
+        dir="../$dir"
+    done
+    cd "$dir"
+}
+
+swap2file() {
+    if [[ ! -f "$1" || ! -f "$2" ]]; then
+        echo "$1 or $2 is not existed." >&2
+        exit 1
+    fi
+
+    if [[ "$1" -ef "$2" ]]; then
+        echo "$1 and $2 is same file" >&2
+        exit 2
+    fi
+
+    tempfile=`mktemp ./swap2file.$$.XXXXXXXXXX`
+    mv "$1" $tempfile
+    mv "$2" "$1"
+    mv $tempfile "$2"
+}
+dus() {
+    du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
+}
+
+# about bash prompt
+_get_short_pwd() {
+    split=5
+    W=$(pwd | sed -e "s!$HOME!~!")
+    total_cnt=$(echo $W | grep -o '/' | wc -l)
+    last_cnt=$(($total_cnt-1))
+    if [ $total_cnt -gt $split ]; then
+        echo $W | cut -d/ -f1-2 | xargs -I{} echo {}"/…/$(echo $W | cut -d/ -f${last_cnt}-)"
+    else
+        echo $W
+    fi
+}
+
+_get_jobs_name() {
+    local job_arr=(`jobs | tr -d '+' | awk '$2 == "Stopped" || $2 == "suspended" {print$3}'`)
+    local content=
+    for var in ${job_arr[*]}; do
+        content="${content}%${var} "
+    done
+    echo "${content}"
+}
+
+_bash_prompt_cmd() {
+    [[ $? -eq 0 ]] && local promFg="92" || local promFg="91"
+    local shortPwd=`_get_short_pwd`
+    local jobIdx=`_get_jobs_name`
+    PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;34m\]${jobIdx}\[\e[0m\]\[\e[0;${promFg}m\]\\$\[\e[0m\] "
+}
+
+EOF
+
+if which -v &>/dev/null; then
+    cat >> $generate_file << 'EOF'
+# final location of which command
+fwh() {
+    local yellow=$'\E[0;33m'
+    local reset=$'\E[m'
+    local whi=`\which $1 2>/dev/null`
+    # is aliased to?
+    if echo $whi | grep -q ' aliased '; then
+        local real_cmd=`echo $whi | cut -d' ' -f4`
+        local argu="`echo $whi | cut -d' ' -f5-`"
+        if [[ "$1" == "$real_cmd" ]]; then
+            [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd ${yellow}with arguments:${reset} $argu $2"
+        else
+            fwh $real_cmd "$argu $2"
+        fi
+    else
+        if [ -x ${whi} 2>/dev/null ]; then
+            readlink -f ${whi} | xargs -I{} echo {} `test -n "$2" && echo "with arguments: $2"`
+        elif echo $whi | grep -qE '}$'; then # shell function
+            type $1
+            echo "$whi"
+        elif echo $whi | grep -q 'built-in'; then # shell built-in
+            echo -e "${yellow}$whi${reset}"
+        else
+            echo -e "ERROR\n $whi"
+        fi
+    fi
+}
+EOF
+fi
+
+if [ -n "$is_linux" ]; then
+    cat >> $generate_file << 'EOF'
+qlibc() {
+    strings $1 | grep -E '^GLIBC_'
+}
+EOF
+fi
+
+
+## ip awk ?
+# get real network device local ipv4 address
+# rlip4() {
+#     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
+# }
+
+## jnl jfxeu
