@@ -79,8 +79,10 @@ unset real_dir plugins plug_arr plugsfile i
 
 ### config
 source ${cur_dir}/zsh-config.zsh
-source ${cur_dir}/zba.sh
-unset cur_dir
+# source ${cur_dir}/zba.sh ## decrapated after v1.0.0
+test -e ${cur_dir}/common.sh && source ${cur_dir}/common.sh
+
+unset real_location cur_dir
 
 if [[ $_en_xtrc -eq 1 ]]; then
   unsetopt XTRACE

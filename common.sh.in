@@ -3,13 +3,17 @@
 OS_TYPE=$(uname)
 
 if [ "$OS_TYPE" == "Linux" ]; then
-    is_linux=1
+    _dotzsh_is_linux=1
 elif [ "$OS_TYPE" == "Darwin" ]; then
-    is_macos=1
+    echo "Operating system is MacOS($OS_TYPE)"
 else
     echo "Unknown operating system: $OS_TYPE"
     return 1
 fi
+
+_dotzsh_cmd_exists() {
+    command -v "$@" &>/dev/null
+}
 
 real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 current_dir=`cd $(dirname "$real_location");pwd`
@@ -116,7 +120,6 @@ upd() {
     done
     cd "$dir"
 }
-
 swap2file() {
     if [[ ! -f "$1" || ! -f "$2" ]]; then
         echo "$1 or $2 is not existed." >&2
@@ -133,8 +136,10 @@ swap2file() {
     mv "$2" "$1"
     mv $tempfile "$2"
 }
-dus() {
-    du $1 --apparent-size -alh -d1 | sort -rh | head -n 21
+## TODO: awk sed readlink?
+# get real network device local ipv4 address
+rlip4() {
+    ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
 }
 
 # about bash prompt
@@ -166,6 +171,73 @@ _bash_prompt_cmd() {
     PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;34m\]${jobIdx}\[\e[0m\]\[\e[0;${promFg}m\]\\$\[\e[0m\] "
 }
 
+# ----------------------- alias ---------------------- {{{1
+# git
+alias gta="git status"
+alias gts="git status -s"
+alias gtun="git status uno"
+
+alias gcm="git commit"
+alias gcmm="git commit -m"
+alias gcma="git commit -a"
+alias gcmam="git commit -a -m"
+alias gcmn="git commit --amend"
+alias gcman="git commit -a --amend"
+
+alias gpl="git pull"
+alias gplrb="git pull --rebase"
+
+alias gsh="git stash"
+alias gshl="git stash list"
+alias gshp="git stash pop"
+
+alias grs="git reset"
+alias grsh="git reset --hard"
+alias grss="git reset --soft"
+alias gro="git restore"
+alias grog="git restore --staged"
+
+alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
+alias glp="glg --graph"
+alias glh="glp | head -30"
+
+alias gdf="git diff"
+alias gdfh="git diff HEAD"
+alias gdfc="git diff --cached"
+alias gbr="git branch"
+alias gba="git branch -a"
+alias gtl="git tag --list"
+alias gck="git checkout"
+alias grt="git remote -v"
+alias gblm="git blame -L"
+alias gaprj="git apply --reject"
+
+alias gchp="git cherry-pick"
+alias gcln="git clean -n"
+alias gclfd="git clean -fd"
+# tar
+alias tarx="tar --no-same-owner -xf"
+alias tarz="tar zcf"
+alias tarj="tar jcf"
+
+## about env:PS1(PROMPT), PS2, PS4
+_PRE=$'\E['
+
+PS2="${_PRE}0;33m>${_PRE}0m"
+PS4="${_PRE}1;2m+${_PRE}0;33m$0:${_PRE}0;92m$LINENO${_PRE}m${_PRE}1;2m> ${_PRE}m"
+unset _PRE
+
+if [[ -n "$BASH_VERSION" ]]; then
+    PROMPT_COMMAND=_bash_prompt_cmd
+    HISTCONTROL=ignoreboth
+    shopt -s histappend
+    shopt -s autocd
+    shopt -s checkwinsize
+    shopt -s expand_aliases
+    export HISTTIMEFORMAT='%F %T '
+fi
+
+# ----------------------- conditional shell function ----------------------
 EOF
 
 if which -v &>/dev/null; then
@@ -200,7 +272,7 @@ fwh() {
 EOF
 fi
 
-if [ -n "$is_linux" ]; then
+if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists ldd; then
     cat >> $generate_file << 'EOF'
 qlibc() {
     strings $1 | grep -E '^GLIBC_'
@@ -208,11 +280,178 @@ qlibc() {
 EOF
 fi
 
+if _dotzsh_cmd_exists journalctl; then
+    cat >> $generate_file << 'EOF'
+jnl() {
+    journalctl -eu $1 | less +G
+}
+jfxeu() {
+    journalctl -n 100 -fxeu $1
+}
+EOF
+fi
 
-## ip awk ?
-# get real network device local ipv4 address
-# rlip4() {
-#     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
-# }
+if _dotzsh_cmd_exists pigz; then
+    cat >> $generate_file << 'EOF'
+# tar compress/uncompress gzip with pigz
+tcpzf() {
+    tar cf - $2 | pigz --fast > $1
+}
+txpz() {
+    tar --no-same-owner -xf $1 -I pigz
+}
+EOF
+fi
 
-## jnl jfxeu
+if _dotzsh_cmd_exists rsync; then
+    cat >> $generate_file << 'EOF'
+cpv() {
+    rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
+}
+EOF
+fi
+
+if _dotzsh_cmd_exists du; then
+    if du --apparent-size /dev/null &>/dev/null; then
+        cat >> $generate_file << 'EOF'
+dus() {
+    du --apparent-size -alh -d1 $1 | sort -rh | head -n 21
+}
+EOF
+    else
+        cat >> $generate_file << 'EOF'
+dus() {
+    du -alh -d1 $1 | sort -rh | head -n 21
+}
+EOF
+    fi
+fi
+
+
+if _dotzsh_cmd_exists systemctl; then
+    cat >> $generate_file << 'EOF'
+# systemctl
+alias syta="systemctl status"
+alias syca="systemctl cat"
+alias syst="sudo systemctl start"
+alias syrs="sudo systemctl restart"
+alias syte="sudo systemctl stop"
+alias syrld="sudo systemctl reload"
+alias syen="sudo systemctl enable"
+alias syenw="sudo systemctl enable --now"
+alias sydis="sudo systemctl disable"
+alias sydisw="sudo systemctl disable --now"
+alias sydrld="sudo systemctl daemon-reload"
+
+EOF
+elif _dotzsh_cmd_exists launchctl; then
+    cat >> $generate_file << 'EOF'
+alias syst="sudo launchctl start"
+alias syte="sudo launchctl stop"
+
+EOF 
+fi
+
+# TODO: not work!
+if _dotzsh_cmd_exists ninja; then
+    cat >> $generate_file << 'EOF'
+export BUILD_DIR=./build
+
+alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
+alias cmkr="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release"
+alias cmkd="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug"
+alias cmba="cmake --build ${BUILD_DIR}"
+alias cmbt="cmake --build ${BUILD_DIR} -t"
+
+EOF
+else
+    cat >> $generate_file << 'EOF'
+export BUILD_DIR=./build
+
+alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
+alias cmkr="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Release"
+alias cmkd="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug"
+alias cmba="cmake --build ${BUILD_DIR}"
+alias cmbt="cmake --build ${BUILD_DIR} -t"
+
+EOF
+fi
+
+## dpz in 'if' is same to 'else' part
+if _dotzsh_cmd_exists perl; then
+    cat >> $generate_file << 'EOF'
+# docker ps
+alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/, :::.*?p//g'"
+alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+
+EOF
+else 
+    cat >> $generate_file << 'EOF'
+# docker ps
+alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
+alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+
+EOF
+fi
+
+if _dotzsh_cmd_exists pacman; then
+    if _dotzsh_cmd_exists yay; then
+        _cmd=yay
+    elif _dotzsh_cmd_exists paru; then
+        _cmd=paru
+    else
+        _cmd=pacman
+    fi
+    cat >> $generate_file << EOF
+alias pkgsy="$_cmd -Sy"
+alias pkgr="$_cmd -R"
+alias pkgssq="$_cmd -Ssq"
+alias pkgss="$_cmd -Ss"
+alias pkgsi="$_cmd -Si"
+alias pkgqs="$_cmd -Qs"
+alias pkgqi="$_cmd -Qi"
+alias pkgql="$_cmd -Ql"
+alias pkgqo="$_cmd -Qo"
+
+EOF
+elif _dotzsh_cmd_exists apt; then
+    _cmd=apt
+    # TODO
+#     cat >> $generate_file << EOF
+# EOF
+elif _dotzsh_cmd_exists brew; then
+    _cmd=brew
+    cat >> $generate_file << EOF
+alias pkgsy="$_cmd install"
+alias pkgcsy="$_cmd cask install"
+alias pkgr="$_cmd uninstall"
+alias pkgcr="$_cmd cask uninstall"
+alias pkgss="$_cmd search"
+alias pkgsi="$_cmd info"
+alias pkgdep="$_cmd deps"
+
+EOF
+fi
+
+# TODO: add about eza
+if ls --color=auto /dev/null &>/dev/null; then
+    cat >> $generate_file << 'EOF'
+[[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
+alias ls="ls -A $LS_OPTIONS"
+alias ll="ls -AlFh"
+alias l="ls -AlF"
+alias la="ls -alF"
+
+EOF
+else
+    cat >> $generate_file << 'EOF'
+alias ls="ls -A"
+alias ll="ls -AlFh"
+alias l="ls -AlF"
+alias la="ls -alF"
+
+EOF
+fi
+
+unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd
+# vim:fdm=marker
