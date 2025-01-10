@@ -315,8 +315,11 @@ zle -N sudo-command-line
 bindkey "\e\e" sudo-command-line # Esc Esc or Ctrl [ [
 
 # File and Dir colors for ls and other outputs
-export LS_OPTIONS=--color=auto
-eval "$(dircolors -b)"
+# export LS_OPTIONS=--color=auto
+
+if (( $+commands[dircolors] )); then
+    eval "$(dircolors -b)"
+fi
 
 ! test -d ~/.cache && mkdir -p ~/.cache
 

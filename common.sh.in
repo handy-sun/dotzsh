@@ -4,6 +4,7 @@ OS_TYPE=$(uname)
 
 if [ "$OS_TYPE" == "Linux" ]; then
     _dotzsh_is_linux=1
+    echo "Operating system is Linux"
 elif [ "$OS_TYPE" == "Darwin" ]; then
     echo "Operating system is MacOS($OS_TYPE)"
 else
@@ -348,8 +349,10 @@ elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
 alias syst="sudo launchctl start"
 alias syte="sudo launchctl stop"
+alias syul="sudo launchctl unload"
+alias syld="sudo launchctl load"
 
-EOF 
+EOF
 fi
 
 # TODO: not work!
@@ -455,3 +458,4 @@ fi
 
 unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd
 # vim:fdm=marker
+
