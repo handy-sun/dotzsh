@@ -221,6 +221,22 @@ alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
 alias tarj="tar jcf"
 
+# other shell
+alias r="fc -s"
+alias pingk="ping -c4"
+alias gdb="gdb -q"
+alias cp="cp -arvf"
+alias mv="mv -v"
+alias sln="ln -sfv"
+alias less="less -R"
+alias df="df -h -T"
+alias free="free -h"
+alias rrm="\rm -rf"
+alias grep="grep --color=auto"
+alias diff="diff --color=auto"
+alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
+alias surl="curl --proto '=https' --tlsv1.2 -LSv"
+
 ## about env:PS1(PROMPT), PS2, PS4
 _PRE=$'\E['
 
@@ -339,6 +355,7 @@ alias syrs="sudo systemctl restart"
 alias syte="sudo systemctl stop"
 alias syrld="sudo systemctl reload"
 alias syen="sudo systemctl enable"
+alias syed="sudo systemctl edit"
 alias syenw="sudo systemctl enable --now"
 alias sydis="sudo systemctl disable"
 alias sydisw="sudo systemctl disable --now"
@@ -426,19 +443,40 @@ elif _dotzsh_cmd_exists brew; then
     _cmd=brew
     cat >> $generate_file << EOF
 alias pkgsy="$_cmd install"
-alias pkgcsy="$_cmd cask install"
+alias pkgcsy="$_cmd install --cask"
 alias pkgr="$_cmd uninstall"
-alias pkgcr="$_cmd cask uninstall"
+alias pkgcr="$_cmd uninstall --cask"
 alias pkgss="$_cmd search"
 alias pkgsi="$_cmd info"
+alias pkgls="$_cmd list"
 alias pkgdep="$_cmd deps"
 
 EOF
 fi
 
-# TODO: add about eza
-if ls --color=auto /dev/null &>/dev/null; then
-    cat >> $generate_file << 'EOF'
+if _dotzsh_cmd_exists eza; then
+    eza_al='alias ls="eza --group-directories-first -A"'
+
+    if eza --git /dev/null &>/dev/null; then
+        eza_al+=$'\nalias ll="ls -bl --git"'     # Long format, git status
+    else
+        eza_al+=$'\nalias ll="ls -bl"' 
+    fi
+    eza_al+=$'\nalias l="ll -B"               # Long format, Byte size'
+    eza_al+=$'\nalias la="ll -a"              # Long format, all files'
+    eza_al+=$'\nalias lr="ll -T"              # Long format, recursive as a tree'
+    eza_al+=$'\nalias lx="ll -sextension"     # Long format, sort by extension'
+    eza_al+=$'\nalias lk="ll -ssize"          # Long format, largest file size last'
+    eza_al+=$'\nalias lt="ll -smodified"      # Long format, newest modification time last'
+    eza_al+=$'\nalias lc="ll -schanged"       # Long format, newest status change (ctime) last'
+
+    cat >> $generate_file << EOF
+$eza_al
+EOF
+
+else
+    if ls --color=auto /dev/null &>/dev/null; then
+        cat >> $generate_file << 'EOF'
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
 alias ls="ls -A $LS_OPTIONS"
 alias ll="ls -AlFh"
@@ -446,16 +484,45 @@ alias l="ls -AlF"
 alias la="ls -alF"
 
 EOF
-else
-    cat >> $generate_file << 'EOF'
+    else
+        cat >> $generate_file << 'EOF'
 alias ls="ls -A"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
 
 EOF
+    fi
 fi
 
-unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd
+some_al=''
+if _dotzsh_cmd_exists trash; then
+    some_al+=$'\nalias rm="trash"'
+fi
+
+if _dotzsh_cmd_exists xclip; then
+    some_al+=$'\nalias pbcopy="xclip -selection clipboard"\nalias pbpaste="xclip -selection clipboard -o"'
+fi
+
+if _dotzsh_cmd_exists fd; then
+    some_al+=$'\nalias fdf="fd -t f -H -I -E .git -E .svn -E .vscode -E node_modules -E target -E build -E dist -E out -E .idea -E .vs -E .vscode-server -E .vscode-test -E .github -E .gitignore -E .gitattributes -E .gitmodules -E .gitkeep -E .gitlab-ci.yml"'
+fi
+
+if _dotzsh_cmd_exists fzf && _dotzsh_cmd_exists bat; then
+    some_al+=$'\nalias fzf="fzf --preview '\''bat --color=always --style=header,grid --line-range :500 {}'\''"'
+fi
+
+if _dotzsh_cmd_exists tree; then
+    some_al+=$'\nalias trelh="tree -AlFh"\nalias treds="tree -hF --du --sort=size | more"'
+fi
+
+if _dotzsh_cmd_exists dust; then
+    some_al+=$'\nalias dur="dust -sr"\nalias durd="dust -srb -d 1"'
+fi
+cat >> $generate_file << EOF
+$some_al
+EOF
+
+unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd eza_al some_al
 # vim:fdm=marker
 
