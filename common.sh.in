@@ -24,7 +24,7 @@ cat > $generate_file << 'EOF'
 cmd_exists() {
     command -v "$@" &>/dev/null
 }
-# about git stash
+## about git stash
 shpo() {
     git stash pop stash@{$1};
 }
@@ -37,11 +37,11 @@ shsw() {
 shdr() {
     git stash drop stash@{$1};
 }
-# get pid of a process, avoid some Linux system cannot use 'pgrep' program
+## get pid of a process, avoid some Linux system cannot use 'pgrep' program
 qpid() {
     ps -eo pid,cmd | grep "$1" | grep -vE 'grep|\]$' | awk '{print$1;}'
 }
-# print all info, and search insensitive
+## print all info, and search insensitive
 ppre() {
     ps -ef | grep -i "$1" | grep -vE 'grep|\]$'
 }
@@ -64,7 +64,7 @@ htdel() {
         sed -i "/$1/d" $file
     fi
 }
-# quickly update(rebase) git repo between local and all remotes
+## quickly update(rebase) git repo between local and all remotes
 gitur() {
     # set -x
     git add `git status -s | grep -vE '^\?\?|  ' | awk '{print$2;}'`
@@ -138,12 +138,12 @@ swap2file() {
     mv $tempfile "$2"
 }
 ## TODO: awk sed readlink?
-# get real network device local ipv4 address
+## get real network device local ipv4 address, TODO: use jq?
 rlip4() {
     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
 }
 
-# about bash prompt
+## about bash prompt
 _get_short_pwd() {
     split=5
     W=$(pwd | sed -e "s!$HOME!~!")
@@ -172,8 +172,8 @@ _bash_prompt_cmd() {
     PS1="\[\e[0m\]\[\033[0;32m\]\A \[\e[0;36m\]${shortPwd} \[\e[0;34m\]${jobIdx}\[\e[0m\]\[\e[0;${promFg}m\]\\$\[\e[0m\] "
 }
 
-# ----------------------- alias ---------------------- {{{1
-# git
+## ----------------------- alias ---------------------- {{{1
+## git
 alias gta="git status"
 alias gts="git status -s"
 alias gtun="git status uno"
@@ -216,12 +216,12 @@ alias gaprj="git apply --reject"
 alias gchp="git cherry-pick"
 alias gcln="git clean -n"
 alias gclfd="git clean -fd"
-# tar
+## tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
 alias tarj="tar jcf"
 
-# other shell
+## other shell
 alias r="fc -s"
 alias pingk="ping -c4"
 alias gdb="gdb -q"
@@ -254,12 +254,12 @@ if [[ -n "$BASH_VERSION" ]]; then
     export HISTTIMEFORMAT='%F %T '
 fi
 
-# ----------------------- conditional shell function ----------------------
+## ----------------------- conditional shell function ----------------------
 EOF
 
 if which -v &>/dev/null; then
     cat >> $generate_file << 'EOF'
-# final location of which command
+## final location of which command
 fwh() {
     local yellow=$'\E[0;33m'
     local reset=$'\E[m'
@@ -286,6 +286,7 @@ fwh() {
         fi
     fi
 }
+
 EOF
 fi
 
@@ -305,12 +306,20 @@ jnl() {
 jfxeu() {
     journalctl -n 100 -fxeu $1
 }
+
+EOF
+else # macOS
+    cat >> $generate_file << 'EOF'
+jnl() {
+    log show --predicate "process == \"$1\"" --info --last 1d
+}
+
 EOF
 fi
 
 if _dotzsh_cmd_exists pigz; then
     cat >> $generate_file << 'EOF'
-# tar compress/uncompress gzip with pigz
+## tar compress/uncompress gzip with pigz
 tcpzf() {
     tar cf - $2 | pigz --fast > $1
 }
@@ -334,12 +343,14 @@ if _dotzsh_cmd_exists du; then
 dus() {
     du --apparent-size -alh -d1 $1 | sort -rh | head -n 21
 }
+
 EOF
     else
         cat >> $generate_file << 'EOF'
 dus() {
     du -alh -d1 $1 | sort -rh | head -n 21
 }
+
 EOF
     fi
 fi
@@ -347,7 +358,7 @@ fi
 
 if _dotzsh_cmd_exists systemctl; then
     cat >> $generate_file << 'EOF'
-# systemctl
+## systemctl
 alias syta="systemctl status"
 alias syca="systemctl cat"
 alias syst="sudo systemctl start"
@@ -366,15 +377,30 @@ elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
 alias syst="sudo launchctl start"
 alias syte="sudo launchctl stop"
-alias syul="sudo launchctl unload"
-alias syld="sudo launchctl load"
+alias syen="sudo launchctl load"
+alias syenw="sudo launchctl load -w"
+alias sydis="sudo launchctl unload"
+alias sydisw="sudo launchctl unload -w"
+
+alias bsst="brew services start"
+alias bste="brew services stop"
+alias bsrs="brew services restart"
+alias bsls="brew services list"
+alias bsinf="brew services info --all"
+
+syrs() {
+    sudo launchctl stop $1 && sudo launchctl start $1
+}
+syss() {
+    launchctl list | grep -i $1 | awk '{print$3;}'
+}
 
 EOF
 fi
 
-# TODO: not work!
 if _dotzsh_cmd_exists ninja; then
     cat >> $generate_file << 'EOF'
+## cmake
 export BUILD_DIR=./build
 
 alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
@@ -400,14 +426,14 @@ fi
 ## dpz in 'if' is same to 'else' part
 if _dotzsh_cmd_exists perl; then
     cat >> $generate_file << 'EOF'
-# docker ps
+## docker ps
 alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/, :::.*?p//g'"
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
 EOF
 else 
     cat >> $generate_file << 'EOF'
-# docker ps
+## docker ps
 alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
@@ -505,7 +531,7 @@ if _dotzsh_cmd_exists xclip; then
 fi
 
 if _dotzsh_cmd_exists fd; then
-    some_al+=$'\nalias fdf="fd -t f -H -I -E .git -E .svn -E .vscode -E node_modules -E target -E build -E dist -E out -E .idea -E .vs -E .vscode-server -E .vscode-test -E .github -E .gitignore -E .gitattributes -E .gitmodules -E .gitkeep -E .gitlab-ci.yml"'
+    some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.vscode-server,.idea,.github,node_modules,target,build,dist}"'
 fi
 
 if _dotzsh_cmd_exists fzf && _dotzsh_cmd_exists bat; then
@@ -521,8 +547,9 @@ if _dotzsh_cmd_exists dust; then
 fi
 cat >> $generate_file << EOF
 $some_al
+
 EOF
 
 unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd eza_al some_al
-# vim:fdm=marker
 
+# vim:fdm=marker
