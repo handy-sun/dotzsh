@@ -403,7 +403,7 @@ if _dotzsh_cmd_exists ninja; then
 ## cmake
 export BUILD_DIR=./build
 
-alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
+alias cmkln="\rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
 alias cmkr="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
@@ -414,7 +414,7 @@ else
     cat >> $generate_file << 'EOF'
 export BUILD_DIR=./build
 
-alias cmkln="rm -rf ${BUILD_DIR}/CMakeCache.txt ${BUILD_DIR}/CMakeFiles/"
+alias cmkln="\rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
 alias cmkr="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
@@ -484,9 +484,9 @@ if _dotzsh_cmd_exists eza; then
     eza_al='alias ls="eza --group-directories-first -A"'
 
     if eza --git /dev/null &>/dev/null; then
-        eza_al+=$'\nalias ll="ls -bl --git"'     # Long format, git status
+        eza_al+=$'\nalias ll="ls -blg --git"'     # Long format, git status
     else
-        eza_al+=$'\nalias ll="ls -bl"' 
+        eza_al+=$'\nalias ll="ls -blg"'
     fi
     eza_al+=$'\nalias l="ll -B"               # Long format, Byte size'
     eza_al+=$'\nalias la="ll -a"              # Long format, all files'
