@@ -230,7 +230,6 @@ alias mv="mv -v"
 alias sln="ln -sfv"
 alias less="less -R"
 alias df="df -h -T"
-alias free="free -h"
 alias rrm="\rm -rf"
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"
@@ -338,21 +337,31 @@ EOF
 fi
 
 if _dotzsh_cmd_exists du; then
-    if du --apparent-size /dev/null &>/dev/null; then
+    if [ -n "$_dotzsh_is_linux" ]; then
+        if du --apparent-size /dev/null &>/dev/null; then
         cat >> $generate_file << 'EOF'
 dus() {
     du --apparent-size -alh -d1 $1 | sort -rh | head -n 21
 }
 
 EOF
-    else
+        else
         cat >> $generate_file << 'EOF'
 dus() {
     du -alh -d1 $1 | sort -rh | head -n 21
 }
 
 EOF
+        fi
+    else # darwin system
+        cat >> $generate_file << 'EOF'
+dus() {
+    du -Alh -d1 $1 | sort -rh | head -n 21
+}
+
+EOF
     fi
+
 fi
 
 
@@ -522,6 +531,9 @@ EOF
 fi
 
 some_al=''
+if _dotzsh_cmd_exists free; then
+    some_al+=$'\nalias free="free -h"'
+fi
 if _dotzsh_cmd_exists trash; then
     some_al+=$'\nalias rm="trash"'
 fi

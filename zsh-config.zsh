@@ -338,9 +338,10 @@ bindkey -s '\e;' 'll\n'       # ALT+;
 if [[ "$PROMPT" =~ "# $" ]]; then
   PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
 fi
-if [[ ! -n "$RPROMPT" ]]; then
-  RPROMPT='%F{red}%(?..%?)%f %#%F{yellow}%j %F{grey}%*%f'
-fi
+
+# if [[ ! -n "$RPROMPT" ]]; then
+RPROMPT='%F{red}%(?..%?)%f %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%M'
+# fi
 
 # only zsh alias
 alias -g ...='../..'
