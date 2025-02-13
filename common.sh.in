@@ -143,6 +143,79 @@ rlip4() {
     ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
 }
 
+
+## fwh v2.0 ---------- {{
+_fwh_resolve_alias() {
+    local cmd="$1"
+    ## Get alias（handle quote）
+    local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/alias ${cmd}='(.*)'/\1/; s/'\\''/'/g"`
+    if [ $? -eq 0 ]; then
+        local pointed_cmd=`echo "$alias_def" | grep -Eo "'(.+)'" | tr -d "'" | awk '{print $1}'`
+        # Recursive resolve the pointed word
+        if [[ -n "$pointed_cmd" ]] && [ "$pointed_cmd" != "$cmd" ]; then
+            printf "%s\n" "$alias_def"
+            _fwh_resolve_alias "$pointed_cmd"
+        fi
+    else
+        printf "Command: %s\n" "$cmd"
+    fi
+}
+
+_fwh_resolve_func() {
+    local cmd="$1"
+    local func_def=`declare -f -- "$cmd" 2>/dev/null` || {
+        echo "Error: Function '$cmd' not found" >&2
+        return 1
+    }
+    ## Get define location
+    # local src_info=`declare -F -- "$cmd" | awk '{printf "Defined in %s (line %d)", $3, $2}'`
+    local src_info=`type -- "$cmd"`
+    echo "[Function]: $src_info"
+    echo "Definition: ↴"
+    echo $func_def
+}
+
+_fwh_resolve_exec() {
+    local cmd="$1"
+    local initial_path=`command -v -- "$cmd"` || {
+        echo "Error: Command '$cmd' not found" >&2
+        return 1
+    }
+    echo "[Executable]: $initial_path"
+    local temp_path=$initial_path
+    ## Follow soft link
+    while [[ -L "$temp_path" ]]; do
+        local target=$(readlink -- "$temp_path")
+        temp_path=$(realpath -- "$temp_path")
+        printf "  Symbolic link to: %s\n" $target
+    done
+    if [ "$initial_path" != "$temp_path" ]; then
+        printf "Final target: %s\n" "$temp_path"
+    fi
+}
+
+fwh() {
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: ${0##*/} <command>" >&2
+        return 1
+    fi
+    local cmd="$1"
+
+    if alias -- "$cmd" &>/dev/null; then
+        echo "[Alias]"
+        _fwh_resolve_alias "$cmd"
+    elif declare -f -- "$cmd" &>/dev/null; then
+        _fwh_resolve_func "$cmd"
+    elif cmd_exists "$cmd"; then
+        _fwh_resolve_exec "$cmd"
+    else
+        echo "Error: '$cmd' is not recognized" >&2
+        return 1
+    fi
+}
+## fwh v2.0 ---------- }}
+
+
 ## about bash prompt
 _get_short_pwd() {
     split=5
@@ -205,8 +278,8 @@ alias glh="glp | head -30"
 alias gdf="git diff"
 alias gdfh="git diff HEAD"
 alias gdfc="git diff --cached"
-alias gbr="git branch"
-alias gba="git branch -a"
+alias gbr="git branch -v"
+alias gba="git branch -a -v"
 alias gtl="git tag --list"
 alias gck="git checkout"
 alias grt="git remote -v"
@@ -216,6 +289,8 @@ alias gaprj="git apply --reject"
 alias gchp="git cherry-pick"
 alias gcln="git clean -n"
 alias gclfd="git clean -fd"
+
+alias gklrj="git clone --recursive --jobs 8"
 ## tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
@@ -224,10 +299,9 @@ alias tarj="tar jcf"
 ## other shell
 alias r="fc -s"
 alias pingk="ping -c4"
-alias gdb="gdb -q"
 alias cp="cp -arvf"
 alias mv="mv -v"
-alias sln="ln -sfv"
+alias sln="ln -sfnv"
 alias less="less -R"
 alias df="df -h -T"
 alias rrm="\rm -rf"
@@ -255,39 +329,6 @@ fi
 
 ## ----------------------- conditional shell function ----------------------
 EOF
-
-if which -v &>/dev/null; then
-    cat >> $generate_file << 'EOF'
-## final location of which command
-fwh() {
-    local yellow=$'\E[0;33m'
-    local reset=$'\E[m'
-    local whi=`\which $1 2>/dev/null`
-    # is aliased to?
-    if echo $whi | grep -q ' aliased '; then
-        local real_cmd=`echo $whi | cut -d' ' -f4`
-        local argu="`echo $whi | cut -d' ' -f5-`"
-        if [[ "$1" == "$real_cmd" ]]; then
-            [ -x /bin/$real_cmd ] && echo "/bin/$real_cmd ${yellow}with arguments:${reset} $argu $2"
-        else
-            fwh $real_cmd "$argu $2"
-        fi
-    else
-        if [ -x ${whi} 2>/dev/null ]; then
-            readlink -f ${whi} | xargs -I{} echo {} `test -n "$2" && echo "with arguments: $2"`
-        elif echo $whi | grep -qE '}$'; then # shell function
-            type $1
-            echo "$whi"
-        elif echo $whi | grep -q 'built-in'; then # shell built-in
-            echo -e "${yellow}$whi${reset}"
-        else
-            echo -e "ERROR\n $whi"
-        fi
-    fi
-}
-
-EOF
-fi
 
 if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists ldd; then
     cat >> $generate_file << 'EOF'
@@ -440,7 +481,7 @@ alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
 EOF
-else 
+else
     cat >> $generate_file << 'EOF'
 ## docker ps
 alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
