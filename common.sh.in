@@ -427,9 +427,7 @@ elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
 alias syst="sudo launchctl start"
 alias syte="sudo launchctl stop"
-alias syen="sudo launchctl load"
 alias syenw="sudo launchctl load -w"
-alias sydis="sudo launchctl unload"
 alias sydisw="sudo launchctl unload -w"
 
 alias bsst="brew services start"
@@ -438,11 +436,20 @@ alias bsrs="brew services restart"
 alias bsls="brew services list"
 alias bsinf="brew services info --all"
 
-syrs() {
-    sudo launchctl stop $1 && sudo launchctl start $1
+syuss() {
+    sudo launchctl list | grep -i $1 | awk '{print$3;}'
 }
 syss() {
     launchctl list | grep -i $1 | awk '{print$3;}'
+}
+syspr() {
+    local srv_target=`syuss ${1}`
+    [[ -n "${srv_target}" ]] && launchctl print system/${srv_target} || echo 'None service target'
+}
+sygpr() {
+    local uid=`id -u`
+    local srv_target=`syss ${1}`
+    [[ -n "${srv_target}" ]] && launchctl print gui/${uid}/${srv_target} || echo 'None service target'
 }
 
 EOF
@@ -477,7 +484,7 @@ fi
 if _dotzsh_cmd_exists perl; then
     cat >> $generate_file << 'EOF'
 ## docker ps
-alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/, :::.*?p//g'"
+alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/0.0.0.0.*?,//g'"
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
 
 EOF
@@ -597,6 +604,9 @@ fi
 
 if _dotzsh_cmd_exists dust; then
     some_al+=$'\nalias dur="dust -sr"\nalias durd="dust -srb -d 1"'
+fi
+if _dotzsh_cmd_exists aria2c; then
+    some_al+=$'\nalias ar2c="aria2c -x 8 -s 6 -j 8"'
 fi
 cat >> $generate_file << EOF
 $some_al
