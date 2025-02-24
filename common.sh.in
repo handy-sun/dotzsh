@@ -147,8 +147,14 @@ rlip4() {
 ## fwh v2.1 ---------- {{
 _fwh_check_abs_path() {
     local cmd_path=$(command -v -- "$1")
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Command '$cmd' not found" >&2
+        return 1
+    fi
     if [[ "${cmd_path}" =~ "/" ]]; then
-        printf " (%s:%s)" $1 $cmd_path
+        printf "(%s:%s)\n" $1 $cmd_path
+    else
+        printf "(%s:shell built-in)\n" $1
     fi
 }
 _fwh_resolve_alias() {
@@ -160,8 +166,8 @@ _fwh_resolve_alias() {
         local pointed_cmd=`echo "$trimmed_equal_sign" | awk '{print $1}'`
         ## Recursive resolve the pointed word
         if [[ -n "$pointed_cmd" ]]; then
+            echo "$alias_def"
             if [ "$pointed_cmd" != "$cmd" ]; then
-                printf "\n%s" "$alias_def"
                 _fwh_resolve_alias "$pointed_cmd"
             else
                 _fwh_check_abs_path "$cmd"
@@ -192,7 +198,12 @@ _fwh_resolve_exec() {
         echo "Error: Command '$cmd' not found" >&2
         return 1
     }
-    echo "[Executable]: $initial_path"
+    if [[ "${initial_path}" =~ "/" ]]; then
+        printf "(%s:%s)\n" $1 $initial_path
+    else
+        printf "(%s:shell built-in)\n" $1
+        return 0
+    fi
     local temp_path=$initial_path
     ## Follow soft link
     while [[ -L "$temp_path" ]]; do
@@ -200,6 +211,13 @@ _fwh_resolve_exec() {
         temp_path=$(realpath -- "$temp_path")
         printf "  Symbolic link to: %s\n" $target
     done
+
+    # local judge_built_in=`type -- "$temp_path" | grep -E 'shell built-in'`
+    if type -- "$temp_path" | grep -Eq 'shell built-in'; then
+        printf " (%s:shell built-in)\n" $temp_path
+        return 0
+    fi
+
     if [ "$initial_path" != "$temp_path" ]; then
         printf "Final target: %s\n" "$temp_path"
     fi
@@ -213,9 +231,8 @@ fwh() {
     local cmd="$1"
 
     if alias -- "$cmd" &>/dev/null; then
-        printf "[Alias]"
+        echo "[Alias]"
         _fwh_resolve_alias "$cmd"
-        printf "\n"
     elif declare -f -- "$cmd" &>/dev/null; then
         _fwh_resolve_func "$cmd"
     elif cmd_exists "$cmd"; then
