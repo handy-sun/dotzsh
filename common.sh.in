@@ -103,7 +103,6 @@ cdt() {
         echo "Error: The file or directory does not exist."
         return 1
     fi
-
     if [[ -d $1 ]]; then
         cd "$1"
     elif [[ -f $1 ]]; then
@@ -145,17 +144,18 @@ rlip4() {
 
 
 ## fwh v2.1 ---------- {{
-_fwh_check_abs_path() {
+_fwh_judge_built_in_or_abs_path() {
     local cmd_path=$(command -v -- "$1")
     if [[ $? -ne 0 ]]; then
         echo "Error: Command '$cmd' not found" >&2
         return 1
     fi
-    if [[ "${cmd_path}" =~ "/" ]]; then
-        printf "(%s:%s)\n" $1 $cmd_path
-    else
-        printf "(%s:shell built-in)\n" $1
+    if type -- "$cmd_path" | grep -Eq 'shell built-in'; then
+        printf "(%s:shell built-in)\n" $cmd_path
+    # else
+    #     printf "(%s:%s)\n" $1 $cmd_path
     fi
+    # if [[ "${cmd_path}" =~ "/" ]]; then
 }
 _fwh_resolve_alias() {
     local cmd="$1"
@@ -170,11 +170,11 @@ _fwh_resolve_alias() {
             if [ "$pointed_cmd" != "$cmd" ]; then
                 _fwh_resolve_alias "$pointed_cmd"
             else
-                _fwh_check_abs_path "$cmd"
+                _fwh_judge_built_in_or_abs_path "$cmd"
             fi
         fi
     else
-        _fwh_check_abs_path "$cmd"
+        _fwh_judge_built_in_or_abs_path "$cmd"
     fi
 }
 
@@ -198,11 +198,12 @@ _fwh_resolve_exec() {
         echo "Error: Command '$cmd' not found" >&2
         return 1
     }
-    if [[ "${initial_path}" =~ "/" ]]; then
-        printf "(%s:%s)\n" $1 $initial_path
-    else
-        printf "(%s:shell built-in)\n" $1
+
+    if type -- "$initial_path" | grep -Eq 'shell built-in'; then
+        printf "(%s:shell built-in)\n" $initial_path
         return 0
+    else
+        printf "(%s:%s)\n" $1 $initial_path
     fi
     local temp_path=$initial_path
     ## Follow soft link
@@ -212,9 +213,8 @@ _fwh_resolve_exec() {
         printf "  Symbolic link to: %s\n" $target
     done
 
-    # local judge_built_in=`type -- "$temp_path" | grep -E 'shell built-in'`
     if type -- "$temp_path" | grep -Eq 'shell built-in'; then
-        printf " (%s:shell built-in)\n" $temp_path
+        printf "(%s:shell built-in)\n" $temp_path
         return 0
     fi
 
@@ -328,7 +328,7 @@ alias tarj="tar jcf"
 ## other shell
 alias r="fc -s"
 alias pingk="ping -c4"
-alias cp="cp -arvf"
+alias cp="cp -avf"
 alias mv="mv -v"
 alias sln="ln -sfnv"
 alias less="less -R"
