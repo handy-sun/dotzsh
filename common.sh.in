@@ -542,20 +542,19 @@ alias pkgss="$_cmd -Ss"
 alias pkgsi="$_cmd -Si"
 alias pkgqs="$_cmd -Qs"
 alias pkgqi="$_cmd -Qi"
-alias pkgql="$_cmd -Ql"
 alias pkgqo="$_cmd -Qo"
 EOF
     if _dotzsh_cmd_exists eza; then
-        cat >> $generate_file << 'EOF'
+        cat >> $generate_file << EOF
 pkgql() {
-    $_cmd -Ql $1 | grep -Ev '/$' | awk '{print$NF}' | xargs \eza -blg
+    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs \eza -blg
 }
 
 EOF
     else
-        cat >> $generate_file << 'EOF'
+        cat >> \$generate_file << EOF
 pkgql() {
-    $_cmd -Ql $1 | grep -Ev '/$' | awk '{print$NF}' | xargs \ls -blg
+    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs \ls -blg
 }
 
 EOF
