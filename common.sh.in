@@ -324,6 +324,7 @@ alias gklrj="git clone --recursive --jobs 8"
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
 alias tarj="tar jcf"
+alias tarsc1="tar --no-same-owner --strip-components=1 -xf"
 
 ## other shell
 alias r="fc -s"
@@ -526,59 +527,7 @@ alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}
 EOF
 fi
 
-if _dotzsh_cmd_exists pacman; then
-    if _dotzsh_cmd_exists yay; then
-        _cmd=yay
-    elif _dotzsh_cmd_exists paru; then
-        _cmd=paru
-    else
-        _cmd=pacman
-    fi
-    cat >> $generate_file << EOF
-alias pkgsy="$_cmd -S --noconfirm"
-alias pkgr="$_cmd -R"
-alias pkgssq="$_cmd -Ssq"
-alias pkgss="$_cmd -Ss"
-alias pkgsi="$_cmd -Si"
-alias pkgqs="$_cmd -Qs"
-alias pkgqi="$_cmd -Qi"
-alias pkgqo="$_cmd -Qo"
-EOF
-    if _dotzsh_cmd_exists eza; then
-        cat >> $generate_file << EOF
-pkgql() {
-    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs \eza -blg
-}
-
-EOF
-    else
-        cat >> \$generate_file << EOF
-pkgql() {
-    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs \ls -blg
-}
-
-EOF
-    fi
-elif _dotzsh_cmd_exists apt; then
-    _cmd=apt
-    # TODO
-#     cat >> $generate_file << EOF
-# EOF
-elif _dotzsh_cmd_exists brew; then
-    _cmd=brew
-    cat >> $generate_file << EOF
-alias pkgsy="$_cmd install"
-alias pkgcsy="$_cmd install --cask"
-alias pkgr="$_cmd uninstall"
-alias pkgcr="$_cmd uninstall --cask"
-alias pkgss="$_cmd search"
-alias pkgsi="$_cmd info"
-alias pkgls="$_cmd list"
-alias pkgdep="$_cmd deps"
-
-EOF
-fi
-
+## eza/ls {{{
 if _dotzsh_cmd_exists eza; then
     eza_al='alias ls="eza --group-directories-first -A"'
 
@@ -619,6 +568,70 @@ alias la="ls -alF"
 EOF
     fi
 fi
+## eza/ls }}}
+
+## package management command {{{
+if _dotzsh_cmd_exists pacman; then
+    if _dotzsh_cmd_exists yay; then
+        _cmd=yay
+    elif _dotzsh_cmd_exists paru; then
+        _cmd=paru
+    else
+        _cmd=pacman
+    fi
+    cat >> $generate_file << EOF
+alias pkgsy="$_cmd -S --noconfirm"
+alias pkgr="$_cmd -R"
+alias pkgssq="$_cmd -Ssq"
+alias pkgss="$_cmd -Ss"
+alias pkgsi="$_cmd -Si"
+alias pkgqs="$_cmd -Qs"
+alias pkgqi="$_cmd -Qi"
+alias pkgqo="$_cmd -Qo"
+## list files of local package without directory
+pkgql() {
+    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs ll
+}
+
+EOF
+elif _dotzsh_cmd_exists apt; then
+    _cmd=apt
+    cat >> $generate_file << EOF
+alias pkgsy="$_cmd install -y"
+alias pkgr="$_cmd remove"
+alias pkgss="$_cmd search"
+alias pkgsi="$_cmd show"
+alias pkgqi="dpkg -s"
+alias pkgqo="dpkg -S"
+## list files of local package without directory
+pkgql() {
+    dpkg -L \$1 | grep -Ev '\.\$' | xargs bash -c 'for ele do test ! -d \$ele && echo \$ele; done | xargs ll' {}
+}
+
+EOF
+elif _dotzsh_cmd_exists apk; then
+    _cmd=apk
+    # TODO
+    cat >> $generate_file << EOF
+        alias pkgsy="$_cmd add"
+        alias pkgr="$_cmd del"
+EOF
+elif _dotzsh_cmd_exists brew; then
+    _cmd=brew
+    cat >> $generate_file << EOF
+alias pkgsy="$_cmd install"
+alias pkgcsy="$_cmd install --cask"
+alias pkgr="$_cmd uninstall"
+alias pkgcr="$_cmd uninstall --cask"
+alias pkgss="$_cmd search"
+alias pkgsi="$_cmd info"
+alias pkgls="$_cmd list"
+alias pkgdep="$_cmd deps"
+
+EOF
+fi
+## package management command }}}
+
 
 some_al=''
 if _dotzsh_cmd_exists free; then
@@ -654,6 +667,6 @@ cat >> $generate_file << EOF
 $some_al
 EOF
 
-unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd eza_al some_al
+unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd _cmdeza_al some_al
 
 # vim:fdm=marker
