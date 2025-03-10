@@ -48,7 +48,7 @@ setopt noflowcontrol
 
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' # Case insensitive tab completion
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"         # Colored completion (different colors for dirs/files/etc)
-zstyle ':completion:*' rehash true                              # automatically find new executables in path 
+zstyle ':completion:*' rehash true                              # automatically find new executables in path
 zstyle ':completion:*' menu select                              # Highlight menu selection
 # Speed up completions
 zstyle ':completion:*' accept-exact '*(N)'
@@ -93,7 +93,7 @@ bindkey '^[[1;5C' forward-word                                  #
 bindkey '^H' backward-kill-word                                 # delete previous word with ctrl+backspace
 bindkey '^[[Z' undo                                             # Shift+tab undo last action
 
-# Theming section  
+# Theming section
 autoload -U compinit colors zcalc
 compinit -d
 colors
@@ -326,6 +326,7 @@ fi
 HISTSIZE=10000
 SAVEHIST=10000
 HISTFILE=~/.cache/.zhistory
+ZSH_COMPDUMP=~/.cache/.zcompdump
 export EDITOR=/usr/bin/vim
 export VISUAL=/usr/bin/vim
 WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word

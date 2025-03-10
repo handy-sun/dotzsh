@@ -95,9 +95,6 @@ dktty() {
         docker exec -ti $1 /bin/$var -i && return 0
     done
 }
-qip() {
-    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
-}
 cdt() {
     if [[ ! -e $1 ]]; then
         echo "Error: The file or directory does not exist."
@@ -360,6 +357,14 @@ fi
 ## ----------------------- conditional shell function ----------------------
 EOF
 
+if _dotzsh_cmd_exists curl && _dotzsh_cmd_exists jq; then
+    cat >> $generate_file << 'EOF'
+qip() {
+    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
+}
+EOF
+fi
+
 if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists ldd; then
     cat >> $generate_file << 'EOF'
 qlibc() {
@@ -546,8 +551,9 @@ if _dotzsh_cmd_exists eza; then
 
     cat >> $generate_file << EOF
 $eza_al
-EOF
 
+EOF
+    _list_cmd='eza --group-directories-first -A -blg'
 else
     if ls --color=auto /dev/null &>/dev/null; then
         cat >> $generate_file << 'EOF'
@@ -566,6 +572,7 @@ alias l="ls -AlF"
 alias la="ls -alF"
 
 EOF
+    _list_cmd='ls -AlFh $LS_OPTIONS'
     fi
 fi
 ## eza/ls }}}
@@ -590,7 +597,7 @@ alias pkgqi="$_cmd -Qi"
 alias pkgqo="$_cmd -Qo"
 ## list files of local package without directory
 pkgql() {
-    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs ll
+    $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs $_list_cmd
 }
 
 EOF
@@ -602,10 +609,12 @@ alias pkgr="$_cmd remove"
 alias pkgss="$_cmd search"
 alias pkgsi="$_cmd show"
 alias pkgqi="dpkg -s"
-alias pkgqo="dpkg -S"
+pkgqo() {
+    which $1 | xargs dpkg -S
+}
 ## list files of local package without directory
 pkgql() {
-    dpkg -L \$1 | grep -Ev '\.\$' | xargs bash -c 'for ele do test ! -d \$ele && echo \$ele; done | xargs ll' {}
+    dpkg -L \$1 | grep -Ev '\.\$' | xargs bash -c 'for ele do test ! -d \$ele && echo \$ele; done | xargs $_list_cmd' {}
 }
 
 EOF
@@ -613,8 +622,10 @@ elif _dotzsh_cmd_exists apk; then
     _cmd=apk
     # TODO
     cat >> $generate_file << EOF
-        alias pkgsy="$_cmd add"
-        alias pkgr="$_cmd del"
+alias pkgsy="$_cmd add"
+alias pkgr="$_cmd del"
+alias pkgss="$_cmd search"
+
 EOF
 elif _dotzsh_cmd_exists brew; then
     _cmd=brew
@@ -667,6 +678,6 @@ cat >> $generate_file << EOF
 $some_al
 EOF
 
-unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd _cmdeza_al some_al
+unset OS_TYPE _dotzsh_is_linux real_location current_dir generate_file _cmd _list_cmd eza_al some_al
 
 # vim:fdm=marker
