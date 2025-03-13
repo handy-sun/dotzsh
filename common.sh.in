@@ -134,10 +134,6 @@ swap2file() {
     mv $tempfile "$2"
 }
 ## TODO: awk sed readlink?
-## get real network device local ipv4 address, TODO: use jq?
-rlip4() {
-    ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{printf"%-20s %s\n",$2,$4}'
-}
 
 
 ## fwh v2.1 ---------- {{
@@ -157,6 +153,7 @@ _fwh_judge_built_in_or_abs_path() {
 _fwh_resolve_alias() {
     local cmd="$1"
     ## Get alias (remove all quotes)
+    ## TODO: [WARNING] sed will remove unexpect quote(s)
     local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/alias ${cmd}='(.*)'/\1/; s/'\\''/'/g" | tr -d "'"`
     if [[ -n "${alias_def}" ]]; then
         local trimmed_equal_sign=`echo ${alias_def#*=}`
@@ -332,8 +329,8 @@ alias sln="ln -sfnv"
 alias less="less -R"
 alias df="df -h -T"
 alias rrm="\rm -rf"
-alias grep="grep --color=auto"
-alias diff="diff --color=auto"
+alias grep="\grep --color=auto"
+alias diff="\diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
 
@@ -357,12 +354,35 @@ fi
 ## ----------------------- conditional shell function ----------------------
 EOF
 
-if _dotzsh_cmd_exists curl && _dotzsh_cmd_exists jq; then
+if _dotzsh_cmd_exists jq; then
     cat >> $generate_file << 'EOF'
 qip() {
     curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
+
+rlip4() {
+    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet")'
+}
+
+rlip6() {
+    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet6" and (.local | startswith("fe80:") | not)) | .local'
+}
+
 EOF
+else
+    cat >> $generate_file << 'EOF'
+qip() {
+    curl -S ip-api.com/json/$1 2>/dev/null
+}
+
+EOF
+    if [ -n "$_dotzsh_is_linux" ]; then
+        cat >> $generate_file << 'EOF'
+rlip4() {
+    ip -o -4 addr list | grep -Ev '\s(docker|lo|tun)' | awk '{printf"%-20s %s\n",$2,$4}'
+}
+EOF
+    fi
 fi
 
 if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists ldd; then
@@ -490,6 +510,10 @@ sygpr() {
 EOF
 fi
 
+## TODO
+# if _dotzsh_cmd_exists supervisorctl; then
+# fi
+
 if _dotzsh_cmd_exists ninja; then
     cat >> $generate_file << 'EOF'
 ## cmake
@@ -610,7 +634,7 @@ alias pkgss="$_cmd search"
 alias pkgsi="$_cmd show"
 alias pkgqi="dpkg -s"
 pkgqo() {
-    which $1 | xargs dpkg -S
+    which \$1 | xargs dpkg -S
 }
 ## list files of local package without directory
 pkgql() {
@@ -620,7 +644,7 @@ pkgql() {
 EOF
 elif _dotzsh_cmd_exists apk; then
     _cmd=apk
-    # TODO
+    ## TODO: May be need improve
     cat >> $generate_file << EOF
 alias pkgsy="$_cmd add"
 alias pkgr="$_cmd del"
