@@ -435,14 +435,14 @@ fi
 if _dotzsh_cmd_exists du; then
     if [ -n "$_dotzsh_is_linux" ]; then
         if du --apparent-size /dev/null &>/dev/null; then
-        cat >> $generate_file << 'EOF'
+            cat >> $generate_file << 'EOF'
 dus() {
     du --apparent-size -alh -d1 $1 | sort -rh | head -n 21
 }
 
 EOF
         else
-        cat >> $generate_file << 'EOF'
+            cat >> $generate_file << 'EOF'
 dus() {
     du -alh -d1 $1 | sort -rh | head -n 21
 }
@@ -453,6 +453,10 @@ EOF
         cat >> $generate_file << 'EOF'
 dus() {
     du -Alh -d1 $1 | sort -rh | head -n 21
+}
+
+rspid() {
+    procs --no-header --only PID "$1" | xargs -n 1
 }
 
 EOF
@@ -475,7 +479,7 @@ alias syed="sudo systemctl edit"
 alias syenw="sudo systemctl enable --now"
 alias sydis="sudo systemctl disable"
 alias sydisw="sudo systemctl disable --now"
-alias sydrld="sudo systemctl daemon-reload"
+alias sydr="sudo systemctl daemon-reload"
 
 EOF
 elif _dotzsh_cmd_exists launchctl; then
@@ -511,8 +515,16 @@ EOF
 fi
 
 ## TODO
-# if _dotzsh_cmd_exists supervisorctl; then
-# fi
+if _dotzsh_cmd_exists supervisorctl; then
+    cat >> $generate_file << 'EOF'
+alias svta="sudo supervisorctl status"
+alias svst="sudo supervisorctl start"
+alias svrs="sudo supervisorctl restart"
+alias svte="sudo supervisorctl stop"
+alias svupd="sudo supervisorctl update"
+
+EOF
+fi
 
 if _dotzsh_cmd_exists ninja; then
     cat >> $generate_file << 'EOF'
@@ -682,6 +694,10 @@ fi
 
 if _dotzsh_cmd_exists fd; then
     some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.vscode-server,.idea,.github,node_modules,target,build,dist}"'
+fi
+
+if _dotzsh_cmd_exists rg; then
+    some_al+=$'\nalias rga="rg -i --no-ignore"'
 fi
 
 if _dotzsh_cmd_exists fzf && _dotzsh_cmd_exists bat; then
