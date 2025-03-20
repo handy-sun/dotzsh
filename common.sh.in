@@ -615,12 +615,16 @@ fi
 
 ## package management command {{{
 if _dotzsh_cmd_exists pacman; then
-    if _dotzsh_cmd_exists yay; then
-        _cmd=yay
-    elif _dotzsh_cmd_exists paru; then
-        _cmd=paru
-    else
+    if [ $(id -u) -eq 0 ]; then
         _cmd=pacman
+    else
+        if _dotzsh_cmd_exists yay; then
+            _cmd=yay
+        elif _dotzsh_cmd_exists paru; then
+            _cmd=paru
+        else
+            _cmd=pacman
+        fi
     fi
     cat >> $generate_file << EOF
 alias pkgsy="$_cmd -S --noconfirm"

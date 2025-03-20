@@ -10,17 +10,23 @@ dcpupd() {
     docker-compose -f $dcp_file up -d
 }
 
-dcpfrupd() {
+dcpfru() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file up -d --force-recreate --remove-orphans
 }
 
 dcplgf() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
-    docker-compose -f $dcp_file logs -f
+    docker-compose -f $dcp_file logs -n 500 -f
 }
 
 dcpte() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file stop
 }
+
+dcppl() {
+    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+    docker-compose -f $dcp_file pull
+}
+
