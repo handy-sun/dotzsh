@@ -107,8 +107,8 @@ export LESS_TERMCAP_so=$'\E[01;47;34m'
 export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;36m'
 [[ -z "$LESS" ]] && export LESS=-R
-
 zmodload zsh/terminfo
+
 
 # Set terminal window and tab/icon title
 # usage: title short_tab_title [long_window_title]
@@ -318,7 +318,7 @@ bindkey "\e\e" sudo-command-line # Esc Esc or Ctrl [ [
 # export LS_OPTIONS=--color=auto
 
 if (( $+commands[dircolors] )); then
-    eval "$(dircolors -b)"
+  eval "$(dircolors -b)"
 fi
 
 ! test -d ~/.cache && mkdir -p ~/.cache
@@ -335,14 +335,30 @@ WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider
 bindkey -s '\eo' 'cd ..\n'    # ALT+O
 bindkey -s '\e;' 'll\n'       # ALT+;
 
-# modify default PROMPT
-if [[ "$PROMPT" =~ "# $" ]]; then
-  PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red})%B>%b%f '
-fi
+function pre_exec_timer() {
+  timer=${timer:-$SECONDS}
+}
 
-# if [[ ! -n "$RPROMPT" ]]; then
-RPROMPT='%F{red}%(?..%?)%f %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%M'
-# fi
+function pre_set_prompt() {
+  if [ $timer ]; then
+    local timer_show=$(($SECONDS - $timer))
+    if [[ $timer_show -ge 4 ]]; then
+      RPROMPT="%F{cyan}${timer_show}s%f"
+    else
+      RPROMPT=""
+    fi
+    RPROMPT+=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
+    unset timer
+  else
+    RPROMPT=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
+  fi
+}
+
+# autoload -Uz add-zsh-hook
+add-zsh-hook preexec pre_exec_timer
+add-zsh-hook precmd pre_set_prompt
+
+PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? %F{white})%B>%b%f '
 
 # only zsh alias
 alias -g ...='../..'
