@@ -20,6 +20,11 @@ dcplgf() {
     docker-compose -f $dcp_file logs -n 500 -f
 }
 
+dcpdown() {
+    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+    docker-compose -f $dcp_file down --remove-orphans
+}
+
 dcpte() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file stop
@@ -29,4 +34,3 @@ dcppl() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file pull
 }
-

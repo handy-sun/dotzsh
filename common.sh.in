@@ -333,6 +333,9 @@ alias grep="\grep --color=auto"
 alias diff="\diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
+surs() {
+    curl --proto '=https' --tlsv1.2 -LSv https://"$1"
+}
 
 ## about env:PS1(PROMPT), PS2, PS4
 _PRE=$'\E['
@@ -551,19 +554,66 @@ alias cmbt="cmake --build ${BUILD_DIR} -t"
 EOF
 fi
 
-## dpz in 'if' is same to 'else' part
+cat >> $generate_file << 'EOF'
+## about docker
+get_docker_shell() {
+    local container="$1"
+    ## Set priority list
+    local preferred_order=("/bin/bash" "/bin/zsh" "/bin/sh" "/usr/bin/bash" "/usr/bin/zsh")
+    local shells=$(docker exec "$container" sh -c 'cat /etc/shells 2>/dev/null' 2>/dev/null)
+
+    if [ $? -eq 0 ] && [ -n "$shells" ]; then
+        local valid_shells
+        valid_shells=$(echo "$shells" | grep -E '^/' | grep -v '#')
+
+        ## Check the first shell in order of priority list
+        for shell in "${preferred_order[@]}"; do
+            if echo "$valid_shells" | grep -q "^${shell}$"; then
+                echo "$shell"
+                return 0
+            fi
+        done
+    fi
+
+    ## /etc/shells not available
+    docker exec "$container" sh -c '
+    if command -v bash >/dev/null 2>&1; then
+        echo "/bin/bash"
+    elif command -v sh >/dev/null 2>&1; then
+        echo "/bin/sh"
+    elif command -v zsh >/dev/null 2>&1; then
+        echo "/bin/zsh"
+    else
+        echo "unknown"
+    fi
+    ' 2>/dev/null
+}
+
+dkex() {
+    container="$1"
+    shell_path=$(get_docker_shell "$container")
+
+    if [ "$shell_path" = "unknown" ]; then
+        echo "ERROR: No valid shell found in $container"
+        exit 1
+    else
+        docker exec -it "$container" "$shell_path"
+    fi
+}
+
+alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+EOF
+
 if _dotzsh_cmd_exists perl; then
     cat >> $generate_file << 'EOF'
-## docker ps
 alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/0.0.0.0.*?,//g'"
-alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+alias dpa="docker ps -a --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' | perl -pe 's/0.0.0.0.*?,//g'"
 
 EOF
 else
     cat >> $generate_file << 'EOF'
-## docker ps
 alias dps="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
-alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+alias dpa="docker ps -a --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
 
 EOF
 fi
