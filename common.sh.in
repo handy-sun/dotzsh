@@ -19,10 +19,11 @@ _dotzsh_cmd_exists() {
 real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 current_dir=`cd $(dirname "$real_location");pwd`
 full_filename=`echo ${real_location##*/}`
-base_filename=`echo ${full_filename%%.*}`
-generate_file=${current_dir}/${base_filename}.sh
+strip_in_name=`echo ${full_filename%.*}`
+generate_file=${current_dir}/${strip_in_name}
+
 # echo "full_filename:${full_filename}"
-# echo "base_filename:${base_filename}"
+# echo "strip_in_name:${strip_in_name}"
 # echo "real_location:${real_location}"
 echo "generate_file:${generate_file}"
 
@@ -768,6 +769,6 @@ cat >> $generate_file << EOF
 $some_al
 EOF
 
-unset OS_TYPE _dotzsh_is_linux real_location current_dir full_filename base_filename generate_file _cmd _list_cmd eza_al some_al
+unset OS_TYPE _dotzsh_is_linux real_location current_dir full_filename strip_in_name generate_file _cmd _list_cmd eza_al some_al
 
 # vim:fdm=marker:fmr=[[[,]]]
