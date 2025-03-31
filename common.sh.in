@@ -364,7 +364,7 @@ alias tarsc1="tar --no-same-owner --strip-components=1 -xf"
 ## other shell
 alias r="fc -s"
 alias pingk="ping -c4"
-alias cp="cp -dvf"
+alias cp="cp -Rvf"
 alias mv="mv -v"
 alias sln="ln -sfnv"
 alias less="less -R"
@@ -686,6 +686,9 @@ alias pkgqo="$_cmd -Qo"
 pkgql() {
     $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs $_list_cmd
 }
+pkgssw() {
+    $_cmd -Ss "^\${1}$"
+}
 
 EOF
 elif _dotzsh_cmd_exists apt; then
@@ -703,7 +706,9 @@ pkgqo() {
 pkgql() {
     dpkg -L \$1 | grep -Ev '\.\$' | xargs bash -c 'for ele do test ! -d \$ele && echo \$ele; done | xargs $_list_cmd' {}
 }
-
+pkgqs() {
+    $_cmd list --installed 2>/dev/null | grep \$1
+}
 EOF
 elif _dotzsh_cmd_exists apk; then
     _cmd=apk
@@ -718,9 +723,7 @@ elif _dotzsh_cmd_exists brew; then
     _cmd=brew
     cat >> $generate_file << EOF
 alias pkgsy="$_cmd install"
-alias pkgcsy="$_cmd install --cask"
 alias pkgr="$_cmd uninstall"
-alias pkgcr="$_cmd uninstall --cask"
 alias pkgss="$_cmd search"
 alias pkgsi="$_cmd info"
 alias pkgls="$_cmd list"
@@ -743,10 +746,6 @@ if _dotzsh_cmd_exists xclip; then
     some_al+=$'\nalias pbcopy="xclip -selection clipboard"\nalias pbpaste="xclip -selection clipboard -o"'
 fi
 
-if _dotzsh_cmd_exists fd; then
-    some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.vscode-server,.idea,.github,node_modules,target,build,dist}"'
-fi
-
 if _dotzsh_cmd_exists rg; then
     some_al+=$'\nalias rga="rg -i --no-ignore"'
 fi
@@ -762,9 +761,18 @@ fi
 if _dotzsh_cmd_exists dust; then
     some_al+=$'\nalias dur="dust -sr"\nalias durd="dust -srb -d 1"'
 fi
+
 if _dotzsh_cmd_exists aria2c; then
     some_al+=$'\nalias ar2c="aria2c -x 8 -s 6 -j 8"'
 fi
+
+if _dotzsh_cmd_exists fd; then
+    some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.vscode-server,.idea,.github,node_modules,target,build,dist}"'
+    some_al+=$'\nfdw() {
+    fd -H -I "^${1}$" ${2}
+}'
+fi
+
 cat >> $generate_file << EOF
 $some_al
 EOF
