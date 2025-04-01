@@ -22,9 +22,6 @@ full_filename=`echo ${real_location##*/}`
 strip_in_name=`echo ${full_filename%.*}`
 generate_file=${current_dir}/${strip_in_name}
 
-# echo "full_filename:${full_filename}"
-# echo "strip_in_name:${strip_in_name}"
-# echo "real_location:${real_location}"
 echo "generate_file:${generate_file}"
 
 cat > $generate_file << 'EOF'
@@ -64,6 +61,7 @@ htdel() {
         return 1
     fi
 
+    grep -rn $1 $file
     if [[ "$1" =~ "/" ]]; then
         transfer=`printf "$1" | sed 's#\/#\\\/#g'`
         sed -i "/$transfer/d" $file
@@ -87,6 +85,31 @@ gitur() {
     for var in ${remote_arr[*]}; do
         git push --all $var
     done
+}
+## List all untracked files/directories in current git repo and decide whether to delete it.
+gcldi() {
+    local untracked_files=`git ls-files --directory --others`
+    if [[ ${#untracked_files[@]} -eq 0 ]]; then
+        echo "No untracked files or directories found."
+        return 0
+    fi
+
+    echo "The following files/directories are untracked:"
+    printf '%s%s%s\n' $'\E[0;33m' "${untracked_files[@]}" $'\E[m'
+    # echo ""
+
+    ## Ask for confirmation
+    printf "Do you want to delete all these untracked files/directories? [y/N] "
+    read answer
+    case "$answer" in
+        [yY][eE][sS]|[yY])
+            git ls-files --directory --others | xargs rm -rf
+            echo "Deletion completed."
+            ;;
+        *)
+            echo "Operation cancelled."
+            ;;
+    esac
 }
 cdt() {
     if [[ ! -e $1 ]]; then
@@ -351,10 +374,12 @@ alias gblm="git blame -L"
 alias gaprj="git apply --reject"
 
 alias gchp="git cherry-pick"
+
+alias gklrj="git clone --recursive --jobs 8"
+
 alias gcln="git clean -n"
 alias gclfd="git clean -fd"
 
-alias gklrj="git clone --recursive --jobs 8"
 ## tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
