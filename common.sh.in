@@ -41,10 +41,6 @@ shsw() {
 shdr() {
     git stash drop stash@{$1};
 }
-## get pid of a process, avoid some Linux system cannot use 'pgrep' program
-qpid() {
-    ps -eo pid,cmd | grep "$1" | grep -vE 'grep|\]$' | awk '{print$1;}'
-}
 ## print all info, and search insensitive
 ppre() {
     ps -ef | grep -i "$1" | grep -vE 'grep|\]$'
@@ -502,38 +498,42 @@ cpv() {
 EOF
 fi
 
-if _dotzsh_cmd_exists du; then
-    if [ -n "$_dotzsh_is_linux" ]; then
-        if du --apparent-size /dev/null &>/dev/null; then
-            cat >> $generate_file << 'EOF'
+some_al=''
+if [ -n "$_dotzsh_is_linux" ]; then
+    if du --apparent-size /dev/null &>/dev/null; then
+        some_al+=$'
 dus() {
-    du --apparent-size -alh -d1 $1 | sort -rh | head -n 21
-}
-
-EOF
-        else
-            cat >> $generate_file << 'EOF'
+    du --apparent-size -alh -d1 "$1" | sort -rh | head -n 21
+}'
+    else
+        some_al+=$'
 dus() {
-    du -alh -d1 $1 | sort -rh | head -n 21
-}
+    du -alh -d1 "$1" | sort -rh | head -n 21
+}'
+    fi
 
-EOF
-        fi
-    else # darwin system
-        cat >> $generate_file << 'EOF'
+    some_al+=$'
+qpid() {
+    ps -eo pid,cmd | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$1;}\'
+}'
+
+else # darwin system
+    some_al+=$'
 dus() {
     du -Alh -d1 $1 | sort -rh | head -n 21
 }
 
+qpid() {
+    ps -ef | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$1;}\'
+}
 rspid() {
     procs --no-header --only PID "$1" | xargs -n 1
-}
-
-EOF
-    fi
-
+}'
 fi
 
+cat >> $generate_file << EOF
+$some_al
+EOF
 
 if _dotzsh_cmd_exists systemctl; then
     cat >> $generate_file << 'EOF'
