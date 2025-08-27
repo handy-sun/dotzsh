@@ -34,3 +34,12 @@ dcppl() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file pull
 }
+
+dcpca() {
+    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+    if command -v bat &>/dev/null; then
+        bat $dcp_file
+    else
+        cat $dcp_file
+    fi
+}
