@@ -503,7 +503,8 @@ if [ -n "$_dotzsh_is_linux" ]; then
     if du --apparent-size /dev/null &>/dev/null; then
         some_al+=$'
 dus() {
-    du --apparent-size -alh -d1 "$1" | sort -rh | head -n 21
+    local _dir="${1:-.}"
+    du --apparent-size -alh -d1 "$_dir" | sort -rh | head -n 21
 }'
     else
         some_al+=$'
