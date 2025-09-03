@@ -509,7 +509,8 @@ dus() {
     else
         some_al+=$'
 dus() {
-    du -alh -d1 "$1" | sort -rh | head -n 21
+    local _dir="${1:-.}"
+    du -alh -d1 "$_dir" | sort -rh | head -n 21
 }'
     fi
 
