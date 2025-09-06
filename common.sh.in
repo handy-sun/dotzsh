@@ -517,7 +517,7 @@ dus() {
     some_al+=$'
 qpid() {
     ps -eo pid,cmd | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$1;}\'
-}'
+}\n'
 
 else # darwin system
     some_al+=$'
@@ -527,10 +527,14 @@ dus() {
 
 qpid() {
     ps -ef | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$1;}\'
-}
+}\n'
+fi
+
+if _dotzsh_cmd_exists procs; then
+    some_al+=$'
 rspid() {
     procs --no-header --only PID "$1" | xargs -n 1
-}'
+}\n'
 fi
 
 cat >> $generate_file << EOF
