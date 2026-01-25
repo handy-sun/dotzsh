@@ -8,8 +8,7 @@ if [ "$OS_TYPE" == "Linux" ]; then
 elif [ "$OS_TYPE" == "Darwin" ]; then
     echo "Operating system is MacOS($OS_TYPE)"
 else
-    echo "Unknown operating system: $OS_TYPE"
-    return 1
+    echo "Special operating system: $OS_TYPE"
 fi
 
 _dotzsh_cmd_exists() {
