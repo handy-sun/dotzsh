@@ -327,8 +327,8 @@ HISTSIZE=10000
 SAVEHIST=10000
 HISTFILE=~/.cache/.zhistory
 ZSH_COMPDUMP=~/.cache/.zcompdump
-export EDITOR=/usr/bin/vim
-export VISUAL=/usr/bin/vim
+# export EDITOR=/usr/bin/vim
+# export VISUAL=/usr/bin/vim
 WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
 
 ## other custom key
