@@ -15,10 +15,10 @@ dcpfru() {
     docker-compose -f $dcp_file up -d --force-recreate --remove-orphans
 }
 
-dcplgf() {
-    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
-    docker-compose -f $dcp_file logs -n 500 -f
-}
+# dcplgf() {
+#     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+#     docker-compose -f $dcp_file logs -n 500 -f
+# }
 
 dcpdown() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml

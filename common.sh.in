@@ -394,6 +394,7 @@ alias grep="\grep --color=auto"
 alias diff="\diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
+alias dklg="docker logs -n 300 -f"
 surs() {
     curl --proto '=https' --tlsv1.2 -LSv https://"$1"
 }
