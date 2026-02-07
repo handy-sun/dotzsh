@@ -374,6 +374,7 @@ alias gklrj="git clone --recursive --jobs 8"
 
 alias gcln="git clean -n"
 alias gclfd="git clean -fd"
+alias gpar="git remote | xargs bash -c 'for rmt do git push --all $rmt; done ' {}"
 
 ## tar
 alias tarx="tar --no-same-owner -xf"
@@ -526,7 +527,7 @@ dus() {
 }
 
 qpid() {
-    ps -ef | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$1;}\'
+    ps -ef | grep "$1" | grep -vE \'grep|\]$\' | awk \'{print$2;}\'
 }\n'
 fi
 
