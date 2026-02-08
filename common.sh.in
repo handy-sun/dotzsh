@@ -57,12 +57,7 @@ htdel() {
     fi
 
     grep -rn $1 $file
-    if [[ "$1" =~ "/" ]]; then
-        transfer=`printf "$1" | sed 's#\/#\\\/#g'`
-        sed -i "/$transfer/d" $file
-    else
-        sed -i "/$1/d" $file
-    fi
+    perl -i -ne "print unless m{$1}" $file
 }
 ## quickly update(rebase) git repo between local and all remotes
 gitur() {
@@ -601,6 +596,20 @@ alias svte="sudo supervisorctl stop"
 alias svupd="sudo supervisorctl update"
 
 EOF
+    if [ -d /opt/homebrew/etc/supervisor.d ]; then
+        cat >> $generate_file << 'EOF'
+svca() {
+    local _file=/opt/homebrew/etc/supervisor.d/$1.ini
+    if [ -e "${_file}" ]; then
+        cat $_file
+    else
+        echo "Supervisor config file ${_file} not found."
+        return 1
+    fi
+}
+
+EOF
+    fi
 fi
 
 if _dotzsh_cmd_exists ninja; then
