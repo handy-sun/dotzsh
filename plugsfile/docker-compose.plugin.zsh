@@ -30,9 +30,27 @@ dcpte() {
     docker-compose -f $dcp_file stop
 }
 
+dcprs() {
+    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+    docker-compose -f $dcp_file restart
+}
+
 dcppl() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file pull
+}
+
+dcppal() {
+    for ctner in `ls $DKCP_DIR`; do
+        local dcp_file=$DKCP_DIR/$ctner/docker-compose.yml
+        if [ ! -e $dcp_file ]; then
+            continue
+        fi
+
+        if ! grep -iq 'restart: no' $dcp_file; then
+            docker-compose -f $dcp_file pull
+        fi
+    done
 }
 
 dcpca() {
