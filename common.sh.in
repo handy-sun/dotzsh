@@ -369,7 +369,10 @@ alias gklrj="git clone --recursive --jobs 8"
 
 alias gcln="git clean -n"
 alias gclfd="git clean -fd"
-alias gpar="git remote | xargs bash -c 'for rmt do git push --all $rmt; done ' {}"
+## alias not working well, use function instead
+gpar() {
+    git remote | xargs bash -c 'for rmt do git push --all $rmt; done ' {}
+}
 
 ## tar
 alias tarx="tar --no-same-owner -xf"
@@ -552,6 +555,8 @@ alias syenw="sudo systemctl enable --now"
 alias sydis="sudo systemctl disable"
 alias sydisw="sudo systemctl disable --now"
 alias sydr="sudo systemctl daemon-reload"
+alias sylss="sudo systemctl list-units -t service"
+alias sylsa="sudo systemctl list-units -t service --all"
 
 EOF
 elif _dotzsh_cmd_exists launchctl; then
