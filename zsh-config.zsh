@@ -341,15 +341,28 @@ function pre_exec_timer() {
 
 function pre_set_prompt() {
   if [ $timer ]; then
-    local timer_show=$(($SECONDS - $timer))
-    if [[ $timer_show -ge 4 ]]; then
-      RPROMPT="%F{cyan}${timer_show}s%f"
-    else
+    local timer_seconds=$(($SECONDS - $timer))
+    if [[ $timer_seconds -ge 4 ]]; then
+      if [[ $timer_seconds -ge 60 ]]; then
+        local timer_minutes=$(( $timer_seconds / 60 ))
+        local remaining_seconds=$(( $timer_seconds % 60 ))
+        if [[ $timer_minutes -ge 60 ]]; then # seconds greater than 3600, show hours, minutes and seconds
+          local timer_hours=$(( $timer_minutes / 60 ))
+          remaining_minutes=$(( $timer_minutes % 60 ))
+          RPROMPT="%F{cyan}${timer_hours}h${remaining_minutes}m${remaining_seconds}s%f"
+        else # seconds greater than 60 but less than 3600, show minutes and seconds
+          RPROMPT="%F{cyan}${timer_minutes}m${remaining_seconds}s%f"
+        fi
+      else # seconds between 4 and 60, show seconds only
+        RPROMPT="%F{cyan}${timer_seconds}s%f"
+      fi
+    else # seconds less than 4, no timer shown
       RPROMPT=""
     fi
+
     RPROMPT+=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
     unset timer
-  else
+  else # no timer, just show the right prompt
     RPROMPT=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
   fi
 }
@@ -367,4 +380,3 @@ alias -g .....='../../../..'
 alias -g ......='../../../../..'
 
 alias -- -='cd -'
-
