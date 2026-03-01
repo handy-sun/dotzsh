@@ -47,21 +47,6 @@ shdr() {
 ppre() {
     ps -ef | grep -i "$1" | grep -vE 'grep|\]$'
 }
-htdel() {
-    # set -x
-    if [[ -n "$HISTFILE" ]]; then
-        local file=$HISTFILE
-    elif [[ -n "$ZSH_VERSION" ]] && [ -e ~/.zhistory ]; then
-        local file=~/.zhistory
-    elif [[ -n "$BASH_VERSION" ]] && [ -e ~/.bash_history ]; then
-        local file=~/.bash_history
-    else
-        return 1
-    fi
-
-    grep -rn $1 $file
-    perl -i -ne "print unless m{$1}" $file
-}
 ## quickly update(rebase) git repo between local and all remotes
 gitur() {
     # set -x
@@ -450,6 +435,52 @@ EOF
         cat >> $generate_file << 'EOF'
 rlip4() {
     ip -o -4 addr list | grep -Ev '\s(docker|lo|tun)' | awk '{printf"%-20s %s\n",$2,$4}'
+}
+EOF
+    fi
+fi
+
+cat >> $generate_file << 'EOF'
+htdel() {
+    if [[ -n "$HISTFILE" ]]; then
+        local file=$HISTFILE
+    elif [[ -n "$ZSH_VERSION" ]] && [ -e ~/.zhistory ]; then
+        local file=~/.zhistory
+    elif [[ -n "$BASH_VERSION" ]] && [ -e ~/.bash_history ]; then
+        local file=~/.bash_history
+    else
+        return 1
+    fi
+
+    grep -rn $1 $file
+EOF
+
+if _dotzsh_cmd_exists perl; then
+    cat >> $generate_file << 'EOF'
+    perl -i -ne "print unless m{$1}" $file
+}
+EOF
+else
+    if [ -n "$_dotzsh_is_linux" ]; then
+        cat >> $generate_file << 'EOF'
+    if [[ "$1" =~ "/" ]]; then
+        local transfer=`printf "$1" | sed 's#\/#\\\/#g'`
+        ## use LC_ALL=C to avoid the file enconding diff with the terminal, which may cause the sed command not work well
+        LC_ALL=C sed -i "/$transfer/d" $file
+    else
+        LC_ALL=C sed -i "/$1/d" $file
+    fi
+}
+EOF
+    else # darwin system
+        cat >> $generate_file << 'EOF'
+    if [[ "$1" =~ "/" ]]; then
+        local transfer=`printf "$1" | sed 's#\/#\\\/#g'`
+        ## use LC_ALL=C to avoid the file enconding diff with the terminal, which may cause the sed command not work well
+        LC_ALL=C sed -i "" "/$transfer/d" $file
+    else
+        LC_ALL=C sed -i "" "/$1/d" $file
+    fi
 }
 EOF
     fi
