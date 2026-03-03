@@ -21,12 +21,12 @@ fi
 localpre_arr=("$cur_dir/localpre" "$HOME/.cache/dotzsh/localpre" "/tmp/localpre")
 for localpre in ${localpre_arr[*]}; do
   if [ -d $localpre ]; then
-    for i in $localpre/*sh; do
+    for i in $localpre/*sh(N); do
       if [ -r $i ]; then
         source $i
       fi
     done
-    echo "Sourced localpre from $localpre"
+    # echo "Sourced localpre from $localpre"
     break
   fi
 done
@@ -46,7 +46,7 @@ done
 
 plugsfile=$cur_dir/plugsfile
 if [ -d $plugsfile ]; then
-  for i in $plugsfile/*.zsh; do
+  for i in $plugsfile/*.zsh(N); do
     if [ -r $i ]; then
       source $i
     fi
@@ -87,7 +87,7 @@ source ${cur_dir}/zsh-config.zsh
 gen_common=("${cur_dir}/common.sh" "$HOME/.cache/dotzsh/common.sh" "/tmp/common.sh")
 for file in ${gen_common[*]}; do
   if [ -e $file ]; then
-    echo "Internal sourcing $file"
+    # echo "Internal sourcing $file"
     source $file
     break
   fi
