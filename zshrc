@@ -18,14 +18,18 @@ if [[ $_en_xtrc -eq 1 ]]; then
 fi
 
 # local pre
-localpre=$cur_dir/localpre
-if [ -d $localpre ]; then
-  for i in $localpre/*sh; do
-    if [ -r $i ]; then
-      source $i
-    fi
-  done
-fi
+localpre_arr=("$cur_dir/localpre" "$HOME/.cache/dotzsh/localpre" "/tmp/localpre")
+for localpre in ${localpre_arr[*]}; do
+  if [ -d $localpre ]; then
+    for i in $localpre/*sh; do
+      if [ -r $i ]; then
+        source $i
+      fi
+    done
+    echo "Sourced localpre from $localpre"
+    break
+  fi
+done
 
 # zsh-prompt {{{1
 plugins=$cur_dir/plugins
@@ -49,7 +53,7 @@ if [ -d $plugsfile ]; then
   done
 fi
 
-unset real_dir plugins plug_arr plugsfile i
+unset real_dir plugins plug_arr plugsfile i localpre_arr localpre
 
 () {
   # Determine terminal capabilities.
@@ -79,10 +83,17 @@ unset real_dir plugins plug_arr plugsfile i
 
 ### config
 source ${cur_dir}/zsh-config.zsh
-# source ${cur_dir}/zba.sh ## decrapated after v1.0.0
-test -e ${cur_dir}/common.sh && source ${cur_dir}/common.sh
 
-unset real_location cur_dir
+gen_common=("${cur_dir}/common.sh" "$HOME/.cache/dotzsh/common.sh" "/tmp/common.sh")
+for file in ${gen_common[*]}; do
+  if [ -e $file ]; then
+    echo "Internal sourcing $file"
+    source $file
+    break
+  fi
+done
+
+unset real_location cur_dir gen_common file
 
 if [[ $_en_xtrc -eq 1 ]]; then
   unsetopt XTRACE
