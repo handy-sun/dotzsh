@@ -95,7 +95,7 @@ bindkey '^[[Z' undo                                             # Shift+tab undo
 
 # Theming section
 autoload -U compinit colors zcalc
-compinit -d
+# compinit -d
 colors
 
 # Color man pages
@@ -106,9 +106,19 @@ export LESS_TERMCAP_se=$'\E[0m'
 export LESS_TERMCAP_so=$'\E[01;47;34m'
 export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;36m'
-[[ -z "$LESS" ]] && export LESS=-R
+
+# [[ -z "$LESS" ]] && export LESS=-R
+# HISTSIZE=10000
+# SAVEHIST=10000
+
+export HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/.zhistory"
+export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump"
+export WORDCHARS=${WORDCHARS//\/[&.;]}                          # Don't consider certain characters part of the word
+
+compinit -d "$ZSH_COMPDUMP"
 zmodload zsh/terminfo
 
+! test -d ~/.cache && mkdir -p ~/.cache
 
 # Set terminal window and tab/icon title
 # usage: title short_tab_title [long_window_title]
@@ -321,15 +331,6 @@ if (( $+commands[dircolors] )); then
   eval "$(dircolors -b)"
 fi
 
-! test -d ~/.cache && mkdir -p ~/.cache
-
-HISTSIZE=10000
-SAVEHIST=10000
-HISTFILE=~/.cache/.zhistory
-ZSH_COMPDUMP=~/.cache/.zcompdump
-# export EDITOR=/usr/bin/vim
-# export VISUAL=/usr/bin/vim
-WORDCHARS=${WORDCHARS//\/[&.;]}                                 # Don't consider certain characters part of the word
 
 ## other custom key
 bindkey -s '\eo' 'cd ..\n'    # ALT+O
