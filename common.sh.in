@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!env bash
+set -e
 
 OS_TYPE=$(uname)
 
