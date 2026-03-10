@@ -61,3 +61,9 @@ dcpca() {
         cat $dcp_file
     fi
 }
+
+dcped() {
+    set -x
+    local dcp_file=$DKCP_DIR/$1/docker-compose.yml
+    [[ -z "$EDITOR" ]] && ${EDITOR} $dcp_file || ${EDITOR:-vi} $dcp_file
+}
