@@ -93,7 +93,19 @@ for file in ${gen_common[*]}; do
   fi
 done
 
-unset real_location cur_dir gen_common file
+localpost_arr=("$cur_dir/localpost" "$HOME/.cache/dotzsh/localpost" "/tmp/localpost")
+for localpost in ${localpost_arr[*]}; do
+  if [ -d $localpost ]; then
+    for i in $localpost/*sh(N); do
+      if [ -r $i ]; then
+        source $i
+      fi
+    done
+    break
+  fi
+done
+
+unset real_location cur_dir gen_common file localpost_arr
 
 if [[ $_en_xtrc -eq 1 ]]; then
   unsetopt XTRACE

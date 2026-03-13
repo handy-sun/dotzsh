@@ -17,7 +17,8 @@ _dotzsh_cmd_exists() {
 }
 
 if [[ $1 -eq 1 ]]; then
-    test ! -d ~/.cache/dotzsh && mkdir -pv ~/.cache/dotzsh/localpre
+    test ! -d ~/.cache/dotzsh/localpre && mkdir -pv ~/.cache/dotzsh/localpre
+    test ! -d ~/.cache/dotzsh/localpost && mkdir -pv ~/.cache/dotzsh/localpost
     generate_file=~/.cache/dotzsh/common.sh
 elif [[ $1 -eq 2 ]]; then
     generate_file=/tmp/common.sh
