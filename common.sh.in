@@ -865,6 +865,10 @@ if _dotzsh_cmd_exists fd; then
 }'
 fi
 
+if _dotzsh_cmd_exists unrar-free; then
+    some_al+=$'\nalias unrar="unrar-free"'
+fi
+
 cat >> $generate_file << EOF
 $some_al
 EOF
