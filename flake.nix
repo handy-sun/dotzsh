@@ -3,155 +3,75 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    # flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
+    # flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    devshell.url = "github:numtide/devshell";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
+  outputs = inputs @ { self, flake-parts, ... }:
+  flake-parts.lib.mkFlake { inherit inputs; } {
+    imports = [
+      inputs.devshell.flakeModule
+    ];
 
-        # 定义 dotzsh 包
-        dotzsh-package = pkgs.stdenv.mkDerivation {
-          name = "dotzsh";
-          version = "0.0.1";
-          src = ./.;
-          buildInputs = [ pkgs.bash ];
+    flake.homeManagerModules.default = { config, lib, pkgs, ... }:
+    let
+      cfg = config.programs.dotzsh;
+    in {
+      options.programs.dotzsh = {
+        enable = lib.mkEnableOption "execute runsh shell";
+      };
 
-          buildPhase = ''
-            mkdir -p $out/bin
-            cp -ar ./ $out/bin/
-          '';
+      config = lib.mkIf cfg.enable {
+        home.packages = [ self.packages.${pkgs.system}.runsh ];
+        ## Same to  `nix run .#runsh`
+        home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+          echo "--- Running dotzsh activation shell script ---"
+          ${self.packages.${pkgs.system}.runsh}/bin/runsh
+          echo "*** Done ***"
+        '';
+      };
+    };
 
-          installPhase = ''
-            chmod +x $out/bin/common.sh.in
-          '';
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
 
-          postInstall = ''
-            if [ ! -f "$out/bin/common.sh.in" ]; then
-              echo "Error: common.sh.in not found"
-              exit 1
-            fi
-          '';
-        };
-
-        # Home Manager Module
-        hmModule = { config, pkgs, lib, ... }:
-          let
-            cfg = config.programs.dotzsh;
-          in
-          {
-            options.programs.dotzsh = {
-              enable = lib.mkEnableOption "dotzsh";
-              runOnInit = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether to run the script on shell initialization";
-              };
-            };
-
-            config = lib.mkIf cfg.enable {
-              home.packages = [ cfg.package ];
-              programs.zsh.initExtra = lib.mkIf cfg.runOnInit ''
-                if [ command -v bash >/dev/null 2>&1 ]; then
-                  ${pkgs.bash}/bin/bash ${cfg.package}/bin/common.sh.in 1
-                fi
-              '';
-            };
-          };
-
-        # NixOS Module
-        nixosModule = { config, pkgs, lib, ... }:
-          let
-            cfg = config.programs.dotzsh;
-          in
-          {
-            options.programs.dotzsh = {
-              enable = lib.mkEnableOption "dotzsh";
-              runOnInit = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether to run the script on shell initialization";
-              };
-            };
-
-            config = lib.mkIf cfg.enable {
-              users.users = lib.mapAttrs (_: userConfig:
-                if userConfig.shell == "/run/current-system/sw/bin/zsh" then
-                  {
-                    shellInit = lib.mkIf cfg.runOnInit ''
-                      ${pkgs.bash}/bin/bash ${dotzsh-package}/bin/common.sh.in 1
-                    '';
-                  }
-                else
-                  {}
-              ) config.users.users;
-            };
-          };
-
-      in
-      {
-        # packages.dotzsh-package = dotzsh-package;
-        packages = {
-          default = dotzsh-package;
-          inherit dotzsh-package;
-
-          run-dotzsh-init = pkgs.writeScriptBin "run-dotzsh-init" ''
-            #!/usr/bin/env bash
-            if [ -f "${dotzsh-package}/bin/common.sh.in" ]; then
-              exec bash "${dotzsh-package}/bin/common.sh.in" 1
-            else
-              echo "Error: common.sh.in not found in ${dotzsh-package}"
-              exit 1
-            fi
-          '';
-        };
-
-        apps = {
-          # Offer an app api to init
-          run-dotzsh = {
-            type = "app";
-            program = "${pkgs.bash}/bin/bash ${dotzsh-package}/bin/common.sh.in 1";
-          };
-        };
-
-        homeManagerModules = {
-          default = hmModule;
-          dotzsh = hmModule;
-        };
-
-        nixosModules = {
-          default = nixosModule;
-          dotzsh = nixosModule;
-        };
-
-        # Offer a dev shell for development and testing
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            bash
-            coreutils
+    perSystem = { pkgs, system, ... }: {
+      packages = {
+        runsh = pkgs.writeShellApplication {
+          name = "runsh";
+          runtimeInputs = [
+            pkgs.bash
+            pkgs.coreutils
           ];
-
-          shellHook = ''
-            echo "Development shell for dotzsh"
-            echo "Available commands:"
-            echo "  - bash ${./common.sh.in} 1  # Test the script directly"
-            echo "  - nix run .#run-dotzsh      # Run via flake"
+          text = ''
+            ${pkgs.bash}/bin/bash ${./common.sh.in} 1
           '';
         };
-      }
-    );
-    # // {
-    #   ## All systems share the same modules, so we can just point them to the same definitions
-    #   nixosModules = flake-utils.lib.eachDefaultSystem (system: {
-    #     default = self.outputs.${system}.nixosModules.default;
-    #     dotzsh = self.outputs.${system}.nixosModules.dotzsh;
-    #   });
+      };
 
-    #   homeManagerModules = flake-utils.lib.eachDefaultSystem (system: {
-    #     default = self.outputs.${system}.homeManagerModules.default;
-    #     dotzsh = self.outputs.${system}.homeManagerModules.dotzsh;
-    #   });
-    # };
+      devshells.default = {
+        commands = [
+          {
+            help = "runsh no help";
+            name = "runsh";
+            package = self.packages.${system}.runsh;
+          }
+        ];
+        devshell = {
+          motd = ''
+            🔨 Welcome to devshell{reset}
+          '';
+        };
+      };
+    };
+  };
 }
