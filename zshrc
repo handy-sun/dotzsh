@@ -107,6 +107,10 @@ done
 
 unset real_location cur_dir gen_common file localpost_arr
 
+if (( $+commands[zoxide] )); then
+    eval "$(zoxide init zsh)"
+fi
+
 if [[ $_en_xtrc -eq 1 ]]; then
   unsetopt XTRACE
   exec 2>&3 3>&-
