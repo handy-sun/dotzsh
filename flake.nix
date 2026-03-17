@@ -21,20 +21,38 @@
     flake.homeManagerModules.default = { config, lib, pkgs, ... }:
     let
       cfg = config.programs.dotzsh;
+      ## usually is `~/.nix-profile/bin`, sometimes `/etc/profiles/per-user/$USER/bin`
+      userNixProfileBin = "${config.home.profileDirectory}/bin";
+      systemBin = "/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
     in {
       options.programs.dotzsh = {
         enable = lib.mkEnableOption "execute runsh shell";
+        enableSourceZshrc = lib.mkEnableOption "init Content in .zshrc";
       };
 
-      config = lib.mkIf cfg.enable {
-        home.packages = [ self.packages.${pkgs.system}.runsh ];
-        ## Same to  `nix run .#runsh`
-        home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
-          echo "--- Running dotzsh activation shell script ---"
-          ${self.packages.${pkgs.system}.runsh}/bin/runsh
-          echo "*** Done ***"
-        '';
-      };
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
+          home.packages = [ self.packages.${pkgs.system}.runsh ];
+          ## Same to  `nix run .#runsh`
+          home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+            export PATH="${userNixProfileBin}:${systemBin}:$PATH"
+            echo "--- Running dotzsh shell init in real environment ---"
+            # echo "### Current PATH:"
+            # echo "$PATH" | tr ':' '\n'
+            # echo "### Current PATH [end]"
+            ${self.packages.${pkgs.system}.runsh}/bin/runsh
+            echo "--- Done ---"
+          '';
+        })
+
+        (lib.mkIf cfg.enableSourceZshrc {
+          ## Append the text at the end of $HOME/.zshrc
+          programs.zsh.initContent = lib.mkOrder 1200 ''
+            # --- github:handy/dotzsh flake auto-sourced ---
+            source ${self}/zshrc
+          '';
+        })
+      ];
     };
 
     systems = [

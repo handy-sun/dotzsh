@@ -107,9 +107,6 @@ export LESS_TERMCAP_so=$'\E[01;47;34m'
 export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;36m'
 
-# [[ -z "$LESS" ]] && export LESS=-R
-# HISTSIZE=10000
-# SAVEHIST=10000
 
 export HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/.zhistory"
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump"
