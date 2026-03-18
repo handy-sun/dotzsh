@@ -36,6 +36,9 @@
           ## Same to  `nix run .#cm-init`
           home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
             export PATH="${userNixProfileBin}:${systemBin}:$PATH"
+            if [ -f /opt/homebrew/bin/brew ]; then
+              export PATH="/opt/homebrew/bin:$PATH"
+            fi
             echo "--- Running dotzsh shell init in real environment ---"
             # echo "### Current PATH:"
             # echo "$PATH" | tr ':' '\n'

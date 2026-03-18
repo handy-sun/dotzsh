@@ -1,8 +1,18 @@
-# Resolve symbolic link if present and get the directory this script lives in.
-# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
-# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
-# fallback, which doesn't attempt to do anything with links.
-real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+## Resolve symbolic link if present and get the directory this script lives in.
+## NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+## contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+## fallback, which doesn't attempt to do anything with links.
+real_location=$(command -v realpath &>/dev/null && realpath "$0" || {
+    p="$0"
+    while [ -L "$p" ]; do
+      link=$(readlink "$p")
+      [[ "$link" = /* ]] && p="$link" || p="$(dirname "$p")/$link"
+    done
+    echo "$p"
+  }
+)
+# real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+# echo zshrc_real_location = "$real_location"
 
 cur_dir=`cd $(dirname "$real_location");pwd`
 
