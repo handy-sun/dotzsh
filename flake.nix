@@ -26,21 +26,21 @@
       systemBin = "/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
     in {
       options.programs.dotzsh = {
-        enable = lib.mkEnableOption "execute runsh shell";
+        enable = lib.mkEnableOption "execute cm-init shell";
         enableSourceZshrc = lib.mkEnableOption "init Content in .zshrc";
       };
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
-          home.packages = [ self.packages.${pkgs.system}.runsh ];
-          ## Same to  `nix run .#runsh`
+          home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
+          ## Same to  `nix run .#cm-init`
           home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
             export PATH="${userNixProfileBin}:${systemBin}:$PATH"
             echo "--- Running dotzsh shell init in real environment ---"
             # echo "### Current PATH:"
             # echo "$PATH" | tr ':' '\n'
             # echo "### Current PATH [end]"
-            ${self.packages.${pkgs.system}.runsh}/bin/runsh
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm-init
             echo "--- Done ---"
           '';
         })
@@ -64,8 +64,8 @@
 
     perSystem = { pkgs, system, ... }: {
       packages = {
-        runsh = pkgs.writeShellApplication {
-          name = "runsh";
+        cm-init = pkgs.writeShellApplication {
+          name = "dotzsh-cm-init";
           runtimeInputs = [
             pkgs.bash
             pkgs.coreutils
@@ -79,9 +79,9 @@
       devshells.default = {
         commands = [
           {
-            help = "runsh no help";
-            name = "runsh";
-            package = self.packages.${system}.runsh;
+            help = "no";
+            name = "cm-init";
+            package = self.packages.${system}.cm-init;
           }
         ];
         devshell = {
