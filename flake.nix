@@ -28,31 +28,39 @@
       options.programs.dotzsh = {
         enable = lib.mkEnableOption "execute cm-init shell";
         enableSourceZshrc = lib.mkEnableOption "init Content in .zshrc";
+        enableSourceFishrc = lib.mkEnableOption "init Content in .fishrc";
       };
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
           home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
-          ## Same to  `nix run .#cm-init`
+          ## Same to  `nix run .#cm-init` and `nix run .#fish-init`
           home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
             export PATH="${userNixProfileBin}:${systemBin}:$PATH"
             if [ -f /opt/homebrew/bin/brew ]; then
               export PATH="/opt/homebrew/bin:$PATH"
             fi
-            echo "--- Running dotzsh shell init in real environment ---"
+            echo "--- Running dotzsh shell init ---"
             # echo "### Current PATH:"
             # echo "$PATH" | tr ':' '\n'
             # echo "### Current PATH [end]"
-            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm-init
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm
+            ${self.packages.${pkgs.stdenv.hostPlatform.system}.fish-init}/bin/dotzsh-fish
             echo "--- Done ---"
           '';
         })
 
         (lib.mkIf cfg.enableSourceZshrc {
-          ## Append the text at the end of $HOME/.zshrc
           programs.zsh.initContent = lib.mkOrder 1200 ''
             # --- github:handy/dotzsh flake auto-sourced ---
             source ${self}/zshrc
+          '';
+        })
+
+        (lib.mkIf cfg.enableSourceFishrc {
+          programs.fish.shellInitLast = ''
+            # --- github:handy/dotzsh flake auto-sourced ---
+            source ${config.home.homeDirectory}/.cache/dotzsh/common.fish
           '';
         })
       ];
@@ -68,13 +76,23 @@
     perSystem = { pkgs, system, ... }: {
       packages = {
         cm-init = pkgs.writeShellApplication {
-          name = "dotzsh-cm-init";
+          name = "dotzsh-cm";
           runtimeInputs = [
             pkgs.bash
             pkgs.coreutils
           ];
           text = ''
             ${pkgs.bash}/bin/bash ${./common.sh.in} 1
+          '';
+        };
+        fish-init = pkgs.writeShellApplication {
+          name = "dotzsh-fish";
+          runtimeInputs = [
+            pkgs.bash
+            pkgs.coreutils
+          ];
+          text = ''
+            ${pkgs.bash}/bin/bash ${./common.fish.in} 1
           '';
         };
       };
@@ -85,6 +103,11 @@
             help = "no";
             name = "cm-init";
             package = self.packages.${system}.cm-init;
+          }
+          {
+            help = "no";
+            name = "fish-init";
+            package = self.packages.${system}.fish-init;
           }
         ];
         devshell = {
