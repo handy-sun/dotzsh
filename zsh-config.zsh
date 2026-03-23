@@ -369,6 +369,8 @@ function pre_set_prompt() {
 add-zsh-hook preexec pre_exec_timer
 add-zsh-hook precmd pre_set_prompt
 
+unsetopt extended_glob
+
 PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? %F{white})%B>%b%f '
 
 # only zsh alias

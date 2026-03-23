@@ -31,7 +31,7 @@ fi
 localpre_arr=("$cur_dir/localpre" "$HOME/.cache/dotzsh/localpre" "/tmp/localpre")
 for localpre in ${localpre_arr[*]}; do
   if [ -d $localpre ]; then
-    for i in $localpre/*sh(N); do
+    for i in $localpre/*.sh(N); do
       if [ -r $i ]; then
         source $i
       fi
@@ -106,7 +106,7 @@ done
 localpost_arr=("$cur_dir/localpost" "$HOME/.cache/dotzsh/localpost" "/tmp/localpost")
 for localpost in ${localpost_arr[*]}; do
   if [ -d $localpost ]; then
-    for i in $localpost/*sh(N); do
+    for i in $localpost/*.sh(N); do
       if [ -r $i ]; then
         source $i
       fi

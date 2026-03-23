@@ -16,6 +16,9 @@ _dotzsh_cmd_exists() {
     command -v "$@" &>/dev/null
 }
 
+real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+current_dir=`cd $(dirname "$real_location");pwd`
+
 if [[ $1 -eq 1 ]]; then
     test ! -d ~/.cache/dotzsh/localpre && mkdir -pv ~/.cache/dotzsh/localpre
     test ! -d ~/.cache/dotzsh/localpost && mkdir -pv ~/.cache/dotzsh/localpost
@@ -23,8 +26,6 @@ if [[ $1 -eq 1 ]]; then
 elif [[ $1 -eq 2 ]]; then
     generate_file=/tmp/common.fish
 else
-    real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-    current_dir=`cd $(dirname "$real_location");pwd`
     full_filename=`echo ${real_location##*/}`
     strip_in_name=`echo ${full_filename%.*}`
     generate_file=${current_dir}/${strip_in_name}
@@ -1012,7 +1013,28 @@ alias .... 'cd ../../..'
 alias ..... 'cd ../../../..'
 
 ## ----------------------- fish settings ---------------------- ]]]1
+EOF
 
+some_al="set localpost_arr \"$current_dir/localpost\" "
+
+some_al+='"$HOME/.cache/dotzsh/localpost" "/tmp/localpost"
+for localpost in $localpost_arr
+    if test -d "$localpost"
+        for i in "$localpost"/*.fish
+            if test -r "$i"
+                source "$i"
+            end
+        end
+        break
+    end
+end
+'
+
+cat >> $generate_file << EOF
+$some_al
+EOF
+
+cat >> $generate_file << EOF
 zoxide init fish | source
 # starship init fish | source
 EOF
