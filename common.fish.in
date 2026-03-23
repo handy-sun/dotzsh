@@ -78,7 +78,7 @@ function gitur -d "Git update and rebase"
 
     set -l remote_arr (git remote)
     for var in $remote_arr
-        git push --all $var
+        git push $argv[1] $var
     end
 end
 
@@ -360,7 +360,7 @@ alias gclfd="git clean -fd"
 
 ## git push all remotes
 function gpar -d "Push to all remotes"
-    git remote | xargs -I{} git push --all {}
+    git remote | xargs -I{} git push $argv[1] {}
 end
 
 ## tar
@@ -397,7 +397,7 @@ function qip -d "Query IP info"
 end
 
 function rlip4 -d "List local IPv4 addresses"
-    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet") | .local'
+    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet")'
 end
 
 function rlip6 -d "List local IPv6 addresses"
@@ -560,6 +560,12 @@ function rspid -d "Rapid search PID"
 end
 '
 fi
+
+some_al+='
+function tara -d "gnutar use zstd(gnutar version >= 1.31)"
+    tar cfa "$argv[1].tar.zst" "$argv[2]"
+end
+'
 
 cat >> $generate_file << EOF
 $some_al
@@ -954,6 +960,56 @@ function fish_right_prompt --description 右侧提示符
     echo -n -s (set_color brblack) (date +%H:%M:%S) ' ' (set_color normal)
     echo -n -s (prompt_login) (set_color normal)
 end
+
+function reverse_history_search
+    history | fzf --no-sort | read -l command
+    if test $command
+        commandline -rb $command
+    end
+end
+
+function fish_user_key_bindings
+    if type -q fzf_key_bindings
+        fzf_key_bindings
+    end
+
+    bind \cr reverse_history_search
+    bind -M insert \cr reverse_history_search
+
+    # bind -M insert \e\[1~ beginning-of-line 2>/dev/null
+    # bind -M insert \e\[3~ delete-char 2>/dev/null
+    # bind -M insert \e\[4~ end-of-line 2>/dev/null   ## Home key - beginning of line
+
+    bind \e\[H beginning-of-line
+    bind \e\[1~ beginning-of-line
+    ## End key - end of line
+    bind \e\[F end-of-line
+    bind \e\[4~ end-of-line
+    ## Delete key
+    bind \e\[3~ delete-char
+    ## Right/Left arrow keys (word navigation)
+    # bind \e\[1;5C forward-word
+    # bind \e\[1;5D backward-word
+    # bind \eOc forward-word
+    # bind \eOd backward-word
+    ## PageUp/PageDown - history search
+    bind \e\[5~ history-search-backward
+    bind \e\[6~ history-search-forward
+    ## Ctrl+Backspace - delete previous word
+    bind \cH backward-kill-word
+    ## Shift+Tab - undo
+    bind \e\[Z undo
+    ## Alt+O - cd ..
+    bind \eo 'cd ..\n'
+    ## Alt+; - ll
+    bind \e\; 'll\n'
+    ## Escape Escape - sudo command line
+    bind \e\e 'sudo '
+end
+
+alias ... 'cd ../..'
+alias .... 'cd ../../..'
+alias ..... 'cd ../../../..'
 
 ## ----------------------- fish settings ---------------------- ]]]1
 

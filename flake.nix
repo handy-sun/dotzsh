@@ -27,8 +27,9 @@
     in {
       options.programs.dotzsh = {
         enable = lib.mkEnableOption "execute cm-init shell";
-        enableSourceZshrc = lib.mkEnableOption "init Content in .zshrc";
-        enableSourceFishrc = lib.mkEnableOption "init Content in .fishrc";
+        enableZshIntegration = lib.mkEnableOption "init Content in .zshrc";
+        enableFishIntegration = lib.mkEnableOption "init Content in .fishrc";
+        enableBashIntegration = lib.mkEnableOption "init Content in .bashrc";
       };
 
       config = lib.mkMerge [
@@ -50,17 +51,24 @@
           '';
         })
 
-        (lib.mkIf cfg.enableSourceZshrc {
+        (lib.mkIf cfg.enableZshIntegration {
           programs.zsh.initContent = lib.mkOrder 1200 ''
             # --- github:handy/dotzsh flake auto-sourced ---
             source ${self}/zshrc
           '';
         })
 
-        (lib.mkIf cfg.enableSourceFishrc {
+        (lib.mkIf cfg.enableFishIntegration {
           programs.fish.shellInitLast = ''
             # --- github:handy/dotzsh flake auto-sourced ---
             source ${config.home.homeDirectory}/.cache/dotzsh/common.fish
+          '';
+        })
+
+        (lib.mkIf cfg.enableBashIntegration {
+          programs.bash.shellInitLast = ''
+            # --- github:handy/dotzsh flake auto-sourced ---
+            source ${config.home.homeDirectory}/.cache/dotzsh/common.sh
           '';
         })
       ];

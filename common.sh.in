@@ -70,7 +70,7 @@ gitur() {
 
     remote_arr=(`git remote`)
     for var in ${remote_arr[*]}; do
-        git push --all $var
+        git push $1 $var
     done
 }
 ## List all untracked files/directories in current git repo and decide whether to delete it.
@@ -369,7 +369,7 @@ alias gcln="git clean -n"
 alias gclfd="git clean -fd"
 ## alias not working well, use function instead
 gpar() {
-    git remote | xargs bash -c 'for rmt do git push --all $rmt; done ' {}
+    git remote | xargs bash -c 'for rmt do git push $1 $rmt; done ' {}
 }
 
 ## tar
@@ -581,6 +581,11 @@ rspid() {
     procs --no-header --only PID "$1" | xargs -n 1
 }\n'
 fi
+
+some_al+=$'
+tara() {
+    tar cfa "${1}.tar.zst" "$2"
+}\n'
 
 cat >> $generate_file << EOF
 $some_al
