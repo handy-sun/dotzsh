@@ -79,7 +79,7 @@ function gitur -d "Git update and rebase"
 
     set -l remote_arr (git remote)
     for var in $remote_arr
-        git push $argv[1] $var
+        git push $var $argv[1]
     end
 end
 
@@ -361,7 +361,7 @@ alias gclfd="git clean -fd"
 
 ## git push all remotes
 function gpar -d "Push to all remotes"
-    git remote | xargs -I{} git push $argv[1] {}
+    git remote | xargs -I{} git push {} $argv[1]
 end
 
 ## tar
@@ -378,7 +378,7 @@ alias cp="cp -Rvf"
 alias sln="ln -sfnv"
 alias less="less -R"
 alias rrm="rm -rf"
-alias grep="grep --color=auto"
+# alias grep="grep --color=auto"
 alias diff="diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
@@ -593,41 +593,45 @@ alias sylsa="sudo systemctl list-units -t service --all"
 EOF
 elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
-alias syst="sudo launchctl start"
-alias syte="sudo launchctl stop"
-alias syenw="sudo launchctl load -w"
-alias sydisw="sudo launchctl unload -w"
-
-alias bsst="brew services start"
-alias bste="brew services stop"
-alias bsrs="brew services restart"
-alias bsls="brew services list"
-alias bsinf="brew services info --all"
-
-function syuss -d "System user services search"
-    sudo launchctl list | grep -i $argv[1] | awk '{print $3}'
-end
-
-function syss -d "System services search"
-    launchctl list | grep -i $argv[1] | awk '{print $3}'
-end
-
-function syspr -d "System service print"
-    set -l srv_target (syuss $argv[1])
-    if test -n "$srv_target"
-        launchctl print system/$srv_target
-    else
-        echo 'None service target'
+function syps -d "Search system/user services "
+    if not sudo launchctl list | grep -i $argv[1]
+        launchctl list | grep -i $argv[1]
     end
 end
 
-function sygpr -d "System gui service print"
-    set -l uid (id -u)
-    set -l srv_target (syss $argv[1])
-    if test -n "$srv_target"
-        launchctl print gui/$uid/$srv_target
+function syca -d "View plist file"
+    set -l plist_path (fd "$argv[1]" /Library/Launch{Daemons,Agents} ~/Library/LaunchAgents | head -n 1)
+    if test -n "$plist_path"
+        echo $plist_path
+        bat $plist_path
+    end
+end
+
+function syst -d "launchctl load"
+    set -l root_lib_path (fd "$argv[1]" /Library/Launch{Daemons,Agents} | head -n 1)
+    if test -n "$root_lib_path"
+        echo "sudo launchctl load "$root_lib_path
+        sudo launchctl load $root_lib_path
     else
-        echo 'None service target'
+        set -l user_lib_path (fd "$argv[1]" ~/Library/LaunchAgents | head -n 1)
+        if test -n "$user_lib_path"
+            echo "launchctl load "$user_lib_path
+            launchctl load $user_lib_path
+        end
+    end
+end
+
+function syte -d "launchctl unload"
+    set -l root_lib_path (fd "$argv[1]" /Library/Launch{Daemons,Agents} | head -n 1)
+    if test -n "$root_lib_path"
+        echo "sudo launchctl unload "$root_lib_path
+        sudo launchctl unload $root_lib_path
+    else
+        set -l user_lib_path (fd "$argv[1]" ~/Library/LaunchAgents | head -n 1)
+        if test -n "$user_lib_path"
+            echo "launchctl unload "$root_lib_path
+            launchctl unload $user_lib_path
+        end
     end
 end
 
@@ -939,11 +943,27 @@ end
 
 ## Right prompt (fish_right_prompt)
 ## ============================================================
-# function fish_preexect --description not work?
-#     set -g __exec_timer  (date +%s)
-# end
 ## Original zsh: '%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
 function fish_right_prompt --description 右侧提示符
+    set -l elapsed (math -s1 "$CMD_DURATION / 1000")
+    set_color cyan
+    if test $elapsed -ge 4
+        if test $elapsed -ge 60
+            set -l minutes (math -s0 $elapsed / 60)
+            set -l seconds (math -s0 $elapsed % 60)
+            if test $minutes -ge 60
+                set -l hours (math -s0 $minutes / 60)
+                set -l remain_mins (math -s0 $minutes % 60)
+                echo -n $hours"h"$remain_mins"m"$seconds"s "
+            else
+                echo -n $minutes"m"$seconds"s "
+            end
+        else
+            echo -n $elapsed"s "
+        end
+    end
+    set_color normal
+
     ## ------ git_dirty_count ------
     set -l git_branch (git rev-parse --abbrev-ref HEAD 2>/dev/null)
     if [ $status -eq 0 ]
@@ -958,7 +978,7 @@ function fish_right_prompt --description 右侧提示符
         echo -n -s (set_color cyan) "%$job_count "
     end
     ## ------ Current time (grey) and user@hostname ------
-    echo -n -s (set_color brblack) (date +%H:%M:%S) ' ' (set_color normal)
+    echo -n -s (set_color white) (date +%H:%M:%S) ' ' (set_color normal)
     echo -n -s (prompt_login) (set_color normal)
 end
 
@@ -1005,7 +1025,7 @@ function fish_user_key_bindings
     ## Alt+; - ll
     bind \e\; 'll\n'
     ## Escape Escape - sudo command line
-    bind \e\e 'sudo '
+    # bind \e\e 'sudo '
 end
 
 alias ... 'cd ../..'

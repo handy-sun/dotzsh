@@ -369,7 +369,7 @@ alias gcln="git clean -n"
 alias gclfd="git clean -fd"
 ## alias not working well, use function instead
 gpar() {
-    git remote | xargs bash -c 'for rmt do git push $1 $rmt; done ' {}
+    git remote | xargs bash -c 'for rmt do git push $rmt $1; done ' {}
 }
 
 ## tar
@@ -389,7 +389,7 @@ alias sln="ln -sfnv"
 alias less="less -R"
 alias df="df -h -T"
 alias rrm="\rm -rf"
-alias grep="\grep --color=auto"
+# alias grep="\grep --color=auto"
 alias diff="\diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
@@ -612,31 +612,47 @@ alias sylsa="sudo systemctl list-units -t service --all"
 EOF
 elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
-alias syst="sudo launchctl start"
-alias syte="sudo launchctl stop"
-alias syenw="sudo launchctl load -w"
-alias sydisw="sudo launchctl unload -w"
-
-alias bsst="brew services start"
-alias bste="brew services stop"
-alias bsrs="brew services restart"
-alias bsls="brew services list"
-alias bsinf="brew services info --all"
-
-syuss() {
-    sudo launchctl list | grep -i $1 | awk '{print$3;}'
+# Search system/user services
+syps() {
+    if ! sudo launchctl list | grep -i "$1"; then
+        launchctl list | grep -i "$1"
+    fi
 }
-syss() {
-    launchctl list | grep -i $1 | awk '{print$3;}'
+# View plist file
+syca() {
+    local plist_path=$(fd "$1" /Library/LaunchDaemons /Library/LaunchAgents ~/Library/LaunchAgents | head -n 1)
+    if [ -n "$plist_path" ]; then
+        echo $plist_path
+        bat "$plist_path"
+    fi
 }
-syspr() {
-    local srv_target=`syuss ${1}`
-    [[ -n "${srv_target}" ]] && launchctl print system/${srv_target} || echo 'None service target'
+# launchctl load
+syst() {
+    local root_lib_path=$(fd "$1" /Library/LaunchDaemons /Library/LaunchAgents | head -n 1)
+    if [ -n "$root_lib_path" ]; then
+        echo "sudo launchctl load $root_lib_path"
+        sudo launchctl load "$root_lib_path"
+    else
+        local user_lib_path=$(fd "$1" ~/Library/LaunchAgents | head -n 1)
+        if [ -n "$user_lib_path" ]; then
+            echo "launchctl load $user_lib_path"
+            launchctl load "$user_lib_path"
+        fi
+    fi
 }
-sygpr() {
-    local uid=`id -u`
-    local srv_target=`syss ${1}`
-    [[ -n "${srv_target}" ]] && launchctl print gui/${uid}/${srv_target} || echo 'None service target'
+# launchctl unload
+syte() {
+    local root_lib_path=$(fd "$1" /Library/LaunchDaemons /Library/LaunchAgents | head -n 1)
+    if [ -n "$root_lib_path" ]; then
+        echo "sudo launchctl unload $root_lib_path"
+        sudo launchctl unload "$root_lib_path"
+    else
+        local user_lib_path=$(fd "$1" ~/Library/LaunchAgents | head -n 1)
+        if [ -n "$user_lib_path" ]; then
+            echo "launchctl unload $user_lib_path"
+            launchctl unload "$user_lib_path"
+        fi
+    fi
 }
 
 EOF
