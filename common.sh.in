@@ -325,6 +325,7 @@ alias gta="git status"
 alias gts="git status -s"
 alias gtun="git status uno"
 
+alias gad="git add . -v"
 alias gcm="git commit"
 alias gcmm="git commit -m"
 alias gcma="git commit -a"
