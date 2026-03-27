@@ -371,7 +371,7 @@ add-zsh-hook precmd pre_set_prompt
 
 unsetopt extended_glob
 
-PROMPT='%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? %F{white})%B>%b%f '
+PROMPT='%(2L.%F{yellow}%L%f .)%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? %F{white})%B>%b%f '
 
 # only zsh alias
 alias -g ...='../..'

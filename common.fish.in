@@ -375,6 +375,8 @@ alias matarz="COPYFILE_DISABLE=1 tar --exclude='.DS_Store' -zcf"
 alias maunz="ditto -V -x -k --sequesterRsrc"
 
 ## other shell utilities
+## fish not support?
+# alias r="fc -s"
 alias pingk="ping -c4"
 alias cp="cp -Rvf"
 alias sln="ln -sfnv"
@@ -385,6 +387,8 @@ alias diff="diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
 alias dklg="docker logs -n 300 -f"
+alias xch="cd ~/.config"
+alias xdh="cd ~/.local/share"
 
 function surs -d "Secure URL check"
     curl --proto '=https' --tlsv1.2 -LSv https://$argv[1]
@@ -1160,12 +1164,27 @@ set -g fish_color_user yellow
 set -g fish_color_host bryellow
 set -g fish_color_cwd cyan
 set -g __fish_prompt_prefix ">"
+## Git prompt settings - enable dirty state detection
+set -g __fish_git_prompt_showdirtystate 1
+set -g __fish_git_prompt_showuntrackedfiles 1
+set -g __fish_git_prompt_showstashstate 1
+set -g __fish_git_prompt_show_informative_status 1
+set -g __fish_git_prompt_char_stagedstate '+'
+set -g __fish_git_prompt_char_dirtystate '*'
+set -g __fish_git_prompt_char_untrackedfiles '?'
+set -g __fish_git_prompt_char_stashstate '$'
 
 if not set -q __fish_prompt_hostname
     if [ $COMPUTERNAME ]
         set -g __fish_prompt_hostname $COMPUTERNAME
     else
         set -g __fish_prompt_hostname (hostname | cut -d . -f 1)
+    end
+end
+
+function shell_level -d "get SHLVL"
+    if [ $SHLVL -ne 1 ]
+        echo $SHLVL" "
     end
 end
 
@@ -1183,6 +1202,7 @@ function fish_prompt --description 左侧提示符
         end
         set suffix '#'
     end
+
     # Write pipestatus
     # If the status was carried over (if no command is issued or if `set` leaves the status untouched), don't bold it.
     set -l bold_flag --bold
@@ -1193,9 +1213,10 @@ function fish_prompt --description 左侧提示符
     set __fish_prompt_status_generation $status_generation
     set -l status_color (set_color $fish_color_status)
     set -l statusb_color (set_color $bold_flag $fish_color_status)
+
     set -l prompt_status (__fish_print_pipestatus "[" "]" "|" "$status_color" "$statusb_color" $last_pipestatus)
 
-    echo -n -s (set_color $color_cwd) (prompt_pwd) $normal (fish_vcs_prompt) $normal " "$prompt_status
+    echo -n -s (set_color bryellow) (shell_level) $normal (set_color $color_cwd) (prompt_pwd) $normal (fish_vcs_prompt) $normal" "$prompt_status
     if test $__fish_last_status -eq 0
         echo -n -s (set_color brgreen)' '$suffix' '(set_color normal)
     else
@@ -1226,14 +1247,6 @@ function fish_right_prompt --description 右侧提示符
     end
     set_color normal
 
-    ## ------ git_dirty_count ------
-    set -l git_branch (git rev-parse --abbrev-ref HEAD 2>/dev/null)
-    if [ $status -eq 0 ]
-        set -l git_dirty_count (git status --porcelain  | wc -l | sed "s/ //g")
-        if [ $git_dirty_count -gt 0 ]
-            echo -n -s (set_color red)"±$git_dirty_count "
-        end
-    end
     ## ------ Background job count (cyan) ------
     set -l job_count (jobs -p | count)
     if test $job_count -gt 0
