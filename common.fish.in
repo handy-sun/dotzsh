@@ -366,6 +366,10 @@ function gpar -d "Push to all remotes"
     git remote | xargs -I{} git push {} $argv[1]
 end
 
+function gbc -d "Create new branch and checkout to it"
+    git branch $argv[1] && git checkout $argv[1]
+end
+
 ## tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
@@ -404,11 +408,11 @@ function qip -d "Query IP info"
 end
 
 function rlip4 -d "List local IPv4 addresses"
-    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet")'
+    ip -j addr | jq -r '.[] | .ifname as $name | select($name | test("^(lo|br|docker)") | not) | .addr_info[]? | select(.family=="inet") | "\(.local) \(.prefixlen) \(.label // $name)"' | column -t
 end
 
 function rlip6 -d "List local IPv6 addresses"
-    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet6" and (.local | startswith("fe80:") | not)) | .local'
+    ip -j -6 addr | jq -r '.[] | select(.ifname | test("^(lo|br|docker)") | not) | .addr_info[]? | select(.scope == "global" and ([.flags[]?] | any(. == "deprecated" or . == "tentative") | not)) | "\(.label // .local)"'
 end
 
 EOF
@@ -422,7 +426,7 @@ EOF
     if [ -n "$_dotzsh_is_linux" ]; then
         cat >> $generate_file << 'EOF'
 function rlip4 -d "List local IPv4 addresses"
-    ip -o -4 addr list | grep -Ev '\s(docker|lo|tun)' | awk '{printf"%-20s %s\n",$2,$4}'
+    ip -o -4 addr list | grep -Ev '\s(lo|br|docker)' | awk '{printf"%s %s\n",$4,$2}' | column -t
 end
 EOF
     fi

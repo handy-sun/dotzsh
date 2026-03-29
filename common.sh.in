@@ -372,6 +372,9 @@ alias gclfd="git clean -fd"
 gpar() {
     git remote | xargs bash -c 'for rmt do git push $rmt $1; done ' {}
 }
+gbc() {
+    git branch $1 && git checkout $1
+}
 
 ## tar
 alias tarx="tar --no-same-owner -xf"
@@ -430,11 +433,11 @@ qip() {
 }
 
 rlip4() {
-    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet")'
+    ip -j addr | jq -r '.[] | .ifname as $name | select($name | test("^(lo|br|docker)") | not) | .addr_info[]? | select(.family=="inet") | "\(.local) \(.prefixlen) \(.label // $name)"' | column -t
 }
 
 rlip6() {
-    ip -j addr | jq -r '.[] | select(.ifname | test("^lo|^br|^docker|^tun|^utun") | not) | select(.addr_info != null) | .addr_info[] | select(.family=="inet6" and (.local | startswith("fe80:") | not)) | .local'
+    ip -j -6 addr | jq -r '.[] | select(.ifname | test("^(lo|br|docker)") | not) | .addr_info[]? | select(.scope == "global" and ([.flags[]?] | any(. == "deprecated" or . == "tentative") | not)) | "\(.label // .local)"'
 }
 
 EOF
@@ -448,7 +451,7 @@ EOF
     if [ -n "$_dotzsh_is_linux" ]; then
         cat >> $generate_file << 'EOF'
 rlip4() {
-    ip -o -4 addr list | grep -Ev '\s(docker|lo|tun)' | awk '{printf"%-20s %s\n",$2,$4}'
+    ip -o -4 addr list | grep -Ev '\s(lo|br|docker)' | awk '{printf"%s %s\n",$4,$2}' | column -t
 }
 EOF
     fi
