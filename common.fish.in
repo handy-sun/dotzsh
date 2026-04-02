@@ -350,7 +350,6 @@ alias gbr="git branch"
 alias gba="git branch -a -v"
 alias gtl="git tag --list"
 alias gck="git checkout"
-alias grt="git remote -v"
 alias gblm="git blame -L"
 alias gaprj="git apply --reject"
 
@@ -364,6 +363,14 @@ alias gclfd="git clean -fd"
 ## git push all remotes
 function gpar -d "Push to all remotes"
     git remote | xargs -I{} git push {} $argv[1]
+end
+
+function grt -d "Get dir's remote verbose"
+    set -l work_dir "."
+    if test -n "$argv[1]"
+        set work_dir "$argv[1]"
+    end
+    git -C "$work_dir" remote -v
 end
 
 function gbc -d "Create new branch and checkout to it"
@@ -383,7 +390,7 @@ alias maunz="ditto -V -x -k --sequesterRsrc"
 # alias r="fc -s"
 alias pingk="ping -c4"
 alias cp="cp -Rvf"
-alias sln="ln -sfnv"
+alias sfn="ln -sfnv"
 alias less="less -R"
 alias rrm="rm -rf"
 # alias grep="grep --color=auto"
