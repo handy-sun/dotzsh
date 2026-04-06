@@ -4,6 +4,14 @@ if ! command -v docker-compose &>/dev/null; then
 fi
 
 [[ -z "$DKCP_DIR" ]] && test -d "/var/dkcmpo" && export DKCP_DIR=/var/dkcmpo
+if [[ -z "$DKCP_DIR" ]]; then
+    if [ -d "/var/dkcmpo" ]; then
+        export DKCP_DIR=/var/dkcmpo
+    else
+        export DKCP_DIR=~/.local/share/dkcmpo
+        test -d $DKCP_DIR || mkdir -p ~/.local/share/dkcmpo
+    fi
+fi
 
 dcpupd() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
@@ -14,11 +22,6 @@ dcpfru() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
     docker-compose -f $dcp_file up -d --force-recreate --remove-orphans
 }
-
-# dcplgf() {
-#     local dcp_file=$DKCP_DIR/$1/docker-compose.yml
-#     docker-compose -f $dcp_file logs -n 500 -f
-# }
 
 dcpdown() {
     local dcp_file=$DKCP_DIR/$1/docker-compose.yml

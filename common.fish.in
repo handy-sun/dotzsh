@@ -902,7 +902,7 @@ function colored -d "Display man pages with colors"
     set -gx LESS_TERMCAP_mb (set_color --bold red)
     set -gx LESS_TERMCAP_md (set_color --bold red)
     set -gx LESS_TERMCAP_me (set_color normal)
-    set -gx LESS_TERMCAP_so (set_color --bold yellow; set_color background=blue)
+    set -gx LESS_TERMCAP_so (set_color --bold yellow)
     set -gx LESS_TERMCAP_se (set_color normal)
     set -gx LESS_TERMCAP_us (set_color --bold green)
     set -gx LESS_TERMCAP_ue (set_color normal)
@@ -1039,14 +1039,12 @@ if _dotzsh_cmd_exists docker-compose; then
 if test -z "$DKCP_DIR"
     if test -d "/var/dkcmpo"
         set -gx DKCP_DIR /var/dkcmpo
-    end
-end
-
-# DefaultDKCP_DIR if still not set
-if test -z "$DKCP_DIR"
-    set -gx DKCP_DIR ~/.local/share/docker-compose
-    if not test -d "$DKCP_DIR"
-        mkdir -p "$DKCP_DIR"
+    else
+        ## DefaultDKCP_DIR if still not set
+        set -gx DKCP_DIR ~/.local/share/dkcmpo
+        if not test -d "$DKCP_DIR"
+            mkdir -p "$DKCP_DIR"
+        end
     end
 end
 
