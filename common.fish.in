@@ -314,10 +314,10 @@ end
 ## ----------------------- alias ---------------------- [[[1
 ## git
 alias gta="git status"
-alias gts="git status -s"
 alias gtun="git status uno"
 
-alias gad="git add . -v"
+alias gad="git add -v"
+alias gadd="git add . -v"
 alias gcm="git commit"
 alias gcmm="git commit -m"
 alias gcma="git commit -a"
@@ -365,12 +365,16 @@ function gpar -d "Push to all remotes"
     git remote | xargs -I{} git push {} $argv[1]
 end
 
-function grt -d "Get dir's remote verbose"
-    set -l work_dir "."
-    if test -n "$argv[1]"
-        set work_dir "$argv[1]"
-    end
-    git -C "$work_dir" remote -v
+function gts -d "Get dir's git status short"
+    set -l d $argv[1]
+    test -z "$d"; and set d .
+    git -C $d status -s
+end
+
+function grt -d "Get dir's git remote verbose"
+    set -l d $argv[1]
+    test -z "$d"; and set d .
+    git -C $d remote -v
 end
 
 function gbc -d "Create new branch and checkout to it"

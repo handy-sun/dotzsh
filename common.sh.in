@@ -322,7 +322,6 @@ _bash_prompt_cmd() {
 ## ----------------------- alias ---------------------- [[[1
 ## git
 alias gta="git status"
-alias gts="git status -s"
 alias gtun="git status uno"
 
 alias gad="git add . -v"
@@ -358,7 +357,6 @@ alias gbr="git branch"
 alias gba="git branch -a -v"
 alias gtl="git tag --list"
 alias gck="git checkout"
-alias grt="git remote -v"
 alias gblm="git blame -L"
 alias gaprj="git apply --reject"
 
@@ -371,6 +369,11 @@ alias gclfd="git clean -fd"
 ## alias not working well, use function instead
 gpar() {
     git remote | xargs bash -c 'for rmt do git push $rmt $1; done ' {}
+}
+gts() {
+    local d="$1"
+    [ -z "$d" ] && d="."
+    git -C "$d" status -s
 }
 grt() {
     local work_dir="."
