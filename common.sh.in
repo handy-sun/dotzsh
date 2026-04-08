@@ -1,4 +1,4 @@
-#!env bash
+#!/usr/bin/env bash
 set -e
 
 OS_TYPE=$(uname)
@@ -324,7 +324,7 @@ _bash_prompt_cmd() {
 alias gta="git status"
 alias gtun="git status uno"
 
-alias gad="git add . -v"
+alias gad="git add -v"
 alias gcm="git commit"
 alias gcmm="git commit -m"
 alias gcma="git commit -a"
@@ -384,6 +384,39 @@ grt() {
 }
 gbc() {
     git branch $1 && git checkout $1
+}
+## Find git repository root directory
+git_root_dir() {
+    local current_dir="$(pwd)"
+    local original_dir="$current_dir"
+
+    while [[ "$current_dir" != "/" ]]; do
+        if [[ -d "$current_dir/.git" ]]; then
+            echo "$current_dir"
+            return 0
+        fi
+
+        current_dir="$(dirname "$current_dir")"
+
+        # Prevent infinite loop by checking if we reached the filesystem root
+        if [[ "$current_dir" = "/" ]]; then
+            break
+        fi
+    done
+
+    ## If we get here, we didn't find a git repo
+    echo "fatal: not a git repository (or any of the parent directories): .git" >&2
+    return 128
+}
+## Add files to git using the git root directory
+gaa() {
+    local root_dir
+    root_dir=$(git_root_dir)
+    if [[ $? -eq 0 ]]; then
+        git -C "$root_dir" add . -v "$@"
+    else
+        return 1
+    fi
 }
 
 ## tar

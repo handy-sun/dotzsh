@@ -1,4 +1,4 @@
-#!env bash
+#!/usr/bin/env bash
 set -e
 
 OS_TYPE=$(uname)
@@ -317,7 +317,6 @@ alias gta="git status"
 alias gtun="git status uno"
 
 alias gad="git add -v"
-alias gadd="git add . -v"
 alias gcm="git commit"
 alias gcmm="git commit -m"
 alias gcma="git commit -a"
@@ -379,6 +378,38 @@ end
 
 function gbc -d "Create new branch and checkout to it"
     git branch $argv[1] && git checkout $argv[1]
+end
+
+function git_root_dir -d "Find and return the root directory of the current git repository"
+    set -l current_dir (pwd)
+    set -l original_dir $current_dir
+
+    while test $current_dir != "/"
+        if test -d "$current_dir/.git"
+            echo $current_dir
+            return 0
+        end
+
+        set current_dir (dirname $current_dir)
+
+        ## Prevent infinite loop by checking if we reached the filesystem root
+        if test "$current_dir" = "/"
+            break
+        end
+    end
+
+    ## If we get here, we didn't find a git repo
+    echo "fatal: not a git repository (or any of the parent directories): .git" >&2
+    return 128
+end
+
+function gaa -d "git add . -v in the git repository root directory"
+    set -l root_dir (git_root_dir)
+    if test $status -eq 0
+        git -C "$root_dir" add . -v
+    else
+        return 1
+    end
 end
 
 ## tar
