@@ -343,7 +343,7 @@ alias grs="git reset"
 alias grsh="git reset --hard"
 alias grss="git reset --soft"
 alias gro="git restore"
-alias grog="git restore --staged"
+alias grg="git restore --staged"
 
 alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
 alias glp="glg --graph"
@@ -410,10 +410,27 @@ git_root_dir() {
 }
 ## Add files to git using the git root directory
 gaa() {
-    local root_dir
-    root_dir=$(git_root_dir)
+    local root_dir=$(git_root_dir)
     if [[ $? -eq 0 ]]; then
         git -C "$root_dir" add . -v "$@"
+    else
+        return 1
+    fi
+}
+
+groa() {
+    local root_dir=$(git_root_dir)
+    if [[ $? -eq 0 ]]; then
+        git -C "$root_dir" restore . "$@"
+    else
+        return 1
+    fi
+}
+
+grga() {
+    local root_dir=$(git_root_dir)
+    if [[ $? -eq 0 ]]; then
+        git -C "$root_dir" restore --staged . "$@"
     else
         return 1
     fi
@@ -430,14 +447,12 @@ alias maunz="ditto -V -x -k --sequesterRsrc"
 ## other shell
 alias r="fc -s"
 alias pingk="ping -c4"
-alias cp="cp -Rvf"
-# alias mv="mv -v"
+alias cp="command cp -Rvf"
 alias sfn="ln -sfnv"
-alias less="less -R"
-alias df="df -h -T"
-alias rrm="\rm -rf"
-# alias grep="\grep --color=auto"
-alias diff="\diff --color=auto"
+alias less="command less -R"
+alias df="command df -h -T"
+alias rrm="command rm -rf"
+alias diff="command diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
 alias dklg="docker logs -n 300 -f"
@@ -659,6 +674,19 @@ alias sydr="sudo systemctl daemon-reload"
 alias sylss="sudo systemctl list-units -t service"
 alias sylsa="sudo systemctl list-units -t service --all"
 
+alias sust="systemctl --user start"
+alias surs="systemctl --user restart"
+alias sute="systemctl --user stop"
+alias surld="systemctl --user reload"
+alias suen="systemctl --user enable"
+alias sued="systemctl --user edit"
+alias suenw="systemctl --user enable --now"
+alias sudis="systemctl --user disable"
+alias sudisw="systemctl --user disable --now"
+alias sudr="systemctl --user daemon-reload"
+alias sulss="systemctl --user list-units -t service"
+alias sulsa="systemctl --user list-units -t service --all"
+
 EOF
 elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
@@ -739,7 +767,7 @@ if _dotzsh_cmd_exists ninja; then
 ## cmake
 export BUILD_DIR=./build
 
-alias cmkln="\rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
+alias cmkln="command rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
 alias cmkr="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
@@ -750,7 +778,7 @@ else
     cat >> $generate_file << 'EOF'
 export BUILD_DIR=./build
 
-alias cmkln="\rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
+alias cmkln="command rm -rf ${BUILD_DIR}/CMake{Cache.txt,Files}"
 alias cmkr="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build ${BUILD_DIR}"
@@ -804,7 +832,7 @@ else
     if ls --color=auto /dev/null &>/dev/null; then
         cat >> $generate_file << 'EOF'
 [[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
-alias ls="ls -A $LS_OPTIONS"
+alias ls="command ls -A $LS_OPTIONS"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
@@ -812,7 +840,7 @@ alias la="ls -alF"
 EOF
     else
         cat >> $generate_file << 'EOF'
-alias ls="ls -A"
+alias ls="command ls -A"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
