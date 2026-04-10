@@ -5,11 +5,6 @@ OS_TYPE=$(uname)
 
 if [ "$OS_TYPE" == "Linux" ]; then
     _dotzsh_is_linux=1
-    # echo "Operating system is Linux"
-# elif [ "$OS_TYPE" == "Darwin" ]; then
-    # echo "Operating system is MacOS($OS_TYPE)"
-# else
-    # echo "Special operating system: $OS_TYPE"
 fi
 
 _dotzsh_cmd_exists() {
@@ -335,7 +330,7 @@ alias grs="git reset"
 alias grsh="git reset --hard"
 alias grss="git reset --soft"
 alias gro="git restore"
-alias grog="git restore --staged"
+alias grg="git restore --staged"
 
 alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
 alias glp="glg --graph"
@@ -412,6 +407,24 @@ function gaa -d "git add . -v in the git repository root directory"
     end
 end
 
+function groa -d "git restore . in the git repository root directory"
+    set -l root_dir (git_root_dir)
+    if test $status -eq 0
+        git -C "$root_dir" restore .
+    else
+        return 1
+    end
+end
+
+function grga -d "git restore --staged . in the git repository root directory"
+    set -l root_dir (git_root_dir)
+    if test $status -eq 0
+        git -C "$root_dir" restore --staged .
+    else
+        return 1
+    end
+end
+
 ## tar
 alias tarx="tar --no-same-owner -xf"
 alias tarz="tar zcf"
@@ -424,12 +437,12 @@ alias maunz="ditto -V -x -k --sequesterRsrc"
 ## fish not support?
 # alias r="fc -s"
 alias pingk="ping -c4"
-alias cp="cp -Rvf"
+alias cp="command cp -Rvf"
 alias sfn="ln -sfnv"
-alias less="less -R"
-alias rrm="rm -rf"
-# alias grep="grep --color=auto"
-alias diff="diff --color=auto"
+alias less="command less -R"
+alias df="command df -h -T"
+alias rrm="command rm -rf"
+alias diff="command diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias surl="curl --proto '=https' --tlsv1.2 -LSv"
 alias dklg="docker logs -n 300 -f"
@@ -644,6 +657,19 @@ alias sydr="sudo systemctl daemon-reload"
 alias sylss="sudo systemctl list-units -t service"
 alias sylsa="sudo systemctl list-units -t service --all"
 
+alias sust="systemctl --user start"
+alias surs="systemctl --user restart"
+alias sute="systemctl --user stop"
+alias surld="systemctl --user reload"
+alias suen="systemctl --user enable"
+alias sued="systemctl --user edit"
+alias suenw="systemctl --user enable --now"
+alias sudis="systemctl --user disable"
+alias sudisw="systemctl --user disable --now"
+alias sudr="systemctl --user daemon-reload"
+alias sulss="systemctl --user list-units -t service"
+alias sulsa="systemctl --user list-units -t service --all"
+
 EOF
 elif _dotzsh_cmd_exists launchctl; then
     cat >> $generate_file << 'EOF'
@@ -722,7 +748,7 @@ if _dotzsh_cmd_exists ninja; then
 ## cmake
 set -gx BUILD_DIR ./build
 
-alias cmkln="rm -rf \$BUILD_DIR/CMakeCache.txt \$BUILD_DIR/CMakeFiles"
+alias cmkln="command rm -rf \$BUILD_DIR/CMakeCache.txt \$BUILD_DIR/CMakeFiles"
 alias cmkr="cmake -B\$BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B\$BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build \$BUILD_DIR"
@@ -733,7 +759,7 @@ else
     cat >> $generate_file << 'EOF'
 set -gx BUILD_DIR ./build
 
-alias cmkln="rm -rf \$BUILD_DIR/CMakeCache.txt \$BUILD_DIR/CMakeFiles"
+alias cmkln="command rm -rf \$BUILD_DIR/CMakeCache.txt \$BUILD_DIR/CMakeFiles"
 alias cmkr="cmake -B\$BUILD_DIR -DCMAKE_BUILD_TYPE=Release"
 alias cmkd="cmake -B\$BUILD_DIR -DCMAKE_BUILD_TYPE=Debug"
 alias cmba="cmake --build \$BUILD_DIR"
@@ -789,7 +815,7 @@ else
 if not set -q LS_OPTIONS
     set -gx LS_OPTIONS "--color=auto"
 end
-alias ls="ls -A \$LS_OPTIONS"
+alias ls="command ls -A \$LS_OPTIONS"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
@@ -797,7 +823,7 @@ alias la="ls -alF"
 EOF
     else
         cat >> $generate_file << 'EOF'
-alias ls="ls -A"
+alias ls="command ls -A"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
@@ -836,7 +862,7 @@ function pkgql -d "List package files"
 end
 
 function pkgssw -d "Search package exact match"
-    $_cmd -Ss "^\$argv[1]\$"
+    $_cmd -Ss "^\$argv[1]\\$"
 end
 
 EOF
