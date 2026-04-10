@@ -597,11 +597,13 @@ end
 else # darwin system
     some_al+='
 function dus -d "Disk usage sorted"
-    du -Alh -d1 $argv[1] | sort -rh | head -n 21
+    set -l _dir "$argv[1]"
+    test -z "$_dir"; and set _dir .
+    du -Alh -d1 "$_dir" | sort -rh | head -n 21
 end
 
 function qpid -d "Query PID by name"
-    ps -ef | grep "$argv[1]" | grep -vE '\''grep|\]$'\'' | awk '\''{print $2}'\''
+    /bin/ps -ef | grep "$argv[1]" | grep -vE '\''grep|\]$'\'' | awk '\''{print $2}'\''
 end
 '
 fi
@@ -1012,11 +1014,9 @@ end
 # ==========================
 function copybuffer -d "Copy active line from command line buffer to clipboard"
     # Get buffer content or last command if empty
-    set -l buf
-    if test -z "$BUFFER"
-        set buf (fc -ln -1 | head -1)
-    else
-        set buf "$BUFFER"
+    set -l buf (commandline)
+    if test -z "$buf"
+        set buf (history | head -n 1)
     end
 
     if test -z "$buf"
@@ -1056,12 +1056,6 @@ function copybuffer -d "Copy active line from command line buffer to clipboard"
 
     # Copy to clipboard
     echo -n "$buf" | eval $copycmd
-end
-
-# Fish key binding - use bind command
-function fish_user_key_bindings
-    # Ctrl+O to copy buffer
-    bind \co copybuffer
 end
 
 EOF
@@ -1315,10 +1309,15 @@ function fish_user_key_bindings
 
     bind \cr reverse_history_search
     bind -M insert \cr reverse_history_search
+    # Ctrl+O to copy buffer
+    bind \co copybuffer
 
-    # bind -M insert \e\[1~ beginning-of-line 2>/dev/null
-    # bind -M insert \e\[3~ delete-char 2>/dev/null
-    # bind -M insert \e\[4~ end-of-line 2>/dev/null   ## Home key - beginning of line
+    ## Vi Insert mode: Home key - beginning of line
+    bind -M insert \e\[1~ beginning-of-line 2>/dev/null
+    ## Vi Insert mode: Delete key
+    bind -M insert \e\[3~ delete-char 2>/dev/null
+    ## Vi Insert mode: End key - end of line
+    bind -M insert \e\[4~ end-of-line 2>/dev/null
 
     bind \e\[H beginning-of-line
     bind \e\[1~ beginning-of-line
@@ -1328,10 +1327,8 @@ function fish_user_key_bindings
     ## Delete key
     bind \e\[3~ delete-char
     ## Right/Left arrow keys (word navigation)
-    # bind \e\[1;5C forward-word
-    # bind \e\[1;5D backward-word
-    # bind \eOc forward-word
-    # bind \eOd backward-word
+    bind \eOc forward-word
+    bind \eOd backward-word
     ## PageUp/PageDown - history search
     bind \e\[5~ history-search-backward
     bind \e\[6~ history-search-forward
