@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # flake-utils.url = "github:numtide/flake-utils";
     flake-parts.url = "github:hercules-ci/flake-parts";
     devshell.url = "github:numtide/devshell";
     home-manager = {
@@ -29,7 +28,6 @@
         enable = lib.mkEnableOption "execute cm-init shell";
         enableZshIntegration = lib.mkEnableOption "init Content in .zshrc";
         enableFishIntegration = lib.mkEnableOption "init Content in .fishrc";
-        # enableBashIntegration = lib.mkEnableOption "init Content in .bashrc";
       };
 
       config = lib.mkMerge [
@@ -59,18 +57,15 @@
         })
 
         (lib.mkIf cfg.enableFishIntegration {
-          programs.fish.shellInitLast = ''
+          programs.fish.shellInitLast = let
+            commonFish = pkgs.runCommand "dotzsh-common.fish" {} ''
+              ${pkgs.bash}/bin/bash ${./common.fish.in} stdout > $out
+            '';
+          in ''
             # --- github:handy/dotzsh flake auto-sourced ---
-            source ${config.home.homeDirectory}/.cache/dotzsh/common.fish
+            source ${commonFish}
           '';
         })
-
-        # (lib.mkIf cfg.enableBashIntegration {
-        #   programs.bash.shellInit = ''
-        #     # --- github:handy/dotzsh flake auto-sourced ---
-        #     source ${config.home.homeDirectory}/.cache/dotzsh/common.sh
-        #   '';
-        # })
       ];
     };
 
@@ -90,7 +85,7 @@
             pkgs.coreutils
           ];
           text = ''
-            ${pkgs.bash}/bin/bash ${./common.sh.in} 1
+            ${pkgs.bash}/bin/bash ${./common.sh.in} -1
           '';
         };
         fish-init = pkgs.writeShellApplication {
@@ -100,7 +95,7 @@
             pkgs.coreutils
           ];
           text = ''
-            ${pkgs.bash}/bin/bash ${./common.fish.in} 1
+            ${pkgs.bash}/bin/bash ${./common.fish.in} -1
           '';
         };
       };
