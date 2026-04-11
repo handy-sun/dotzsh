@@ -444,12 +444,12 @@ alias df="command df -h -T"
 alias rrm="command rm -rf"
 alias diff="command diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
-alias surl="curl --proto '=https' --tlsv1.2 -LSv"
+alias hurl="curl --proto '=https' --tlsv1.2 -LSv"
 alias dklg="docker logs -n 300 -f"
 alias xch="cd ~/.config"
 alias xdh="cd ~/.local/share"
 
-function surs -d "Secure URL check"
+function hurs -d "Secure URL check"
     curl --proto '=https' --tlsv1.2 -LSv https://$argv[1]
 end
 ## ----------------------- alias ---------------------- ]]]
@@ -657,6 +657,8 @@ alias sydr="sudo systemctl daemon-reload"
 alias sylss="sudo systemctl list-units -t service"
 alias sylsa="sudo systemctl list-units -t service --all"
 
+alias suta="systemctl --user status"
+alias suca="systemctl --user cat"
 alias sust="systemctl --user start"
 alias surs="systemctl --user restart"
 alias sute="systemctl --user stop"
