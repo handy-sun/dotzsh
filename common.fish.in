@@ -445,12 +445,12 @@ alias maunz="ditto -V -x -k --sequesterRsrc"
 ## fish not support?
 # alias r="fc -s"
 alias pingk="ping -c4"
-alias cp="command cp -Rvf"
+alias cp="cp -Rvf"
 alias sfn="ln -sfnv"
-alias less="command less -R"
-alias df="command df -h -T"
+alias less="less -R"
+alias df="df -h -T"
 alias rrm="command rm -rf"
-alias diff="command diff --color=auto"
+alias diff="diff --color=auto"
 alias pipins="pip install -i https://pypi.tuna.tsinghua.edu.cn/simple"
 alias hurl="curl --proto '=https' --tlsv1.2 -LSv"
 alias dklg="docker logs -n 300 -f"
@@ -824,7 +824,7 @@ else
 if not set -q LS_OPTIONS
     set -gx LS_OPTIONS "--color=auto"
 end
-alias ls="command ls -A \$LS_OPTIONS"
+alias ls="ls -A \$LS_OPTIONS"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
@@ -832,7 +832,7 @@ alias la="ls -alF"
 EOF
     else
         _dotzsh_append_buffer << 'EOF'
-alias ls="command ls -A"
+alias ls="ls -A"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
 alias la="ls -alF"
