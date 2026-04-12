@@ -23,6 +23,12 @@
       ## usually is `~/.nix-profile/bin`, sometimes `/etc/profiles/per-user/$USER/bin`
       userNixProfileBin = "${config.home.profileDirectory}/bin";
       systemBin = "/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
+      setPathScript = ''
+        export PATH="${userNixProfileBin}:${systemBin}:$PATH"
+        if [ -f /opt/homebrew/bin/brew ]; then
+          export PATH="/opt/homebrew/bin:$PATH"
+        fi
+      '';
     in {
       options.programs.dotzsh = {
         enable = lib.mkEnableOption "execute cm-init shell";
@@ -35,10 +41,7 @@
           home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
           ## Same to  `nix run .#cm-init` and `nix run .#fish-init`
           home.activation.runMyShellInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
-            export PATH="${userNixProfileBin}:${systemBin}:$PATH"
-            if [ -f /opt/homebrew/bin/brew ]; then
-              export PATH="/opt/homebrew/bin:$PATH"
-            fi
+            ${setPathScript}
             echo "--- Running dotzsh shell init ---"
             # echo "### Current PATH:"
             # echo "$PATH" | tr ':' '\n'
@@ -59,6 +62,7 @@
         (lib.mkIf cfg.enableFishIntegration {
           programs.fish.shellInitLast = let
             commonFish = pkgs.runCommand "dotzsh-common.fish" {} ''
+              ${setPathScript}
               ${pkgs.bash}/bin/bash ${./common.fish.in} stdout > $out
             '';
           in ''
