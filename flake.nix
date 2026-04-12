@@ -34,6 +34,7 @@
         enable = lib.mkEnableOption "execute cm-init shell";
         enableZshIntegration = lib.mkEnableOption "init Content in .zshrc";
         enableFishIntegration = lib.mkEnableOption "init Content in .fishrc";
+        enableFishPrompt = lib.mkEnableOption "set fish_prompt and fish_right_prompt";
       };
 
       config = lib.mkMerge [
@@ -69,6 +70,10 @@
             # --- github:handy/dotzsh flake auto-sourced ---
             source ${commonFish}
           '';
+        })
+
+        (lib.mkIf cfg.enableFishPrompt {
+          programs.fish.interactiveShellInit = builtins.readFile ./fish/prompt.fish;
         })
       ];
     };
