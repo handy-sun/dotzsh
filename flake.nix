@@ -26,6 +26,7 @@
           ...
         }:
         let
+          inherit (lib) mkIf mkEnableOption;
           cfg = config.programs.dotzsh;
           ## usually is `~/.nix-profile/bin`, sometimes `/etc/profiles/per-user/$USER/bin`
           userNixProfileBin = "${config.home.profileDirectory}/bin";
@@ -39,51 +40,42 @@
         in
         {
           options.programs.dotzsh = {
-            enable = lib.mkEnableOption "execute cm-init shell";
-            enableZshIntegration = lib.mkEnableOption "init Content in .zshrc";
-            enableFishIntegration = lib.mkEnableOption "init Content in .fishrc";
-            enableFishPrompt = lib.mkEnableOption "set fish_prompt and fish_right_prompt";
+            enable = mkEnableOption "execute cm-init shell";
+            enableZshIntegration = mkEnableOption "init Content in .zshrc";
+            enableFishIntegration = mkEnableOption "init Content in .fishrc";
+            enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
+            enableFishGreetingforNix = mkEnableOption "set fish_greeting for nix";
           };
 
           config = lib.mkMerge [
-            (lib.mkIf cfg.enable {
-              home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
-              ## Same to  `nix run .#cm-init` and `nix run .#fish-init`
-              home.activation.runMyShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            (mkIf (cfg.enableZshIntegration && cfg.enable) {
+              home.activation.runMyZshShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
                 ${setPathScript}
-                echo "--- Running dotzsh shell init ---"
-                # echo "### Current PATH:"
-                # echo "$PATH" | tr ':' '\n'
-                # echo "### Current PATH [end]"
                 ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm
-                ${self.packages.${pkgs.stdenv.hostPlatform.system}.fish-init}/bin/dotzsh-fish
-                echo "--- Done ---"
               '';
-            })
-
-            (lib.mkIf cfg.enableZshIntegration {
               programs.zsh.initContent = lib.mkOrder 1200 ''
                 # --- github:handy/dotzsh flake auto-sourced ---
                 source ${self}/zshrc
               '';
             })
 
-            (lib.mkIf cfg.enableFishIntegration {
+            (mkIf (cfg.enableFishIntegration && cfg.enable) {
               programs.fish.shellInitLast =
                 let
+                  extraArgs = (if cfg.enableFishGreetingforNix then "g" else "") + (if cfg.enableFishPrompt then "p" else "");
                   commonFish = pkgs.runCommand "dotzsh-common.fish" { } ''
                     ${setPathScript}
-                    ${pkgs.bash}/bin/bash ${./common.fish.in} stdout > $out
+                    echo "### Current PATH:"
+                    echo "$PATH" | tr ':' '\n'
+                    echo "### Current PATH [end]"
+                    echo extraArgs=${extraArgs}
+                    ${pkgs.bash}/bin/bash ${./common.fish.in} "-0${extraArgs}" > $out
                   '';
                 in
                 ''
                   # --- github:handy/dotzsh flake auto-sourced ---
                   source ${commonFish}
                 '';
-            })
-
-            (lib.mkIf cfg.enableFishPrompt {
-              programs.fish.interactiveShellInit = builtins.readFile ./fish/prompt.fish;
             })
           ];
         };
