@@ -1,5 +1,4 @@
-# -*- fish -*- #
-
+## nix-shell fish greeting
 function fish_greeting
     set -l drv_info ""
     if test -n "$IN_NIX_SHELL"

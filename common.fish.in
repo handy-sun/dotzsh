@@ -11,21 +11,52 @@ _dotzsh_cmd_exists() {
     command -v "$@" &>/dev/null
 }
 
-real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-current_dir=`cd $(dirname "$real_location");pwd`
+_dotzsh_usage() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  -0    Generate fish file to stdout"
+    echo "  -1    Generate fish file to ~/.cache/dotzsh/common.fish"
+    echo "  -2    Generate fish file to current directory (default)"
+    echo "  -3    Generate fish file to /tmp/common.fish"
+    echo "  -g    Generate nix fish greeting"
+    echo "  -p    Generate user prompt"
+    echo "  -h    Show usage"
+}
 
-if [[ $1 == "-1" ]]; then
-    test ! -d ~/.cache/dotzsh/localpre && mkdir -pv ~/.cache/dotzsh/localpre
-    test ! -d ~/.cache/dotzsh/localpost && mkdir -pv ~/.cache/dotzsh/localpost
-    generate_file=~/.cache/dotzsh/common.fish
-elif [[ $1 == "-2" ]]; then
-    generate_file=/tmp/common.fish
-elif [[ "$1" == "stdout" ]]; then
-    generate_file=/dev/stdout
-else
+_dotzsh_gen_in_cur() {
     full_filename=`echo ${real_location##*/}`
     strip_in_name=`echo ${full_filename%.*}`
     generate_file=${current_dir}/${strip_in_name}
+}
+
+real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+current_dir=`cd $(dirname "$real_location");pwd`
+
+# greeting=0
+# custom_prompt=0
+
+while getopts "0123gph" opt; do
+    case $opt in
+    0) generate_file=/dev/stdout;;
+    1)
+        test ! -d ~/.cache/dotzsh/localpre && mkdir -pv ~/.cache/dotzsh/localpre
+        test ! -d ~/.cache/dotzsh/localpost && mkdir -pv ~/.cache/dotzsh/localpost
+        generate_file=~/.cache/dotzsh/common.fish
+    ;;
+    2)
+        _dotzsh_gen_in_cur
+    ;;
+    3) generate_file=/tmp/common.fish;;
+    g) greeting=1;;
+    p) custom_prompt=1;;
+    h) _dotzsh_usage; exit 0;;
+    ?) _dotzsh_usage; exit 1;;
+    esac
+done
+
+shift $((OPTIND-1))
+if [[ -z "$generate_file" ]]; then
+    _dotzsh_gen_in_cur
 fi
 
 FISH_BUFFER=""
@@ -1290,6 +1321,18 @@ alias ..... 'cd ../../../..'
 ## ----------------------- fish settings ---------------------- ]]]1
 EOF
 
+if [[ "$custom_prompt" == "1" ]]; then
+    _dotzsh_append_buffer << EOF
+$(cat "$current_dir/fish/prompt.fish")
+EOF
+fi
+
+if [[ "$greeting" == "1" ]]; then
+    _dotzsh_append_buffer << EOF
+$(cat "$current_dir/fish/nix-greeting.fish")
+EOF
+fi
+
 some_al="set localpost_arr \"$current_dir/localpost\" "
 
 some_al+='"$HOME/.cache/dotzsh/localpost" "/tmp/localpost"
@@ -1320,6 +1363,6 @@ else
     echo -n "$FISH_BUFFER" > "$generate_file"
 fi
 
-unset OS_TYPE _dotzsh_is_linux real_location current_dir full_filename strip_in_name generate_file _cmd _list_cmd eza_al some_al FISH_BUFFER
+unset OS_TYPE _dotzsh_is_linux real_location current_dir full_filename strip_in_name generate_file _cmd _list_cmd eza_al some_al FISH_BUFFER greeting custom_prompt
 
 # vim:fdm=marker:fmr=[[[,]]]

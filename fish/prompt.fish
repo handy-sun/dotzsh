@@ -1,5 +1,4 @@
-# -*- fish -*- #
-
+## custom fish prompt
 set -g __fish_prompt_prefix ">"
 set -g __fish_git_prompt_showdirtystate 1
 set -g __fish_git_prompt_showuntrackedfiles 1
@@ -24,8 +23,7 @@ function shell_level -d "get SHLVL"
     end
 end
 
-## Defined embedded:functions/fish_prompt.fish @ line 4
-function fish_prompt --description 左侧提示符
+function fish_prompt --description "Left prompt"
     set -l last_pipestatus $pipestatus
     set -lx __fish_last_status $status # Export for __fish_print_pipestatus.
     set -l normal (set_color normal)
@@ -61,9 +59,7 @@ function fish_prompt --description 左侧提示符
 end
 
 ## Right prompt (fish_right_prompt)
-## ============================================================
-## Original zsh: '%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
-function fish_right_prompt --description 右侧提示符
+function fish_right_prompt --description "Right prompt"
     set -l elapsed (math -s0 "$CMD_DURATION / 1000")
     set_color brblack
     if test $elapsed -ge 4
