@@ -60,22 +60,19 @@
             })
 
             (mkIf (cfg.enableFishIntegration && cfg.enable) {
-              programs.fish.shellInitLast =
+              home.activation.runMyFishShellInit =
                 let
-                  extraArgs = (if cfg.enableFishGreetingforNix then "g" else "") + (if cfg.enableFishPrompt then "p" else "");
-                  commonFish = pkgs.runCommand "dotzsh-common.fish" { } ''
-                    ${setPathScript}
-                    echo "### Current PATH:"
-                    echo "$PATH" | tr ':' '\n'
-                    echo "### Current PATH [end]"
-                    echo extraArgs=${extraArgs}
-                    ${pkgs.bash}/bin/bash ${./common.fish.in} "-0${extraArgs}" > $out
-                  '';
+                  extraArgs =
+                    (if cfg.enableFishGreetingforNix then "g" else "") + (if cfg.enableFishPrompt then "p" else "");
                 in
-                ''
-                  # --- github:handy/dotzsh flake auto-sourced ---
-                  source ${commonFish}
+                lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+                  ${setPathScript}
+                  ${self.packages.${pkgs.stdenv.hostPlatform.system}.fish-init}/bin/dotzsh-fish -1${extraArgs}
                 '';
+              programs.fish.shellInitLast = ''
+                # --- github:handy/dotzsh flake auto-sourced ---
+                source ${config.home.homeDirectory}/.cache/dotzsh/common.fish
+              '';
             })
           ];
         };
@@ -108,7 +105,7 @@
                 pkgs.coreutils
               ];
               text = ''
-                ${pkgs.bash}/bin/bash ${./common.fish.in} -1
+                ${pkgs.bash}/bin/bash ${./common.fish.in} "$@"
               '';
             };
           };
