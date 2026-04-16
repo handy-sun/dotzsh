@@ -953,7 +953,7 @@ if _dotzsh_cmd_exists trash; then
     some_al+=$'\nalias rm="trash"'
 fi
 
-if _dotzsh_cmd_exists xclip; then
+if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists xclip; then
     some_al+=$'\nalias pbcopy="xclip -selection clipboard"\nalias pbpaste="xclip -selection clipboard -o"'
 fi
 
@@ -992,7 +992,7 @@ EOF
 
 _dotzsh_append_buffer << 'EOF'
 # ==========================
-# 1. Colored Man Pages
+# Colored Man Pages
 # ==========================
 function colored -d "Display man pages with colors"
     # Color configuration for less
@@ -1033,47 +1033,64 @@ function debman -d "Display debman pages with colors"
 end
 
 # ==========================
-# 2. Copy Path
+# Copy Path / Copy Buffer to Clipboard
 # ==========================
+function getcopycmd -d "Get appropriate clipboard copy command"
+    set -l os (uname -s)
+    switch "$os"
+    case "Linux*"
+        if command -v xclip &>/dev/null
+            echo "xclip -selection clipboard"
+        else if command -v xsel &>/dev/null
+            echo "xsel --clipboard --input"
+        else if command -v wl-copy &>/dev/null
+            echo "wl-copy"
+        else if command -v pbcopy &>/dev/null
+            echo "pbcopy"
+        else if command -v clipcopy &>/dev/null
+            echo "clipcopy"
+        else
+            echo "Error: clipboard copy program not found. Install xclip, xsel, wl-clipboard, pbcopy, or clipcopy." >&2
+            return 1
+        end
+    case "Darwin*"
+        if command -v pbcopy &>/dev/null
+            echo "pbcopy"
+        else if command -v clipcopy &>/dev/null
+            echo "clipcopy"
+        else
+            echo "Error: clipboard copy program not found. Install pbcopy or clipcopy." >&2
+            return 1
+        end
+    case "*"
+        echo "Error: Unsupported OS: $os" >&2
+        return 1
+    end
+end
+
 function copypath -d "Copy file or directory path to clipboard"
-    # Use current directory if no argument provided
+    ## Use current directory if no argument provided
     set -l file (test -z "$argv"; and echo "."; or echo "$argv[1]")
 
-    # Make absolute path if relative
+    ## Make absolute path if relative
     if not string match -q "/*" "$file"
         set file (pwd)/"$file"
     end
 
-    # Resolve to absolute path (without resolving symlinks)
+    ## Resolve to absolute path (without resolving symlinks)
     set file (realpath -s "$file" 2>/dev/null; or echo "$file")
 
-    # Copy to clipboard based on available tool
-    set -l copycmd
-    if command -v xclip &>/dev/null
-        set copycmd "xclip -selection clipboard"
-    else if command -v xsel &>/dev/null
-        set copycmd "xsel --clipboard --input"
-    else if command -v wl-copy &>/dev/null
-        set copycmd "wl-copy"
-    else if command -v pbcopy &>/dev/null
-        set copycmd "pbcopy"
-    else if command -v clipcopy &>/dev/null
-        set copycmd "clipcopy"
-    else
-        echo "No clipboard command found. Install xclip, xsel, wl-clipboard, or clipcopy."
+    set -l copycmd (getcopycmd)
+    if test $status -ne 0
         return 1
     end
 
-    # Copy path and show message
     echo -n "$file" | eval $copycmd
     echo (set_color --bold) "$file" (set_color normal) "copied to clipboard."
 end
 
-# ==========================
-# 3. Copy Buffer to Clipboard
-# ==========================
 function copybuffer -d "Copy active line from command line buffer to clipboard"
-    # Get buffer content or last command if empty
+    ## Get buffer content or last command if empty
     set -l buf (commandline)
     if test -z "$buf"
         set buf (history | head -n 1)
@@ -1084,33 +1101,8 @@ function copybuffer -d "Copy active line from command line buffer to clipboard"
         return 1
     end
 
-    # Determine clipboard command based on OS
-    set -l copycmd
-    set -l os (uname -s)
-
-    switch "$os"
-    case "Linux*"
-        if command -v xclip &>/dev/null
-            set copycmd "xclip -selection clipboard"
-        else if command -v xsel &>/dev/null
-            set copycmd "xsel --clipboard --input"
-        else if command -v wl-copy &>/dev/null
-            set copycmd "wl-copy"
-        else if command -v pbcopy &>/dev/null
-            set copycmd "pbcopy"
-        else
-            echo "clipboard copy program not found. Install xclip, xsel, or wl-clipboard."
-            return 1
-        end
-    case "Darwin*"
-        if command -v pbcopy &>/dev/null
-            set copycmd "pbcopy"
-        else
-            echo "clipboard copy program not found. Install pbcopy or xclip"
-            return 1
-        end
-    case "*"
-        echo "Unsupported OS: $os"
+    set -l copycmd (getcopycmd)
+    if test $status -ne 0
         return 1
     end
 
@@ -1123,7 +1115,7 @@ EOF
 if _dotzsh_cmd_exists docker-compose; then
     _dotzsh_append_buffer << 'EOF'
 # ==========================
-# 4. Docker Compose Functions
+# Docker Compose Functions
 # ==========================
 if test -z "$DKCP_DIR"
     if test -d "/var/dkcmpo"
