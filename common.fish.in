@@ -1309,6 +1309,8 @@ function fish_user_key_bindings
     bind \e\; 'll\n'
     ## Escape Escape - sudo command line
     # bind \e\e 'sudo '
+
+    # fish_vi_key_bindings --no-erase insert
 end
 
 alias ... 'cd ../..'
@@ -1320,8 +1322,13 @@ EOF
 
 if [[ "$custom_prompt" == "1" ]]; then
     _dotzsh_append_buffer << 'EOF'
-## custom fish prompt
-set -g __fish_prompt_prefix ">"
+## custom fish prompt prefix to indicate proxy
+if set -q HTTP_PROXY or set -q HTTPS_PROXY or set -q ALL_PROXY
+    set -g __fish_prompt_prefix ">>"
+else
+    set -g __fish_prompt_prefix ">"
+end
+
 set -g __fish_git_prompt_showdirtystate 1
 set -g __fish_git_prompt_showuntrackedfiles 1
 set -g __fish_git_prompt_showstashstate 1
@@ -1409,6 +1416,29 @@ function fish_right_prompt --description "Right prompt"
     ## ------ Current time (grey) and user@hostname ------
     echo -n -s (set_color white) (date +%H:%M:%S) ' ' (set_color normal)
     echo -n -s (prompt_login) (set_color normal)
+end
+EOF
+else
+    _dotzsh_append_buffer << 'EOF'
+function dotzsh_tide_set_var
+    set --universal tide_left_prompt_items os pwd git
+    echo $tide_right_prompt_items | grep -q shlvl || set --append tide_right_prompt_items shlvl
+end
+
+function dotzsh_tide_set_vi_icon
+    set --universal tide_character_vi_icon_default '>'
+end
+
+function dotzsh_tide_restore_vi_icon
+    set --universal tide_character_vi_icon_default '❮'
+end
+
+function dotzsh_tide_prompt_rainbow_transient
+    tide configure --auto --style=Rainbow --prompt_colors='True color' --show_time='24-hour format' --rainbow_prompt_separators=Angled --powerline_prompt_heads=Sharp --powerline_prompt_tails=Flat --powerline_prompt_style='One line' --prompt_spacing=Compact --icons='Many icons' --transient=Yes
+end
+
+function dotzsh_tide_prompt_lean_no_transient
+    tide configure --auto --style=Lean --prompt_colors='True color' --show_time='24-hour format' --lean_prompt_height='One line' --prompt_spacing=Compact --icons='Many icons' --transient=No
 end
 EOF
 fi
