@@ -40,7 +40,7 @@
         in
         {
           options.programs.dotzsh = {
-            enable = mkEnableOption "execute cm-init shell";
+            enable = mkEnableOption "enable dotzsh";
             enableZshIntegration = mkEnableOption "init Content in .zshrc";
             enableFishIntegration = mkEnableOption "init Content in .fishrc";
             enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
@@ -49,6 +49,7 @@
 
           config = lib.mkMerge [
             (mkIf (cfg.enableZshIntegration && cfg.enable) {
+              home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
               home.activation.runMyZshShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
                 ${setPathScript}
                 ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm
@@ -60,6 +61,7 @@
             })
 
             (mkIf (cfg.enableFishIntegration && cfg.enable) {
+              home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.fish-init ];
               home.activation.runMyFishShellInit =
                 let
                   extraArgs =
@@ -95,7 +97,7 @@
                 pkgs.coreutils
               ];
               text = ''
-                ${pkgs.bash}/bin/bash ${./common.sh.in} -1
+                ${pkgs.bash}/bin/bash ${./common.sh.in} "$@"
               '';
             };
             fish-init = pkgs.writeShellApplication {
@@ -118,7 +120,7 @@
                 package = self.packages.${system}.cm-init;
               }
               {
-                help = "no";
+                help = "-h";
                 name = "fish-init";
                 package = self.packages.${system}.fish-init;
               }

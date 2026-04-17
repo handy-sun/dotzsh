@@ -43,6 +43,50 @@ _dotzsh_append_buffer << 'EOF'
 cmd_exists() {
     command -v "$@" &>/dev/null
 }
+
+getcopycmd() {
+    local os=$(uname -s)
+    if [[ -f /proc/version ]] && grep -iq Microsoft /proc/version; then
+        os="WSL"
+    fi
+    case "$os" in
+        Linux*)
+            if command -v xclip &>/dev/null; then
+                echo "xclip -r -sel clip"
+            elif command -v xsel &>/dev/null; then
+                echo "xsel -ib"
+            elif command -v wl-copy &>/dev/null; then
+                echo "wl-copy"
+            elif command -v pbcopy &>/dev/null; then
+                echo "pbcopy"
+            elif command -v clipcopy &>/dev/null; then
+                echo "clipcopy"
+            else
+                echo "Error: clipboard copy program not found. Install xclip, xsel, wl-clipboard, pbcopy, or clipcopy." >&2
+                return 1
+            fi
+            ;;
+        Darwin*)
+            if command -v pbcopy &>/dev/null; then
+                echo "pbcopy"
+            elif command -v clipcopy &>/dev/null; then
+                echo "clipcopy"
+            else
+                echo "Error: clipboard copy program not found. Install pbcopy or clipcopy." >&2
+                return 1
+            fi
+            ;;
+        WSL)
+            if test -f "/mnt/c/Windows/System32/clip.exe"; then
+                echo "/mnt/c/Windows/System32/clip.exe"
+            fi
+            ;;
+        *)
+            echo "Error: Unsupported OS: $os" >&2
+            return 1
+            ;;
+    esac
+}
 ## about git stash
 shpo() {
     git stash pop stash@{$1};
@@ -935,7 +979,7 @@ if _dotzsh_cmd_exists trash; then
     some_al+=$'\nalias rm="trash"'
 fi
 
-if _dotzsh_cmd_exists xclip; then
+if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists xclip; then
     some_al+=$'\nalias pbcopy="xclip -selection clipboard"\nalias pbpaste="xclip -selection clipboard -o"'
 fi
 
