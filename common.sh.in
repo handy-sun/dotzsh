@@ -623,7 +623,7 @@ jnl() {
     journalctl -eu $1 | less +G
 }
 jfxeu() {
-    journalctl -n 100 -fxeu $1
+    journalctl -n 150 -f -xeu $1
 }
 
 EOF

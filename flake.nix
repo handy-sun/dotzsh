@@ -52,7 +52,7 @@
               home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
               home.activation.runMyZshShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
                 ${setPathScript}
-                ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm
+                ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm -1
               '';
               programs.zsh.initContent = lib.mkOrder 1200 ''
                 # --- github:handy/dotzsh flake auto-sourced ---

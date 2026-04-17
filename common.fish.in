@@ -583,7 +583,7 @@ function jnl -d "Journalctl follow unit"
 end
 
 function jfxeu -d "Journalctl follow and tail unit"
-    journalctl -n 100 -fxeu $argv[1]
+    journalctl -n 150 -f -xeu $argv[1]
 end
 
 EOF
