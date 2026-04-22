@@ -978,7 +978,12 @@ if _dotzsh_cmd_exists aria2c; then
 fi
 
 if _dotzsh_cmd_exists fd; then
-    some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.vscode-server,.idea,.github,node_modules,target,build,dist}"'
+    if _dotzsh_is_linux; then
+        some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.idea,node_modules,target,build,dist}"'
+    else
+        some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.idea,node_modules,target,build,dist,OrbStack,Library,Pictures}"'
+    fi
+
     some_al+=$'\nfunction fdw -d "Find by exact name"\n    fd -H -I "^$argv[1]"\'$\' $argv[2]\nend'
 fi
 
@@ -1499,4 +1504,4 @@ fi
 
 unset OS_TYPE _dotzsh_is_linux real_location current_dir full_filename strip_in_name generate_file _cmd _list_cmd eza_al some_al FISH_BUFFER greeting custom_prompt
 
-# vim:fdm=marker:fmr=[[[,]]]
+# vim: ft=bash:fdm=marker:fmr=[[[,]]]
