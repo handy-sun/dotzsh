@@ -1004,7 +1004,7 @@ if _dotzsh_cmd_exists aria2c; then
 fi
 
 if _dotzsh_cmd_exists fd; then
-    if _dotzsh_is_linux; then
+    if [ -n "$_dotzsh_is_linux" ]; then
         some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.idea,node_modules,target,build,dist}"'
     else
         some_al+=$'\nalias fdf="fd -t f -H -I --exclude={.git,.svn,.vscode,.vs,.idea,node_modules,target,build,dist,OrbStack,Library,Pictures}"'
