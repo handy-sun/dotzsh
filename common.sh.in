@@ -626,6 +626,26 @@ jfxeu() {
     journalctl -n 150 -f -xeu $1
 }
 
+_dotzsh_systemd_services() {
+    systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | awk '{print $1}'
+}
+
+if [ -n "$BASH_VERSION" ]; then
+    _dotzsh_complete_jfxeu_bash() {
+        local cur
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        COMPREPLY=( $(compgen -W "$(_dotzsh_systemd_services)" -- "$cur") )
+    }
+    complete -F _dotzsh_complete_jfxeu_bash jfxeu
+elif [ -n "$ZSH_VERSION" ]; then
+    _dotzsh_complete_jfxeu_zsh() {
+        local -a services
+        services=(${(f)"$(_dotzsh_systemd_services)"})
+        compadd -a services
+    }
+    compdef _dotzsh_complete_jfxeu_zsh jfxeu
+fi
+
 EOF
 else # macOS
     _dotzsh_append_buffer << 'EOF'
