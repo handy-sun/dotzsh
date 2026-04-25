@@ -586,6 +586,8 @@ function jfxeu -d "Journalctl follow and tail unit"
     journalctl -n 150 -f -xeu $argv[1]
 end
 
+complete -c jfxeu -f -a '(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | while read -l unit dummy_var; echo $unit; end)'
+
 EOF
 else # macOS
     _dotzsh_append_buffer << 'EOF'
