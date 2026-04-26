@@ -1257,8 +1257,8 @@ set -g fish_color_operator cyan
 set -g fish_color_escape cyan
 set -g fish_color_autosuggestion brblack
 
-set -g fish_color_user yellow
-set -g fish_color_host bryellow
+set -g fish_color_user brown
+set -g fish_color_host yellow
 set -g fish_color_cwd cyan
 
 function reverse_history_search
@@ -1334,14 +1334,10 @@ set -g __fish_git_prompt_char_stashstate '$'
 if not set -q __fish_prompt_hostname
     if [ $COMPUTERNAME ]
         set -g __fish_prompt_hostname $COMPUTERNAME
-    else
+    else if command -q hostname
         set -g __fish_prompt_hostname (hostname | cut -d . -f 1)
-    end
-end
-
-function shell_level -d "get SHLVL"
-    if [ $SHLVL -ne 1 ]
-        echo $SHLVL" "
+    else
+        set -g __fish_prompt_hostname "unknown"
     end
 end
 
@@ -1372,7 +1368,7 @@ function fish_prompt --description "Left prompt"
 
     set -l prompt_status (__fish_print_pipestatus "[" "]" "|" "$status_color" "$statusb_color" $last_pipestatus)
 
-    echo -n -s (set_color bryellow) (shell_level) $normal (set_color $color_cwd) (prompt_pwd) $normal (fish_vcs_prompt) $normal" "$prompt_status
+    echo -n -s (set_color $color_cwd) (prompt_pwd) $normal (fish_vcs_prompt) $normal" "$prompt_status
     if test $__fish_last_status -eq 0
         echo -n -s (set_color brgreen)' '$suffix' '(set_color normal)
     else
@@ -1406,9 +1402,14 @@ function fish_right_prompt --description "Right prompt"
     if test $job_count -gt 0
         echo -n -s (set_color cyan) "%$job_count "
     end
-    ## ------ Current time (grey) and user@hostname ------
-    echo -n -s (set_color white) (date +%H:%M:%S) ' ' (set_color normal)
+    ## ------ user@hostname and Current time (grey) ------
     echo -n -s (prompt_login) (set_color normal)
+    echo -n -s (set_color white) ' ' (date +%H:%M:%S) (set_color normal)
+    ## ------ SHLVL (when >= threshold) ------
+    set -l _dotzsh_shlvl_threshold 1
+    if test $SHLVL -gt $_dotzsh_shlvl_threshold
+        echo -n -s (set_color -o bryellow) ' L' $SHLVL (set_color normal)
+    end
 end
 EOF
 else
