@@ -1300,14 +1300,8 @@ function fish_user_key_bindings
     bind \e\[6~ history-search-forward
     ## Ctrl+Backspace - delete previous word
     bind \cH backward-kill-word
-    ## Shift+Tab - undo
-    bind \e\[Z undo
-    ## Alt+O - cd ..
-    bind \eo 'cd ..\n'
-    ## Alt+; - ll
-    bind \e\; 'll\n'
-    ## Escape Escape - sudo command line
-    # bind \e\e 'sudo '
+    ## Shift+Backspace - undo
+    bind \eH undo
 
     # fish_vi_key_bindings --no-erase insert
 end
