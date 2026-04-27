@@ -810,6 +810,8 @@ fi
 
 _dotzsh_append_buffer << 'EOF'
 alias dpz="docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Size}}'"
+alias dkspa="docker system prune -a"
+alias dkspv="docker system prune -a --volumes"
 EOF
 
 if _dotzsh_cmd_exists perl; then
@@ -991,6 +993,10 @@ fi
 
 if _dotzsh_cmd_exists unrar-free; then
     some_al+=$'\nalias unrar="unrar-free"'
+fi
+
+if _dotzsh_cmd_exists duf; then
+    some_al+=$'\nalias dufhs="LC_ALL=en_US.UTF-8 duf --hide special"'
 fi
 
 _dotzsh_append_buffer << EOF
