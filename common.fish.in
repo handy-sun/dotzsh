@@ -167,14 +167,14 @@ set -g _cd_dir_stack
 
 function _cd_push_stack -d "Push current dir onto the directory stack"
     set -l current_dir (pwd)
-    set -g _cd_dir_stack (string match -v -- $current_dir $_cd_dir_stack)
+    set -g _cd_dir_stack (string match -v -- "$current_dir" $_cd_dir_stack)
     set -g _cd_dir_stack $current_dir $_cd_dir_stack
     if test (count $_cd_dir_stack) -gt 20
         set -g _cd_dir_stack $_cd_dir_stack[1..20]
     end
 end
 
-function dirs -d "Print directory stack"
+function cdmu_dirs -d "Print directory stack for cdmu"
     if test (count $_cd_dir_stack) -eq 0
         echo "Directory stack is empty."
         return
@@ -211,7 +211,7 @@ function cdmu -d "Change directory using the custom directory stack"
             echo "cdmu: directory stack is empty."
             return 1
         end
-        dirs
+        cdmu_dirs
         read -P "Select directory [1]: " -l choice
         if test -z "$choice"
             set choice 1
@@ -234,6 +234,16 @@ function cdmu -d "Change directory using the custom directory stack"
 
     if test (count $argv) -eq 0
         echo "cdmu: missing operand."
+        return 1
+    end
+
+    if test (count $argv) -gt 1
+        echo "cdmu: too many arguments."
+        return 1
+    end
+
+    if not test -d "$argv[1]"
+        echo "cdmu: directory '$argv[1]' does not exist."
         return 1
     end
 
