@@ -44,7 +44,11 @@
             enableZshIntegration = mkEnableOption "init Content in .zshrc";
             enableFishIntegration = mkEnableOption "init Content in .fishrc";
             enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
-            enableFishGreetingforNix = mkEnableOption "set fish_greeting for nix";
+            fishGreetingMode = lib.mkOption {
+              type = lib.types.nullOr (lib.types.enum [ "empty" "custom" ]);
+              default = null;
+              description = "Fish greeting mode: null = fish default, empty = suppress greeting, custom = dotzsh nix-aware greeting";
+            };
           };
 
           config = lib.mkMerge [
@@ -65,7 +69,7 @@
               home.activation.runMyFishShellInit =
                 let
                   extraArgs =
-                    (if cfg.enableFishGreetingforNix then "g" else "") + (if cfg.enableFishPrompt then "p" else "");
+                    (if cfg.fishGreetingMode == "custom" then "g" else "") + (if cfg.enableFishPrompt then "p" else "");
                 in
                 lib.hm.dag.entryAfter [ "writeBoundary" ] ''
                   ${setPathScript}
@@ -73,6 +77,7 @@
                 '';
               programs.fish.shellInitLast = ''
                 # --- github:handy/dotzsh flake auto-sourced ---
+                ${lib.optionalString (cfg.fishGreetingMode == "empty") "set fish_greeting"}
                 source ${config.home.homeDirectory}/.cache/dotzsh/common.fish
               '';
             })

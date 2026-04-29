@@ -359,6 +359,7 @@ alias gpl="git pull"
 alias gplrb="git pull --rebase"
 
 alias gsh="git stash"
+alias gshm="git stash -m"
 alias gshl="git stash list"
 alias gshp="git stash pop"
 
