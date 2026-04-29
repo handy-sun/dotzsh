@@ -162,6 +162,85 @@ function upd -d "Go up N directories"
     cd "$dir"
 end
 
+## interactive directory stack helper
+set -g _cd_dir_stack
+
+function _cd_push_stack -d "Push current dir onto the directory stack"
+    set -l current_dir (pwd)
+    set -g _cd_dir_stack (string match -v -- $current_dir $_cd_dir_stack)
+    set -g _cd_dir_stack $current_dir $_cd_dir_stack
+    if test (count $_cd_dir_stack) -gt 20
+        set -g _cd_dir_stack $_cd_dir_stack[1..20]
+    end
+end
+
+function dirs -d "Print directory stack"
+    if test (count $_cd_dir_stack) -eq 0
+        echo "Directory stack is empty."
+        return
+    end
+    set -l i 1
+    for dir in $_cd_dir_stack
+        printf "%2d) %s\n" $i $dir
+        set i (math $i + 1)
+    end
+end
+
+function cdmu -d "Change directory using the custom directory stack"
+    # Handle cdmu -N (e.g., cdmu -2)
+    if test (count $argv) -eq 1; and string match -qr '^-\d+$' -- $argv[1]
+        set -l n (string replace -r '^-' '' -- $argv[1])
+        if test $n -ge 1 -a $n -le (count $_cd_dir_stack)
+            set -l target $_cd_dir_stack[$n]
+            if not test -d "$target"
+                echo "cdmu: directory '$target' no longer exists."
+                return 1
+            end
+            _cd_push_stack
+            cd "$target"
+            return
+        else
+            echo "cdmu: directory stack index out of range (1-"(count $_cd_dir_stack)")."
+            return 1
+        end
+    end
+
+    # Handle cdmu - (interactive picker)
+    if test (count $argv) -eq 1; and test "$argv[1]" = "-"
+        if test (count $_cd_dir_stack) -eq 0
+            echo "cdmu: directory stack is empty."
+            return 1
+        end
+        dirs
+        read -P "Select directory [1]: " -l choice
+        if test -z "$choice"
+            set choice 1
+        end
+        if string match -qr '^\d+$' -- $choice
+            if test $choice -ge 1 -a $choice -le (count $_cd_dir_stack)
+                set -l target $_cd_dir_stack[$choice]
+                if not test -d "$target"
+                    echo "cdmu: directory '$target' no longer exists."
+                    return 1
+                end
+                _cd_push_stack
+                cd "$target"
+                return
+            end
+        end
+        echo "cdmu: invalid selection."
+        return 1
+    end
+
+    if test (count $argv) -eq 0
+        echo "cdmu: missing operand."
+        return 1
+    end
+
+    _cd_push_stack
+    cd $argv
+end
+
 function swap2file -d "Swap two files"
     if test ! -f "$argv[1]" -o ! -f "$argv[2]"
         echo "$argv[1] or $argv[2] is not existed." >&2
