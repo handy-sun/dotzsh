@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  nix-flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v14
+      - run: nix flake check
+
+  build-and-verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: Build cm-init
+        run: nix build .#cm-init
+      - name: Build fish-init
+        run: nix build .#fish-init
+
+      - name: Generate common.sh
+        run: nix run .#cm-init -- -3
+      - name: Generate common.fish
+        run: nix run .#fish-init -- -3gp
+
+      - name: Syntax check common.sh
+        run: bash -n /tmp/common.sh && zsh -n /tmp/common.sh
+      - name: Syntax check common.fish
+        run: fish --no-execute /tmp/common.fish
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: shellcheck common.sh.in
+        run: nix shell nixpkgs#shellcheck --command shellcheck -S warning common.sh.in || true
+      - name: shellcheck common.fish.in
+        run: nix shell nixpkgs#shellcheck --command shellcheck -S warning common.fish.in || true
