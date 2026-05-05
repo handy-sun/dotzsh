@@ -626,9 +626,15 @@ jnl() {
 jfxeu() {
     journalctl -n 150 -f -xeu $1
 }
+juxeu() {
+    journalctl --user -n 150 -f -xeu $1
+}
 
 _dotzsh_systemd_services() {
     systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | awk '{print $1}'
+}
+_dotzsh_systemd_user_services() {
+    systemctl --user list-unit-files --type=service --no-legend --no-pager 2>/dev/null | awk '{print $1}'
 }
 
 if [ -n "$BASH_VERSION" ]; then
@@ -638,6 +644,12 @@ if [ -n "$BASH_VERSION" ]; then
         COMPREPLY=( $(compgen -W "$(_dotzsh_systemd_services)" -- "$cur") )
     }
     complete -F _dotzsh_complete_jfxeu_bash jfxeu
+    _dotzsh_complete_juxeu_bash() {
+        local cur
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        COMPREPLY=( $(compgen -W "$(_dotzsh_systemd_user_services)" -- "$cur") )
+    }
+    complete -F _dotzsh_complete_juxeu_bash juxeu
 elif [ -n "$ZSH_VERSION" ]; then
     _dotzsh_complete_jfxeu_zsh() {
         local -a services
@@ -645,6 +657,12 @@ elif [ -n "$ZSH_VERSION" ]; then
         compadd -a services
     }
     compdef _dotzsh_complete_jfxeu_zsh jfxeu
+    _dotzsh_complete_juxeu_zsh() {
+        local -a services
+        services=(${(f)"$(_dotzsh_systemd_user_services)"})
+        compadd -a services
+    }
+    compdef _dotzsh_complete_juxeu_zsh juxeu
 fi
 
 EOF
