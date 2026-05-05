@@ -1516,26 +1516,41 @@ end
 EOF
 else
     _dotzsh_append_buffer << 'EOF'
-function dotzsh_tide_set_var
-    set --universal tide_left_prompt_items os pwd git
-    echo $tide_right_prompt_items | grep -q shlvl || set --append tide_right_prompt_items shlvl
+function dotzsh_tide -d "Tide prompt helper"
+    set -l cmd $argv[1]
+    switch $cmd
+        case add-shlvl
+            string match -q '*shlvl*' $tide_right_prompt_items || set --append tide_right_prompt_items shlvl
+        case set-vi-icon
+            set --universal tide_character_vi_icon_default '>'
+        case restore-vi-icon
+            set --universal tide_character_vi_icon_default '❮'
+        case rainbow
+            set -l saved $tide_prompt_transient_enabled
+            tide configure --auto --style=Rainbow --prompt_colors='True color' --show_time='24-hour format' --rainbow_prompt_separators=Angled --powerline_prompt_heads=Sharp --powerline_prompt_tails=Flat --powerline_prompt_style='One line' --prompt_spacing=Compact --icons='Many icons' --transient=No
+            set --universal tide_prompt_transient_enabled $saved
+        case lean
+            set -l saved $tide_prompt_transient_enabled
+            tide configure --auto --style=Lean --prompt_colors='True color' --show_time='24-hour format' --lean_prompt_height='One line' --prompt_spacing=Compact --icons='Many icons' --transient=No
+            set --universal tide_prompt_transient_enabled $saved
+        case transient-on
+            set --universal tide_prompt_transient_enabled true
+        case transient-off
+            set --universal tide_prompt_transient_enabled false
+        case '*'
+            echo "Usage: dotzsh_tide <subcommand>"
+            echo "Subcommands:"
+            echo "  add-shlvl       Append shlvl to right prompt items"
+            echo "  set-vi-icon     Set vi icon to '>'"
+            echo "  restore-vi-icon Restore vi icon to '❮'"
+            echo "  rainbow         Configure Rainbow style"
+            echo "  lean            Configure Lean style"
+            echo "  transient-on    Enable transient prompt"
+            echo "  transient-off   Disable transient prompt"
+    end
 end
 
-function dotzsh_tide_set_vi_icon
-    set --universal tide_character_vi_icon_default '>'
-end
-
-function dotzsh_tide_restore_vi_icon
-    set --universal tide_character_vi_icon_default '❮'
-end
-
-function dotzsh_tide_prompt_rainbow_transient
-    tide configure --auto --style=Rainbow --prompt_colors='True color' --show_time='24-hour format' --rainbow_prompt_separators=Angled --powerline_prompt_heads=Sharp --powerline_prompt_tails=Flat --powerline_prompt_style='One line' --prompt_spacing=Compact --icons='Many icons' --transient=Yes
-end
-
-function dotzsh_tide_prompt_lean_no_transient
-    tide configure --auto --style=Lean --prompt_colors='True color' --show_time='24-hour format' --lean_prompt_height='One line' --prompt_spacing=Compact --icons='Many icons' --transient=No
-end
+complete -c dotzsh_tide -f -a "add-shlvl set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
 EOF
 fi
 
