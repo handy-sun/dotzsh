@@ -29,7 +29,7 @@ jobs:
         run: nix build .#fish-init
 
       - name: Generate common.sh
-        run: nix run .#cm-init -- -3
+        run: nix run .#cm-init -- -2
       - name: Generate common.fish
         run: nix run .#fish-init -- -3gp
 
