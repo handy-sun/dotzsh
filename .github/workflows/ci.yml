@@ -29,14 +29,14 @@ jobs:
         run: nix build .#fish-init
 
       - name: Generate common.sh
-        run: nix run .#cm-init -- -2
+        run: nix run .#cm-init -- -3
       - name: Generate common.fish
         run: nix run .#fish-init -- -3gp
 
       - name: Syntax check common.sh
-        run: bash -n /tmp/common.sh && zsh -n /tmp/common.sh
+        run: bash -n /tmp/common.sh && nix shell nixpkgs#zsh --command zsh -n /tmp/common.sh
       - name: Syntax check common.fish
-        run: fish --no-execute /tmp/common.fish
+        run: nix shell nixpkgs#fish --command fish --no-execute /tmp/common.fish
 
   lint:
     runs-on: ubuntu-latest
