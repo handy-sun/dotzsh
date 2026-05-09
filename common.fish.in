@@ -1522,7 +1522,7 @@ function dotzsh_tide -d "Tide prompt helper"
         case add-shlvl
             string match -q '*shlvl*' $tide_right_prompt_items || set --append tide_right_prompt_items shlvl
         case set-vi-icon
-            set --universal tide_character_vi_icon_default '>'
+            set --universal tide_character_vi_icon_default '→'
         case restore-vi-icon
             set --universal tide_character_vi_icon_default '❮'
         case rainbow
@@ -1543,7 +1543,7 @@ function dotzsh_tide -d "Tide prompt helper"
                 echo "Usage: dotzsh_tide remove-left <item>"
                 return 1
             end
-            set -l items (string split '\x1e' $tide_left_prompt_items)
+            set -l items (string split '\x1e' $_tide_left_items)
             set -l new_items
             for i in $items
                 test "$i" != "$item" && set -a new_items $i
@@ -1557,7 +1557,7 @@ function dotzsh_tide -d "Tide prompt helper"
                 echo "Usage: dotzsh_tide remove-right <item>"
                 return 1
             end
-            set -l items (string split '\x1e' $tide_right_prompt_items)
+            set -l items (string split '\x1e' $_tide_right_items)
             set -l new_items
             for i in $items
                 test "$i" != "$item" && set -a new_items $i
@@ -1567,11 +1567,11 @@ function dotzsh_tide -d "Tide prompt helper"
             echo "Removed '$item' from right prompt items: $new_items"
         case reset-rainbow-left
             set --universal tide_left_prompt_items vi_mode os pwd git
-            set --universal _tide_left_items vi_mode os pwd git
+            set --universal _tide_left_items $tide_left_prompt_items
             echo "Reset left prompt items to Rainbow default: vi_mode os pwd git"
         case reset-rainbow-right
-            set --universal tide_right_prompt_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig
-            set --universal _tide_right_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig
+            set --universal tide_right_prompt_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig time
+            set --universal _tide_right_items $tide_right_prompt_items
             echo "Reset right prompt items to Rainbow default"
         case '*'
             echo "Usage: dotzsh_tide <subcommand>"
