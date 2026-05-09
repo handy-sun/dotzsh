@@ -1516,11 +1516,19 @@ end
 EOF
 else
     _dotzsh_append_buffer << 'EOF'
+function _tide_item_proxy
+    if set -q HTTP_PROXY; or set -q HTTPS_PROXY; or set -q ALL_PROXY
+        printf '🌐'
+    end
+end
+
 function dotzsh_tide -d "Tide prompt helper"
     set -l cmd $argv[1]
     switch $cmd
         case add-shlvl
             string match -q '*shlvl*' $tide_right_prompt_items || set --append tide_right_prompt_items shlvl
+        case add-proxy
+            string match -q '*proxy*' $tide_right_prompt_items || set --append tide_right_prompt_items proxy
         case set-vi-icon
             set --universal tide_character_vi_icon_default '→'
         case restore-vi-icon
@@ -1570,13 +1578,14 @@ function dotzsh_tide -d "Tide prompt helper"
             set --universal _tide_left_items $tide_left_prompt_items
             echo "Reset left prompt items to Rainbow default: vi_mode os pwd git"
         case reset-rainbow-right
-            set --universal tide_right_prompt_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig time
+            set --universal tide_right_prompt_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig time proxy
             set --universal _tide_right_items $tide_right_prompt_items
             echo "Reset right prompt items to Rainbow default"
         case '*'
             echo "Usage: dotzsh_tide <subcommand>"
             echo "Subcommands:"
             echo "  add-shlvl       Append shlvl to right prompt items"
+            echo "  add-proxy       Append proxy indicator to right prompt items"
             echo "  remove-left <item>   Remove item from left prompt items"
             echo "  remove-right <item>  Remove item from right prompt items"
             echo "  reset-rainbow-left   Reset left prompt items to Rainbow default"
@@ -1590,7 +1599,7 @@ function dotzsh_tide -d "Tide prompt helper"
     end
 end
 
-complete -c dotzsh_tide -f -a "add-shlvl remove-left remove-right reset-rainbow-left reset-rainbow-right set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
+complete -c dotzsh_tide -f -a "add-shlvl add-proxy remove-left remove-right reset-rainbow-left reset-rainbow-right set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
 EOF
 fi
 
