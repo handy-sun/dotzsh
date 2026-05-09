@@ -1526,9 +1526,13 @@ function dotzsh_tide -d "Tide prompt helper"
     set -l cmd $argv[1]
     switch $cmd
         case add-shlvl
-            contains -- shlvl $tide_right_prompt_items; or set --append tide_right_prompt_items shlvl
+            if not contains -- shlvl $tide_right_prompt_items
+                set --universal --append tide_right_prompt_items shlvl
+            end
         case add-proxy
-            contains -- proxy $tide_right_prompt_items; or set --append tide_right_prompt_items proxy
+            if not contains -- proxy $tide_right_prompt_items
+                set --universal --append tide_right_prompt_items proxy
+            end
         case set-vi-icon
             set --universal tide_character_vi_icon_default '→'
         case restore-vi-icon
