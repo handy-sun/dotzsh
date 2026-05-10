@@ -1518,7 +1518,7 @@ else
     _dotzsh_append_buffer << 'EOF'
 function _tide_item_proxy
     if set -q HTTP_PROXY; or set -q HTTPS_PROXY; or set -q ALL_PROXY
-        printf '🌐'
+        printf ' 🌐 '
     end
 end
 

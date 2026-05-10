@@ -45,9 +45,14 @@
             enableFishIntegration = mkEnableOption "init Content in .fishrc";
             enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
             fishGreetingMode = lib.mkOption {
-              type = lib.types.nullOr (lib.types.enum [ "empty" "custom" ]);
+              type = lib.types.nullOr (
+                lib.types.enum [
+                  "empty"
+                  "custom"
+                ]
+              );
               default = null;
-              description = "Fish greeting mode: null = fish default, empty = suppress greeting, custom = dotzsh nix-aware greeting";
+              description = "Fish greeting mode: 'null' = fish default, 'empty' = suppress greeting, 'custom' = dotzsh nix-aware greeting";
             };
           };
 
