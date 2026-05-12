@@ -123,7 +123,7 @@ gitur() {
 }
 ## List all untracked files/directories in current git repo and decide whether to delete it.
 gcldi() {
-    local untracked_files=`git ls-files --directory --others`
+    local untracked_files=`git ls-files --directory --others --exclude-standard`
     if [[ ${#untracked_files[@]} -eq 0 ]]; then
         echo "No untracked files or directories found."
         return 0
@@ -138,7 +138,7 @@ gcldi() {
     read answer
     case "$answer" in
         [yY][eE][sS]|[yY])
-            git ls-files --directory --others | xargs rm -rf
+            git ls-files --directory --others --exclude-standard | xargs rm -rf
             echo "Deletion completed."
             ;;
         *)

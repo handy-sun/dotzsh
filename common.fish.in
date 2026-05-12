@@ -118,7 +118,7 @@ end
 
 ## List all untracked files/directories in current git repo and decide whether to delete it.
 function gcldi -d "Clean untracked files interactively"
-    set -l untracked_files (git ls-files --directory --others)
+    set -l untracked_files (git ls-files --directory --others --exclude-standard)
     if test (count $untracked_files) -eq 0
         echo "No untracked files or directories found."
         return 0
@@ -131,7 +131,7 @@ function gcldi -d "Clean untracked files interactively"
     read -P "Do you want to delete all these untracked files/directories? [y/N] " answer
     switch "$answer"
     case y Y yes YES Yes
-        git ls-files --directory --others | xargs rm -rf
+        git ls-files --directory --others --exclude-standard | xargs rm -rf
         echo "Deletion completed."
     case '*'
         echo "Operation cancelled."
