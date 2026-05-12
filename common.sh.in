@@ -378,7 +378,9 @@ alias gcmm="git commit -m"
 alias gcma="git commit -a"
 alias gcmam="git commit -a -m"
 alias gcmn="git commit --amend"
+alias gcmnn="git commit --amend --no-edit"
 alias gcman="git commit -a --amend"
+alias gcmann="git commit -a --amend --no-edit"
 
 alias gpl="git pull"
 alias gplrb="git pull --rebase"
@@ -406,6 +408,7 @@ alias gbr="git branch"
 alias gba="git branch -a -v"
 alias gtl="git tag --list"
 alias gck="git checkout"
+alias gbc="git checkout -b"
 alias gblm="git blame -L"
 alias gaprj="git apply --reject"
 
@@ -431,9 +434,7 @@ grt() {
     fi
     git -C "$work_dir" remote -v
 }
-gbc() {
-    git branch $1 && git checkout $1
-}
+
 ## Find git repository root directory
 git_root_dir() {
     local current_dir="$(pwd)"
@@ -535,6 +536,10 @@ EOF
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
+ipacc() {
+    curl -S ip-api.com/json 2>/dev/null | jq '.'
+}
+
 qip() {
     curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
@@ -550,6 +555,10 @@ rlip6() {
 EOF
 else
     _dotzsh_append_buffer << 'EOF'
+ipacc() {
+    curl -v ipinfo.io
+}
+
 qip() {
     curl -S ip-api.com/json/$1 2>/dev/null
 }

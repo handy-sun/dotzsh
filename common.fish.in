@@ -442,7 +442,9 @@ alias gcmm="git commit -m"
 alias gcma="git commit -a"
 alias gcmam="git commit -a -m"
 alias gcmn="git commit --amend"
+alias gcmnn="git commit --amend --no-edit"
 alias gcman="git commit -a --amend"
+alias gcmann="git commit -a --amend --no-edit"
 
 alias gpl="git pull"
 alias gplrb="git pull --rebase"
@@ -470,6 +472,7 @@ alias gbr="git branch"
 alias gba="git branch -a -v"
 alias gtl="git tag --list"
 alias gck="git checkout"
+alias gbc="git checkout -b"
 alias gblm="git blame -L"
 alias gaprj="git apply --reject"
 
@@ -495,10 +498,6 @@ function grt -d "Get dir's git remote verbose"
     set -l d $argv[1]
     test -z "$d"; and set d .
     git -C $d remote -v
-end
-
-function gbc -d "Create new branch and checkout to it"
-    git branch $argv[1] && git checkout $argv[1]
 end
 
 function git_root_dir -d "Find and return the root directory of the current git repository"
@@ -584,6 +583,10 @@ EOF
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
+function ipacc -d "Query IP info"
+    curl -S ip-api.com/json 2>/dev/null | jq '.'
+end
+
 function qip -d "Query IP info"
     curl -S ip-api.com/json/$argv[1] 2>/dev/null | jq '.'
 end
@@ -599,6 +602,10 @@ end
 EOF
 else
     _dotzsh_append_buffer << 'EOF'
+function ipacc -d "Query IP info"
+    curl -v ipinfo.io
+end
+
 function qip -d "Query IP info"
     curl -S ip-api.com/json/$argv[1] 2>/dev/null
 end
