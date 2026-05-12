@@ -335,7 +335,22 @@ fwh() {
         return 1
     fi
 }
-## fwh ---------- }}
+
+## fwh completion
+if [ -n "$BASH_VERSION" ]; then
+    _dotzsh_complete_fwh_bash() {
+        local cur
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        COMPREPLY=( $(compgen -c -- "$cur") )
+    }
+    complete -F _dotzsh_complete_fwh_bash fwh
+elif [ -n "$ZSH_VERSION" ]; then
+    _dotzsh_complete_fwh_zsh() {
+        _command_names
+    }
+    compdef _dotzsh_complete_fwh_zsh fwh
+fi
+## fwh ---------- }}}
 
 
 ## about bash prompt

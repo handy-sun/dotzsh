@@ -429,7 +429,9 @@ function fwh -d "Find where a command/hook/alias comes from"
         return 1
     end
 end
-## fwh ---------- }}]
+
+complete -c fwh -f -a '(__fish_complete_command)'
+## fwh ---------- }}}
 
 ## ----------------------- alias ---------------------- [[[1
 ## git
