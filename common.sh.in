@@ -806,7 +806,8 @@ fi
 some_al+=$'
 tara() {
     tar cfa "${1}.tar.zst" "$2"
-}\n'
+}
+'
 
 _dotzsh_append_buffer << EOF
 $some_al
@@ -1131,6 +1132,18 @@ fi
 
 if _dotzsh_cmd_exists duf; then
     some_al+=$'\nalias dufhs="LC_ALL=en_US.UTF-8 duf --hide special"'
+fi
+
+if _dotzsh_cmd_exists claude; then
+    some_al+=$'\nalias clapp="claude --permission-mode bypassPermissions"'
+fi
+
+if _dotzsh_cmd_exists codebuddy; then
+    some_al+=$'\nalias cbuddypp="codebuddy --permission-mode bypassPermissions"'
+fi
+
+if _dotzsh_cmd_exists codex; then
+    some_al+=$'\nalias cxpp="codex --yolo"'
 fi
 
 _dotzsh_append_buffer << EOF
