@@ -533,6 +533,10 @@ function git_root_dir -d "Find and return the root directory of the current git 
 end
 
 function gaa -d "git add . -v in the git repository root directory"
+    if test (count $argv) -gt 0
+        echo "gaa: too many arguments (no arguments expected, 'git add .' from repo root)" >&2
+        return 1
+    end
     set -l root_dir (git_root_dir)
     if test $status -eq 0
         git -C "$root_dir" add . -v

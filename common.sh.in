@@ -483,9 +483,13 @@ git_root_dir() {
 }
 ## Add files to git using the git root directory
 gaa() {
+    if [[ $# -gt 0 ]]; then
+        echo "gaa: too many arguments (no arguments expected, 'git add .' from repo root)" >&2
+        return 1
+    fi
     local root_dir=$(git_root_dir)
     if [[ $? -eq 0 ]]; then
-        git -C "$root_dir" add . -v "$@"
+        git -C "$root_dir" add . -v
     else
         return 1
     fi
