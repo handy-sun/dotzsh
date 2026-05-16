@@ -145,6 +145,34 @@ function gcldi -d "Clean untracked files interactively"
     end
 end
 
+function gclii -d "Clean git-ignored files/directories interactively"
+    set -l root_dir (git_root_dir)
+    if test $status -ne 0
+        return 1
+    end
+
+    set -l ignored_files (git -C "$root_dir" ls-files --directory --others --ignored --exclude-standard)
+    if test (count $ignored_files) -eq 0
+        echo "No ignored files or directories found."
+        return 0
+    end
+
+    echo "The following files/directories are git-ignored:"
+    printf '\033[0;33m%s\033[0m\n' $ignored_files
+
+    ## Ask for confirmation
+    read -P "Do you want to delete all these ignored files/directories? [y/N] " answer
+    switch "$answer"
+    case y Y yes YES Yes
+        for f in $ignored_files
+            rm -rf "$root_dir/$f"
+        end
+        echo "Deletion completed."
+    case '*'
+        echo "Operation cancelled."
+    end
+end
+
 function cdt -d "cd to file's directory or directory itself"
     if test ! -e "$argv[1]"
         echo "Error: The file or directory does not exist."

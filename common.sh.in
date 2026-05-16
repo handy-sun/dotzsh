@@ -154,6 +154,39 @@ gcldi() {
             ;;
     esac
 }
+## Clean git-ignored files/directories interactively
+gclii() {
+    local root_dir=$(git_root_dir)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
+
+    local ignored_files=`git -C "$root_dir" ls-files --directory --others --ignored --exclude-standard`
+    if [[ -z "$ignored_files" ]]; then
+        echo "No ignored files or directories found."
+        return 0
+    fi
+
+    echo "The following files/directories are git-ignored:"
+    echo "$ignored_files" | while IFS= read -r line; do
+        printf '\033[0;33m%s\033[0m\n' "$line"
+    done
+
+    ## Ask for confirmation
+    printf "Do you want to delete all these ignored files/directories? [y/N] "
+    read answer
+    case "$answer" in
+        [yY][eE][sS]|[yY])
+            echo "$ignored_files" | while IFS= read -r f; do
+                rm -rf "$root_dir/$f"
+            done
+            echo "Deletion completed."
+            ;;
+        *)
+            echo "Operation cancelled."
+            ;;
+    esac
+}
 cdt() {
     if [[ ! -e $1 ]]; then
         echo "Error: The file or directory does not exist."
