@@ -465,6 +465,21 @@ function fwh -d "Find where a command/hook/alias comes from"
     end
 end
 
+function cgss -d "Cargo search limit output"
+    cargo search "$argv" --limit 30
+end
+
+function set_proxy
+    set -gx HTTP_PROXY $DZSH_NET_PROXY
+    set -gx HTTPS_PROXY $HTTP_PROXY
+    set -gx ALL_PROXY $HTTPS_PROXY
+    set -gx NO_PROXY localhost,local,orb.local,127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+end
+
+function unset_proxy
+    set -e ALL_PROXY HTTP_PROXY HTTPS_PROXY NO_PROXY
+end
+
 complete -c fwh -f -a '(__fish_complete_command)'
 ## fwh ---------- }}}
 
@@ -485,6 +500,7 @@ alias gcmann="git commit -a --amend --no-edit"
 
 alias gpl="git pull"
 alias gplrb="git pull --rebase"
+alias gph="git push"
 
 alias gsh="git stash"
 alias gshm="git stash -m"

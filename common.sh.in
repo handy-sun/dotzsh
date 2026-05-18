@@ -377,6 +377,21 @@ fwh() {
     fi
 }
 
+cgss() {
+    cargo search "$@" --limit 30
+}
+
+set_proxy() {
+    export HTTP_PROXY="$DZSH_NET_PROXY"
+    export HTTPS_PROXY="$HTTP_PROXY"
+    export ALL_PROXY="$HTTPS_PROXY"
+    export NO_PROXY=localhost,local,orb.local,127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+}
+
+unset_proxy() {
+    unset ALL_PROXY HTTP_PROXY HTTPS_PROXY NO_PROXY
+}
+
 ## fwh completion
 if [ -n "$BASH_VERSION" ]; then
     _dotzsh_complete_fwh_bash() {
@@ -440,6 +455,7 @@ alias gcmann="git commit -a --amend --no-edit"
 
 alias gpl="git pull"
 alias gplrb="git pull --rebase"
+alias gph="git push"
 
 alias gsh="git stash"
 alias gshm="git stash -m"
