@@ -1598,6 +1598,12 @@ function _tide_item_proxy
     end
 end
 
+function _tide_item_private
+    if test "$fish_private_mode" = "1"
+        printf ' 🔒 '
+    end
+end
+
 function dotzsh_tide -d "Tide prompt helper"
     set -l cmd $argv[1]
     switch $cmd
@@ -1609,6 +1615,18 @@ function dotzsh_tide -d "Tide prompt helper"
             if not contains -- proxy $tide_right_prompt_items
                 set --universal --append tide_right_prompt_items proxy
             end
+        case addl-private
+            set -l items
+            if set -q _tide_left_items[1]
+                set items (string split '\x1e' $_tide_left_items)
+            end
+            set -l new_items private
+            for i in $items
+                test "$i" != private && set -a new_items $i
+            end
+            set --universal tide_left_prompt_items $new_items
+            set --universal _tide_left_items $new_items
+            echo "Added private indicator to left prompt items: $new_items"
         case set-vi-icon
             set --universal tide_character_vi_icon_default '→'
         case restore-vi-icon
@@ -1666,6 +1684,7 @@ function dotzsh_tide -d "Tide prompt helper"
             echo "Subcommands:"
             echo "  add-shlvl       Append shlvl to right prompt items"
             echo "  add-proxy       Append proxy indicator to right prompt items"
+            echo "  addl-private    Prepend private-mode indicator to left prompt items"
             echo "  remove-left <item>   Remove item from left prompt items"
             echo "  remove-right <item>  Remove item from right prompt items"
             echo "  reset-rainbow-left   Reset left prompt items to Rainbow default"
@@ -1679,7 +1698,7 @@ function dotzsh_tide -d "Tide prompt helper"
     end
 end
 
-complete -c dotzsh_tide -f -a "add-shlvl add-proxy remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
+complete -c dotzsh_tide -f -a "add-shlvl add-proxy addl-private remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
 EOF
 fi
 
@@ -1703,7 +1722,19 @@ function fish_greeting
 
     set -l nix_ver (nix --version | string replace 'nix ' "")
 
-    echo -s (set_color blue) "❄️ Derivation: " \
+    ## Dim label colors in private mode (fish --private), add privacy indicator
+    if test "$fish_private_mode" = "1"
+        echo -s (set_color brblack) "🔒 Private | " \
+            (set_color brblack) "Derivation: " \
+            (set_color cyan) "$drv_info" \
+            (set_color normal) " | " \
+            (set_color brblack) "Generation: " \
+            (set_color yellow) "$cur_ver" \
+            (set_color normal) " | " \
+            (set_color brblack) "$nix_ver" \
+            (set_color normal)
+    else
+        echo -s (set_color blue) "❄️ Derivation: " \
             (set_color cyan) "$drv_info" \
             (set_color normal) " | " \
             (set_color blue) "Generation: " \
@@ -1711,6 +1742,7 @@ function fish_greeting
             (set_color normal) " | " \
             (set_color brblack) "$nix_ver" \
             (set_color normal)
+    end
 end
 EOF
 fi
