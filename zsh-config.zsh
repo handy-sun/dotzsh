@@ -337,8 +337,22 @@ function pre_exec_timer() {
   timer=${timer:-$SECONDS}
 }
 
+function _dotzsh_zsh_prompt_prefix() {
+  if (( EUID == 0 )); then
+    print -r -- '#'
+  elif (( ${+HTTP_PROXY} || ${+HTTPS_PROXY} || ${+ALL_PROXY} )); then
+    print -r -- '>>'
+  else
+    print -r -- '>'
+  fi
+}
+
 function pre_set_prompt() {
-  if [ $timer ]; then
+  local prompt_prefix=$(_dotzsh_zsh_prompt_prefix)
+  PROMPT="%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? )%B${prompt_prefix}%b%f "
+
+  local prompt_timer=
+  if [[ -n "${timer:-}" ]]; then
     local timer_seconds=$(($SECONDS - $timer))
     if [[ $timer_seconds -ge 4 ]]; then
       if [[ $timer_seconds -ge 60 ]]; then
@@ -346,23 +360,22 @@ function pre_set_prompt() {
         local remaining_seconds=$(( $timer_seconds % 60 ))
         if [[ $timer_minutes -ge 60 ]]; then # seconds greater than 3600, show hours, minutes and seconds
           local timer_hours=$(( $timer_minutes / 60 ))
-          remaining_minutes=$(( $timer_minutes % 60 ))
-          RPROMPT="%F{cyan}${timer_hours}h${remaining_minutes}m${remaining_seconds}s%f"
+          local remaining_minutes=$(( $timer_minutes % 60 ))
+          prompt_timer="${timer_hours}h${remaining_minutes}m${remaining_seconds}s "
         else # seconds greater than 60 but less than 3600, show minutes and seconds
-          RPROMPT="%F{cyan}${timer_minutes}m${remaining_seconds}s%f"
+          prompt_timer="${timer_minutes}m${remaining_seconds}s "
         fi
       else # seconds between 4 and 60, show seconds only
-        RPROMPT="%F{cyan}${timer_seconds}s%f"
+        prompt_timer="${timer_seconds}s "
       fi
-    else # seconds less than 4, no timer shown
-      RPROMPT=""
     fi
 
-    RPROMPT+=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
     unset timer
-  else # no timer, just show the right prompt
-    RPROMPT=' %#%F{yellow}%j %F{grey}%*%f %F{3}%n@%m'
   fi
+
+  local timer_prompt=
+  [[ -n "$prompt_timer" ]] && timer_prompt="%F{cyan}${prompt_timer}%f"
+  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)%F{3}%n@%m%f %F{white}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
 }
 
 # autoload -Uz add-zsh-hook
@@ -371,7 +384,7 @@ add-zsh-hook precmd pre_set_prompt
 
 unsetopt extended_glob
 
-PROMPT='%(2L.%F{yellow}%L%f .)%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? %F{white})%B>%b%f '
+pre_set_prompt
 
 # only zsh alias
 alias -g ...='../..'
