@@ -634,6 +634,10 @@ alias dklg="docker logs -n 300 -f"
 alias xch="cd ~/.config"
 alias xdh="cd ~/.local/share"
 
+function pathl -d "Print PATH entries one per line"
+    printf '%s\n' $PATH
+end
+
 function hurs -d "Secure URL check"
     curl --proto '=https' --tlsv1.2 -LSv https://$argv[1]
 end
