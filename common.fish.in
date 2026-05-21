@@ -507,6 +507,9 @@ alias gshm="git stash -m"
 alias gshl="git stash list"
 alias gshp="git stash pop"
 
+alias gsw="git show"
+alias gsws="git show --stat"
+
 alias grs="git reset"
 alias grsh="git reset --hard"
 alias grss="git reset --soft"
