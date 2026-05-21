@@ -1639,6 +1639,10 @@ function dotzsh_tide -d "Tide prompt helper"
             set -l saved $tide_prompt_transient_enabled
             tide configure --auto --style=Lean --prompt_colors='True color' --show_time='24-hour format' --lean_prompt_height='One line' --prompt_spacing=Compact --icons='Many icons' --transient=No
             set --universal tide_prompt_transient_enabled $saved
+        case lean2
+            set -l saved $tide_prompt_transient_enabled
+            tide configure --auto --style=Lean --prompt_colors='True color' --show_time=No --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Compact --icons='Many icons' --transient=No
+            set --universal tide_prompt_transient_enabled $saved
         case transient-on
             set --universal tide_prompt_transient_enabled true
         case transient-off
@@ -1693,12 +1697,13 @@ function dotzsh_tide -d "Tide prompt helper"
             echo "  restore-vi-icon Restore vi icon to '❮'"
             echo "  rainbow         Configure Rainbow style"
             echo "  lean            Configure Lean style"
+            echo "  lean2           Configure two-line Lean style"
             echo "  transient-on    Enable transient prompt"
             echo "  transient-off   Disable transient prompt"
     end
 end
 
-complete -c dotzsh_tide -f -a "add-shlvl add-proxy addl-private remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean transient-on transient-off"
+complete -c dotzsh_tide -f -a "add-shlvl add-proxy addl-private remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean lean2 transient-on transient-off"
 EOF
 fi
 
