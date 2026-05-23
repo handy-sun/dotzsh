@@ -17,14 +17,14 @@ items="$(
         source "$GENERATED_COMMON_FISH"
         set --universal _tide_right_items status time
         set --erase tide_right_prompt_items
-        dotzsh_tide ar shlvl proxy private_mode shlvl >/dev/null
+        dotzsh_tide ar shlvl proxy shlvl >/dev/null
         string join "," $_tide_right_items
         string join "," $tide_right_prompt_items
         true
     '
 )"
 
-expected_items=$'status,time,shlvl,proxy,private_mode\nstatus,time,shlvl,proxy,private_mode'
+expected_items=$'status,time,shlvl,proxy\nstatus,time,shlvl,proxy'
 if [[ "$items" != "$expected_items" ]]; then
     printf 'expected ar to append unique right prompt items, got:\n%s\n' "$items" >&2
     exit 1

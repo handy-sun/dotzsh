@@ -131,12 +131,11 @@ dotzsh_tide rainbow       # Rainbow 风格（默认）
 dotzsh_tide lean          # Lean 风格
 
 # 管理右侧提示项
-dotzsh_tide ar shlvl proxy private_mode  # 添加右侧提示项
+dotzsh_tide ar shlvl proxy  # 添加右侧提示项
 dotzsh_tide remove-right <item>  # 移除指定项
 dotzsh_tide reset-right   # 重置右侧为默认布局
 
 # 管理左侧提示项
-dotzsh_tide addl-private          # 添加私密模式指示（🔒）
 dotzsh_tide remove-left <item>   # 移除指定项
 dotzsh_tide reset-rainbow-left   # 重置左侧为默认布局
 
