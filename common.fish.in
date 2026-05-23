@@ -1614,14 +1614,24 @@ end
 function dotzsh_tide -d "Tide prompt helper"
     set -l cmd $argv[1]
     switch $cmd
-        case add-shlvl
-            if not contains -- shlvl $tide_right_prompt_items
-                set --universal --append tide_right_prompt_items shlvl
+        case ar
+            if test (count $argv) -lt 2
+                echo "Usage: dotzsh_tide ar <item> [item ...]"
+                return 1
             end
-        case add-proxy
-            if not contains -- proxy $tide_right_prompt_items
-                set --universal --append tide_right_prompt_items proxy
+            set -l items
+            if set -q _tide_right_items[1]
+                set items (string split '\x1e' $_tide_right_items)
+            else if set -q tide_right_prompt_items[1]
+                set items $tide_right_prompt_items
             end
+            set -l new_items $items
+            for item in $argv[2..-1]
+                contains -- "$item" $new_items || set -a new_items $item
+            end
+            set --universal tide_right_prompt_items $new_items
+            set --universal _tide_right_items $new_items
+            echo "Appended right prompt items: $new_items"
         case addl-private
             set -l items
             if set -q _tide_left_items[1]
@@ -1648,7 +1658,7 @@ function dotzsh_tide -d "Tide prompt helper"
             set --universal tide_prompt_transient_enabled $saved
         case lean2
             set -l saved $tide_prompt_transient_enabled
-            tide configure --auto --style=Lean --prompt_colors='True color' --show_time=No --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Compact --icons='Many icons' --transient=No
+            tide configure --auto --style=Lean --prompt_colors='True color' --show_time='24-hour format' --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Compact --icons='Many icons' --transient=No
             set --universal tide_prompt_transient_enabled $saved
         case transient-on
             set --universal tide_prompt_transient_enabled true
@@ -1689,18 +1699,17 @@ function dotzsh_tide -d "Tide prompt helper"
         case reset-right
             set --universal tide_right_prompt_items status cmd_duration context jobs direnv bun node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox terraform aws nix_shell crystal elixir zig time shlvl
             set --universal _tide_right_items $tide_right_prompt_items
-            echo "Reset right prompt items to Rainbow default"
+            echo "Reset right prompt items to default"
         case '*'
             echo "Usage: dotzsh_tide <subcommand>"
             echo "Subcommands:"
-            echo "  add-shlvl       Append shlvl to right prompt items"
-            echo "  add-proxy       Append proxy indicator to right prompt items"
+            echo "  ar <item> [item ...]  Append item(s) to right prompt items"
             echo "  addl-private    Prepend private-mode indicator to left prompt items"
             echo "  remove-left <item>   Remove item from left prompt items"
             echo "  remove-right <item>  Remove item from right prompt items"
             echo "  reset-rainbow-left   Reset left prompt items to Rainbow default"
-            echo "  reset-right          Reset right prompt items to Rainbow default"
-            echo "  set-vi-icon     Set vi icon to '>'"
+            echo "  reset-right          Reset right prompt items to default"
+            echo "  set-vi-icon     Set vi icon to '→'"
             echo "  restore-vi-icon Restore vi icon to '❮'"
             echo "  rainbow         Configure Rainbow style"
             echo "  lean            Configure Lean style"
@@ -1710,7 +1719,7 @@ function dotzsh_tide -d "Tide prompt helper"
     end
 end
 
-complete -c dotzsh_tide -f -a "add-shlvl add-proxy addl-private remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean lean2 transient-on transient-off"
+complete -c dotzsh_tide -f -a "ar addl-private remove-left remove-right reset-rainbow-left reset-right set-vi-icon restore-vi-icon rainbow lean lean2 transient-on transient-off"
 EOF
 fi
 
