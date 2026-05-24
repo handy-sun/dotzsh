@@ -52,6 +52,7 @@
     enableFishIntegration = true;  # 启用 fish 集成 （如果用了tide插件，则会覆盖其提示符）
     enableFishPrompt = true;       # 使用自定义 fish 提示符
     fishGreetingMode = "custom";   # fish 欢迎语模式提供NixOS相应信息
+    inheritActivationPath = true;  # 生成 common.{sh,fish} 时继承 home-manager 调用者的 PATH
   };
 }
 ```
@@ -84,7 +85,10 @@ echo 'source ~/.cache/dotzsh/common.sh' >> ~/.bashrc
 | `enableZshIntegration` | bool | `false` | 将 `zshrc` 注入到 `programs.zsh.initContent`（排序 1200） |
 | `enableFishIntegration` | bool | `false` | 将生成的 `common.fish` 注入到 `programs.fish.shellInitLast` |
 | `enableFishPrompt` | bool | `false` | 启用自定义 `fish_prompt` 和 `fish_right_prompt`（含 SHLVL、代理指示等功能） |
+| `inheritActivationPath` | bool | `false` | 让 dotzsh 在 HM activation 里继承调用者的真实 `PATH` 来探测命令；会同时把整个 activation 脚本的 `home.emptyActivationPath` 设为 `false` |
 | `fishGreetingMode` | `null` / `"empty"` / `"custom"` | `null` | fish 欢迎语：`null` = fish 默认，`empty` = 禁用，`custom` = dotzsh 的 Nix 感知问候语 |
+
+`inheritActivationPath = true` 只影响生成 `~/.cache/dotzsh/common.sh` / `common.fish` 这一阶段的命令探测时机，不影响后续交互 shell 自己的启动逻辑。需要注意的是，Home Manager 的 activation 默认会重建一个受控的 `PATH`；开启这个选项后，会改成继承运行 `home-manager switch`（或对应 driver）的那个进程环境，因此结果会随调用入口不同而变化。
 
 ## 主要功能
 

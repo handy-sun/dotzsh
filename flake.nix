@@ -31,12 +31,16 @@
           ## usually is `~/.nix-profile/bin`, sometimes `/etc/profiles/per-user/$USER/bin`
           userNixProfileBin = "${config.home.profileDirectory}/bin";
           systemBin = "/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
-          setPathScript = ''
-            export PATH="${userNixProfileBin}:${systemBin}:$PATH"
-            if [ -f /opt/homebrew/bin/brew ]; then
-              export PATH="/opt/homebrew/bin:$PATH"
-            fi
-          '';
+          setPathScript =
+            if cfg.inheritActivationPath then
+              ""
+            else
+              ''
+                export PATH="${userNixProfileBin}:${systemBin}:$PATH"
+                if [ -f /opt/homebrew/bin/brew ]; then
+                  export PATH="/opt/homebrew/bin:$PATH"
+                fi
+              '';
         in
         {
           options.programs.dotzsh = {
@@ -44,6 +48,7 @@
             enableZshIntegration = mkEnableOption "init Content in .zshrc";
             enableFishIntegration = mkEnableOption "init Content in .fishrc";
             enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
+            inheritActivationPath = mkEnableOption "inherit the activation caller PATH when generating dotzsh cache files";
             fishGreetingMode = lib.mkOption {
               type = lib.types.nullOr (
                 lib.types.enum [
@@ -57,6 +62,12 @@
           };
 
           config = lib.mkMerge [
+            (mkIf (cfg.enable && cfg.inheritActivationPath && (cfg.enableZshIntegration || cfg.enableFishIntegration)) {
+              # Home Manager normally rebuilds PATH for the whole activation script.
+              # Disable that so the generator sees the caller's runtime PATH.
+              home.emptyActivationPath = lib.mkForce false;
+            })
+
             (mkIf (cfg.enableZshIntegration && cfg.enable) {
               home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
               home.activation.runMyZshShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
