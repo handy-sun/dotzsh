@@ -121,6 +121,38 @@ gitur() {
         git push $1 $var
     done
 }
+ggi() {
+    if [[ -e .gitignore ]]; then
+        echo "Error: .gitignore already exists in $(pwd)"
+        return 1
+    fi
+
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: ggi <template> [template...]"
+        return 1
+    fi
+
+    if ! cmd_exists curl; then
+        echo "Error: curl is required."
+        return 1
+    fi
+
+    local templates="$1"
+    shift
+    for template in "$@"; do
+        templates+=",${template}"
+    done
+
+    local tmp
+    tmp="$(mktemp)" || return 1
+    if ! curl -fsSL "https://www.gitignore.io/api/${templates}" > "$tmp"; then
+        rm -f "$tmp"
+        return 1
+    fi
+
+    mv "$tmp" .gitignore
+    echo ">>> Wrote .gitignore from gitignore.io"
+}
 ## List all untracked files/directories in current git repo and decide whether to delete it.
 gcldi() {
     local root_dir=$(git_root_dir)

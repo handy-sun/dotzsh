@@ -116,6 +116,35 @@ function gitur -d "Git update and rebase"
     end
 end
 
+function ggi -d "Write .gitignore from gitignore.io if it does not exist"
+    if test -e .gitignore
+        echo "Error: .gitignore already exists in "(pwd)
+        return 1
+    end
+
+    if test (count $argv) -eq 0
+        echo "Usage: ggi <template> [template...]"
+        return 1
+    end
+
+    if not cmd_exists curl
+        echo "Error: curl is required."
+        return 1
+    end
+
+    set -l templates (string join , -- $argv)
+    set -l tmp (mktemp)
+    or return 1
+
+    if not curl -fsSL "https://www.gitignore.io/api/$templates" > "$tmp"
+        rm -f "$tmp"
+        return 1
+    end
+
+    mv "$tmp" .gitignore
+    echo ">>> Wrote .gitignore from gitignore.io"
+end
+
 ## List all untracked files/directories in current git repo and decide whether to delete it.
 function gcldi -d "Clean untracked files interactively"
     set -l root_dir (git_root_dir)
