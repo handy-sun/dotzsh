@@ -42,6 +42,7 @@
           options.programs.dotzsh = {
             enable = mkEnableOption "enable dotzsh";
             enableZshIntegration = mkEnableOption "init Content in .zshrc";
+            enableBashIntegration = mkEnableOption "init Content in .bashrc";
             enableFishIntegration = mkEnableOption "init Content in .fishrc";
             enableFishPrompt = mkEnableOption "set fish_prompt and fish_right_prompt";
             fishGreetingMode = lib.mkOption {
@@ -66,6 +67,18 @@
               programs.zsh.initContent = lib.mkOrder 1200 ''
                 # --- github:handy/dotzsh flake auto-sourced ---
                 source ${self}/zshrc
+              '';
+            })
+
+            (mkIf (cfg.enableBashIntegration && cfg.enable) {
+              home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
+              home.activation.runMyBashShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+                ${setPathScript}
+                ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm -1
+              '';
+              programs.bash.initExtra = ''
+                # --- github:handy/dotzsh flake auto-sourced ---
+                source ${config.home.homeDirectory}/.cache/dotzsh/common.sh
               '';
             })
 

@@ -82,6 +82,7 @@ echo 'source ~/.cache/dotzsh/common.sh' >> ~/.bashrc
 |------|------|--------|------|
 | `enable` | bool | `false` | 总开关 |
 | `enableZshIntegration` | bool | `false` | 将 `zshrc` 注入到 `programs.zsh.initContent`（排序 1200） |
+| `enableBashIntegration` | bool | `false` | 生成 `common.sh` 并注入到 `programs.bash.initExtra` |
 | `enableFishIntegration` | bool | `false` | 将生成的 `common.fish` 注入到 `programs.fish.shellInitLast` |
 | `enableFishPrompt` | bool | `false` | 启用自定义 `fish_prompt` 和 `fish_right_prompt`（含 SHLVL、代理指示等功能） |
 | `fishGreetingMode` | `null` / `"empty"` / `"custom"` | `null` | fish 欢迎语：`null` = fish 默认，`empty` = 禁用，`custom` = dotzsh 的 Nix 感知问候语 |
