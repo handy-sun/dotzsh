@@ -375,7 +375,13 @@ function pre_set_prompt() {
 
   local timer_prompt=
   [[ -n "$prompt_timer" ]] && timer_prompt="%F{cyan}${prompt_timer}%f"
-  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)%F{3}%n@%m%f %F{white}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
+
+  # Only show user@hostname over SSH (mimics p10k's context segment)
+  local ssh_context=
+  if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
+    ssh_context="%F{3}%n@%m%f "
+  fi
+  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{245}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
 }
 
 # autoload -Uz add-zsh-hook
