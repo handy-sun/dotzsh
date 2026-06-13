@@ -1149,6 +1149,31 @@ EOF
 fi
 ## package management command ]]]
 
+## nix [[[
+if _dotzsh_cmd_exists nix; then
+    _dotzsh_append_buffer << 'EOF'
+nxqa() {
+    which "$1" | xargs realpath | xargs nix why-depends --all /run/current-system
+}
+EOF
+    if [ -n "$_dotzsh_is_linux" ]; then
+        if _dotzsh_cmd_exists nix-tree; then
+            _dotzsh_append_buffer << 'EOF'
+nxqt() {
+    nix-store --gc --print-roots | rg -v '/proc/' | rg -Po '(?<= -> ).*' | xargs -o nix-tree
+}
+EOF
+        fi
+        _dotzsh_append_buffer << 'EOF'
+nxqdh() {
+    which "$1" | xargs realpath | xargs nix-store -q --deriver | \
+        xargs nix why-depends --derivation ".#homeConfigurations.$USER.activationPackage" 2>/dev/null
+}
+EOF
+    fi
+fi
+## nix ]]]
+
 some_al=''
 if _dotzsh_cmd_exists free; then
     some_al+=$'\nalias free="free -h"'
@@ -1199,6 +1224,16 @@ fi
 
 if _dotzsh_cmd_exists duf; then
     some_al+=$'\nalias dufhs="LC_ALL=en_US.UTF-8 duf --hide special"'
+fi
+
+if _dotzsh_cmd_exists nix; then
+    some_al+=$'\nalias nxsc="nix config show"\nalias nxlg="sudo nix-env -p /nix/var/nix/profiles/system --list-generations"\nalias nxgc="sudo nix-collect-garbage --delete-older-than 4d"'
+    if [ -n "$_dotzsh_is_linux" ]; then
+        some_al+=$'\nalias nxcs="readlink /run/current-system"'
+    fi
+fi
+if _dotzsh_cmd_exists nix-info; then
+    some_al+=$'\nalias nxii="nix-info -m"'
 fi
 
 some_al+=$'\nalias clapp="claude --permission-mode bypassPermissions"'
