@@ -321,9 +321,8 @@ _fwh_judge_built_in_or_abs_path() {
 }
 _fwh_resolve_alias() {
     local cmd="$1"
-    ## Get alias (remove all quotes)
-    ## TODO: [WARNING] sed will remove unexpect quote(s)
-    local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/alias ${cmd}='(.*)'/\1/; s/'\\''/'/g" | tr -d "'"`
+    ## Extract alias value: unescape bash's '\'' (literal quote in single-quoted string)
+    local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/alias ${cmd}='(.*)'/\1/; s/'\\\\''/'/g"`
     if [[ -n "${alias_def}" ]]; then
         local trimmed_equal_sign=`echo ${alias_def#*=}`
         local pointed_cmd=`echo "$trimmed_equal_sign" | awk '{print $1}'`

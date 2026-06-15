@@ -403,8 +403,8 @@ function _fwh_resolve_alias
     set -l alias_def (alias "$cmd" 2>/dev/null)
 
     if test -n "$alias_def"
-        # fish alias output format: alias name 'definition'
-        set -l alias_value (echo "$alias_def" | string replace -r "^alias $cmd '?''?" '' | string trim -c "'")
+        # fish alias output: alias name 'value' — strip the outer quotes only
+        set -l alias_value (string replace -r "^alias $cmd '(.*)'\$" '$1' -- "$alias_def" | string replace -a "''" "'")
         set -l pointed_cmd (echo "$alias_value" | awk '{print $1}')
         ## Recursive resolve the pointed word
         if test -n "$pointed_cmd"
