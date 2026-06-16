@@ -321,11 +321,12 @@ _fwh_judge_built_in_or_abs_path() {
 }
 _fwh_resolve_alias() {
     local cmd="$1"
-    ## Extract alias value: unescape bash's '\'' (literal quote in single-quoted string)
-    local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/alias ${cmd}='(.*)'/\1/; s/'\\\\''/'/g"`
+    ## Strip bash's leading 'alias ' prefix (zsh has none), then unescape bash's '\'' (literal quote in single-quoted string)
+    local alias_def=`alias -- "$cmd" 2>/dev/null | sed -E "s/^alias //; s/'\\\\''/'/g"`
     if [[ -n "${alias_def}" ]]; then
         local trimmed_equal_sign=`echo ${alias_def#*=}`
-        local pointed_cmd=`echo "$trimmed_equal_sign" | awk '{print $1}'`
+        ## Strip surrounding single quotes from the value before taking the first word
+        local pointed_cmd=`echo "$trimmed_equal_sign" | sed -E "s/^'//; s/'$//" | awk '{print $1}'`
         ## Recursive resolve the pointed word
         if [[ -n "$pointed_cmd" ]]; then
             echo "$alias_def"
