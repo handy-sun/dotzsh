@@ -709,6 +709,10 @@ EOF
 function rlip4 -d "List local IPv4 addresses"
     ip -o -4 addr list | grep -Ev '\s(lo|br|docker)' | awk '{printf"%s %s\n",$4,$2}' | column -t
 end
+
+function rlip6 -d "List local IPv6 addresses"
+    ip -o -6 addr show scope global | grep -Ev '\s(lo|br|docker)|deprecated|tentative' | awk '{print $4}' | cut -d/ -f1
+end
 EOF
     fi
 fi
