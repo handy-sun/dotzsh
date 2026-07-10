@@ -79,8 +79,8 @@ assert_output() {
 jq_bin_dir="$(make_bin jq)"
 fallback_bin_dir="$(make_bin fallback)"
 
-expected_routed=$'192.168.1.29 24 enp4s0\n10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n100.64.0.2 32 tailscale0'
-expected_vpn_only=$'10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n100.64.0.2 32 tailscale0'
+expected_routed=$'192.168.1.29 24 enp4s0\n10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0'
+expected_vpn_only=$'10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0'
 
 for mode in jq fallback; do
     for shell_name in sh fish; do

@@ -690,9 +690,11 @@ function rlip4 -d "List routed and VPN IPv4 addresses"
         [
             .[]
             | .ifname as $name
+            | (.link_type // "") as $link_type
             | (.linkinfo.info_kind // "") as $kind
             | (
-                ($kind | test("^(tun|tap|wireguard|ppp)$"; "i"))
+                ($link_type | test("^(tun|tap|wireguard|ppp)$"; "i"))
+                or ($kind | test("^(tun|tap|wireguard|ppp)$"; "i"))
                 or ($name | test("^(zt|tailscale|wg|tun|tap|ppp)"; "i"))
               ) as $is_vpn
             | .addr_info[]?
