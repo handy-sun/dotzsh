@@ -669,7 +669,26 @@ qip() {
 }
 
 rlip4() {
-    ip -j addr | jq -r '.[] | .ifname as $name | select($name | test("^(lo|br|docker)") | not) | .addr_info[]? | select(.family=="inet") | "\(.local) \(.prefixlen) \(.label // $name)"' | column -t
+    local route_ip
+    route_ip=$(ip -j route get 223.5.5.5 2>/dev/null | jq -r '.[0] | .prefsrc // .src // empty' 2>/dev/null)
+    ip -j -d addr | jq -r --arg route_ip "$route_ip" '
+        [
+            .[]
+            | .ifname as $name
+            | (.linkinfo.info_kind // "") as $kind
+            | (
+                ($kind | test("^(tun|tap|wireguard|ppp)$"; "i"))
+                or ($name | test("^(zt|tailscale|wg|tun|tap|ppp)"; "i"))
+              ) as $is_vpn
+            | .addr_info[]?
+            | select(.family == "inet" and (.local == $route_ip or $is_vpn))
+            | { local, prefixlen, label: (.label // $name) }
+        ]
+        | unique_by(.local)
+        | sort_by(if .local == $route_ip then 0 else 1 end)
+        | .[]
+        | "\(.local) \(.prefixlen) \(.label)"
+    ' | column -t
 }
 
 rlip6() {
@@ -691,7 +710,36 @@ EOF
     if [ -n "$_dotzsh_is_linux" ]; then
         _dotzsh_append_buffer << 'EOF'
 rlip4() {
-    ip -o -4 addr list | grep -Ev '\s(lo|br|docker)' | awk '{printf"%s %s\n",$4,$2}' | column -t
+    local route_ip vpn_interfaces
+    route_ip=$(ip -4 route get 223.5.5.5 2>/dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "src") { print $(i + 1); exit } }')
+    vpn_interfaces=$(
+        for kind in tun wireguard ppp; do
+            ip -o link show type "$kind" 2>/dev/null
+        done | awk -F': ' '{ sub(/@.*/, "", $2); print $2 }'
+    )
+    ip -o -4 addr list | awk -v route_ip="$route_ip" -v vpn_interfaces="$vpn_interfaces" '
+        BEGIN {
+            count = split(vpn_interfaces, interfaces, "\n")
+            for (i = 1; i <= count; i++) is_vpn[interfaces[i]] = 1
+        }
+        {
+            interface = $2
+            sub(/@.*/, "", interface)
+            split($4, cidr, "/")
+            ip_address = cidr[1]
+            if (ip_address == route_ip || is_vpn[interface] || tolower(interface) ~ /^(zt|tailscale|wg|tun|tap|ppp)/) {
+                if (!(ip_address in selected)) {
+                    order[++selected_count] = ip_address
+                    selected[ip_address] = ip_address " " cidr[2] " " interface
+                }
+            }
+        }
+        END {
+            if (route_ip in selected) print selected[route_ip]
+            for (i = 1; i <= selected_count; i++)
+                if (order[i] != route_ip) print selected[order[i]]
+        }
+    ' | column -t
 }
 
 rlip6() {

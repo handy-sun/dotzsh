@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+route_mode=${MOCK_ROUTE_MODE:-success}
+
+case "$*" in
+    '-j route get 223.5.5.5')
+        [[ "$route_mode" == success ]] || exit 2
+        printf '%s\n' '[{"dst":"223.5.5.5","gateway":"192.168.1.1","dev":"enp4s0","prefsrc":"192.168.1.29"}]'
+        ;;
+    '-j -d addr')
+        printf '%s\n' '[
+          {"ifname":"lo","link_type":"loopback","addr_info":[{"family":"inet","local":"127.0.0.1","prefixlen":8,"label":"lo"}]},
+          {"ifname":"enp4s0","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.1.29","prefixlen":24,"label":"enp4s0"}]},
+          {"ifname":"enp5s0","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.50.2","prefixlen":24,"label":"enp5s0"}]},
+          {"ifname":"ztmosdpe46","link_type":"ether","linkinfo":{"info_kind":"tun"},"addr_info":[{"family":"inet","local":"10.144.2.9","prefixlen":16,"label":"ztmosdpe46"}]},
+          {"ifname":"corp0","link_type":"none","linkinfo":{"info_kind":"wireguard"},"addr_info":[{"family":"inet","local":"10.66.0.2","prefixlen":24,"label":"corp0"}]},
+          {"ifname":"tailscale0","link_type":"none","addr_info":[{"family":"inet","local":"100.64.0.2","prefixlen":32,"label":"tailscale0"}]},
+          {"ifname":"docker0","link_type":"ether","linkinfo":{"info_kind":"bridge"},"addr_info":[{"family":"inet","local":"172.17.0.1","prefixlen":16,"label":"docker0"}]}
+        ]'
+        ;;
+    '-4 route get 223.5.5.5')
+        [[ "$route_mode" == success ]] || exit 2
+        printf '%s\n' '223.5.5.5 via 192.168.1.1 dev enp4s0 src 192.168.1.29 uid 1000'
+        ;;
+    '-o link show type tun')
+        printf '%s\n' '4: ztmosdpe46: <BROADCAST,UP,LOWER_UP> mtu 2800'
+        ;;
+    '-o link show type wireguard')
+        printf '%s\n' '5: corp0: <POINTOPOINT,UP,LOWER_UP> mtu 1420'
+        ;;
+    '-o link show type ppp')
+        ;;
+    '-o -4 addr list')
+        printf '%s\n' \
+            '1: lo inet 127.0.0.1/8 scope host lo' \
+            '2: enp4s0 inet 192.168.1.29/24 scope global enp4s0' \
+            '3: enp5s0 inet 192.168.50.2/24 scope global enp5s0' \
+            '4: ztmosdpe46 inet 10.144.2.9/16 scope global ztmosdpe46' \
+            '5: corp0 inet 10.66.0.2/24 scope global corp0' \
+            '6: tailscale0 inet 100.64.0.2/32 scope global tailscale0' \
+            '7: docker0 inet 172.17.0.1/16 scope global docker0'
+        ;;
+    *)
+        printf 'unexpected mock ip arguments: %s\n' "$*" >&2
+        exit 64
+        ;;
+esac
