@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+route_mode=${MOCK_ROUTE_MODE:-success}
+
+case "$*" in
+    '-j -6 route get 2400:3200::1')
+        [[ "$route_mode" == success ]] || exit 2
+        printf '%s\n' '[{"dst":"2400:3200::1","gateway":"fe80::1","dev":"enp4s0","prefsrc":"2001:db8:1::abcd"}]'
+        ;;
+    '-j -d -6 addr')
+        printf '%s\n' '[
+          {"ifname":"lo","link_type":"loopback","addr_info":[{"family":"inet6","local":"::1","prefixlen":128,"scope":"host"}]},
+          {"ifname":"enp4s0","link_type":"ether","addr_info":[
+            {"family":"inet6","local":"2001:db8:1::abcd","prefixlen":64,"scope":"global","temporary":true},
+            {"family":"inet6","local":"2001:db8:1::1","prefixlen":64,"scope":"global"},
+            {"family":"inet6","local":"2001:db8:1::dead","prefixlen":64,"scope":"global","deprecated":true},
+            {"family":"inet6","local":"fe80::1","prefixlen":64,"scope":"link"}
+          ]},
+          {"ifname":"enp5s0","link_type":"ether","addr_info":[{"family":"inet6","local":"2001:db8:2::2","prefixlen":64,"scope":"global"}]},
+          {"ifname":"zt6","link_type":"ether","linkinfo":{"info_kind":"tun"},"addr_info":[
+            {"family":"inet6","local":"fd00:144::9","prefixlen":64,"scope":"global"},
+            {"family":"inet6","local":"fe80::9","prefixlen":64,"scope":"link"}
+          ]},
+          {"ifname":"corp0","link_type":"none","linkinfo":{"info_kind":"wireguard"},"addr_info":[
+            {"family":"inet6","local":"fd66::2","prefixlen":64,"scope":"global"},
+            {"family":"inet6","local":"fd66::dead","prefixlen":64,"scope":"global","deprecated":true}
+          ]},
+          {"ifname":"vpn42","link_type":"ppp","addr_info":[{"family":"inet6","local":"fd77::2","prefixlen":128,"scope":"global"}]},
+          {"ifname":"tailscale0","link_type":"none","addr_info":[
+            {"family":"inet6","local":"fd7a:115c:a1e0::2","prefixlen":128,"scope":"global"},
+            {"family":"inet6","local":"fd7a:115c:a1e0::bad","prefixlen":128,"scope":"global","tentative":true}
+          ]},
+          {"ifname":"docker0","link_type":"ether","linkinfo":{"info_kind":"bridge"},"addr_info":[{"family":"inet6","local":"fd17::1","prefixlen":64,"scope":"global"}]}
+        ]'
+        ;;
+    '-6 route get 2400:3200::1')
+        [[ "$route_mode" == success ]] || exit 2
+        printf '%s\n' '2400:3200::1 via fe80::1 dev enp4s0 src 2001:db8:1::abcd metric 100'
+        ;;
+    '-o link show type tun')
+        printf '%s\n' '4: zt6: <BROADCAST,UP,LOWER_UP> mtu 2800'
+        ;;
+    '-o link show type wireguard')
+        printf '%s\n' '5: corp0: <POINTOPOINT,UP,LOWER_UP> mtu 1420'
+        ;;
+    '-o link show type ppp')
+        printf '%s\n' '6: vpn42: <POINTOPOINT,UP,LOWER_UP> mtu 1500'
+        ;;
+    '-o -6 addr show scope global')
+        printf '%s\n' \
+            '2: enp4s0 inet6 2001:db8:1::abcd/64 scope global temporary' \
+            '2: enp4s0 inet6 2001:db8:1::1/64 scope global' \
+            '2: enp4s0 inet6 2001:db8:1::dead/64 scope global deprecated' \
+            '3: enp5s0 inet6 2001:db8:2::2/64 scope global' \
+            '4: zt6 inet6 fd00:144::9/64 scope global' \
+            '5: corp0 inet6 fd66::2/64 scope global' \
+            '5: corp0 inet6 fd66::dead/64 scope global deprecated' \
+            '6: vpn42 inet6 fd77::2/128 scope global' \
+            '7: tailscale0 inet6 fd7a:115c:a1e0::2/128 scope global' \
+            '7: tailscale0 inet6 fd7a:115c:a1e0::bad/128 scope global tentative' \
+            '8: docker0 inet6 fd17::1/64 scope global'
+        ;;
+    *)
+        printf 'unexpected mock ip arguments: %s\n' "$*" >&2
+        exit 64
+        ;;
+esac
