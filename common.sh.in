@@ -502,7 +502,23 @@ alias grg="git restore --staged"
 
 alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
 alias glp="glg --graph"
-alias glh="glp | head -30"
+glh() {
+    local output_lines=30
+    local terminal_lines
+    if ! terminal_lines="$(tput lines 2>/dev/null)"; then
+        terminal_lines=
+    fi
+
+    if [[ "$terminal_lines" =~ ^[0-9]+$ ]]; then
+        if ((terminal_lines <= 2)); then
+            output_lines=0
+        elif ((terminal_lines < 32)); then
+            output_lines=$((terminal_lines - 2))
+        fi
+    fi
+
+    glp --color=always | head -n "$output_lines"
+}
 alias glsa="git log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --graph --all"
 
 alias gdf="git diff"
