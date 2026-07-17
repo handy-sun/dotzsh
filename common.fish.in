@@ -684,6 +684,147 @@ end
 function hurs -d "Secure URL check"
     curl --proto '=https' --tlsv1.2 -LSv https://$argv[1]
 end
+
+function _qip_is_ipv4
+    set -l octets (string split . -- "$argv[1]")
+    test (count $octets) -eq 4; or return 1
+
+    for octet in $octets
+        string match -qr '^(0|[1-9][0-9]{0,2})$' -- "$octet"; and test "$octet" -le 255; or return 1
+    end
+end
+
+function _qip_is_ipv6
+    set -l ip $argv[1]
+    string match -qr '^[0-9A-Fa-f:.]+$' -- "$ip"; and string match -q '*:*' -- "$ip"; or return 1
+
+    set -l compressed 0
+    set -l left $ip
+    set -l right
+    if string match -q '*::*' -- "$ip"
+        set compressed 1
+        set -l sides (string split -m1 :: -- "$ip")
+        set left $sides[1]
+        set right $sides[2]
+        string match -q '*::*' -- "$right"; and return 1
+    else if string match -q ':*' -- "$ip"; or string match -q '*:' -- "$ip"
+        return 1
+    end
+
+    set -l groups
+    test -n "$left"; and set -a groups (string split : -- "$left")
+    test -n "$right"; and set -a groups (string split : -- "$right")
+
+    set -l group_count 0
+    set -l group_index 0
+    for group in $groups
+        set group_index (math "$group_index + 1")
+        if string match -q '*.*' -- "$group"
+            test $group_index -eq (count $groups); and string match -q "*$group" -- "$ip"; and _qip_is_ipv4 "$group"; or return 1
+            set group_count (math "$group_count + 2")
+        else
+            string match -qr '^[0-9A-Fa-f]{1,4}$' -- "$group"; or return 1
+            set group_count (math "$group_count + 1")
+        end
+    end
+
+    if test $compressed -eq 1
+        test $group_count -lt 8
+    else
+        test $group_count -eq 8
+    end
+end
+
+function _qip_response_succeeded
+    switch $argv[1]
+        case ipwho
+            string match -qr '"success"\s*:\s*true' -- "$argv[2]"
+        case ip-api
+            string match -qr '"status"\s*:\s*"success"' -- "$argv[2]"
+        case '*'
+            return 1
+    end
+end
+
+function qip -d "Query IP info"
+    if test (count $argv) -ne 1
+        echo "Usage: qip <IPv4-or-IPv6-address>" >&2
+        return 1
+    end
+    if not _qip_is_ipv4 "$argv[1]"; and not _qip_is_ipv6 "$argv[1]"
+        echo "Usage: qip <IPv4-or-IPv6-address>" >&2
+        return 1
+    end
+
+    set -l ip $argv[1]
+    set -l succeeded 0
+
+    echo "=== ipwho.is ==="
+    set -l response (curl -fsS --max-time 10 "https://ipwho.is/$ip")
+    if test $status -eq 0
+        if not cmd_exists jq
+            printf '%s\n' "$response"
+            if _qip_response_succeeded ipwho "$response"
+                set succeeded 1
+            else
+                echo "Error: ipwho.is returned an invalid response." >&2
+            end
+        else if printf '%s\n' "$response" | jq -e '
+            select(.success == true)
+            | {
+                ip,
+                country,
+                region,
+                city,
+                location: { latitude, longitude },
+                asn: .connection.asn,
+                organization: .connection.org,
+                isp: .connection.isp,
+                timezone: .timezone.id
+              }
+        '
+            set succeeded 1
+        else
+            echo "Error: ipwho.is returned an invalid response." >&2
+        end
+    else
+        echo "Error: ipwho.is query failed." >&2
+    end
+
+    echo "=== ip-api.com ==="
+    set response (curl -fsS --max-time 10 "http://ip-api.com/json/$ip?fields=status,message,query,country,regionName,city,lat,lon,timezone,isp,org,as")
+    if test $status -eq 0
+        if not cmd_exists jq
+            printf '%s\n' "$response"
+            if _qip_response_succeeded ip-api "$response"
+                set succeeded 1
+            else
+                echo "Error: ip-api.com returned an invalid response." >&2
+            end
+        else if printf '%s\n' "$response" | jq -e '
+            select(.status == "success")
+            | {
+                ip: .query,
+                country,
+                region: .regionName,
+                city,
+                location: { latitude: .lat, longitude: .lon },
+                asn: (.as | split(" ")[0] | ltrimstr("AS") | tonumber),
+                organization: .org,
+                isp,
+                timezone
+              }
+        '
+            set succeeded 1
+        else
+            echo "Error: ip-api.com returned an invalid response." >&2
+        end
+    else
+        echo "Error: ip-api.com query failed." >&2
+    end
+
+    test $succeeded -eq 1
+end
 ## ----------------------- alias ---------------------- ]]]
 
 EOF
@@ -692,10 +833,6 @@ if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
 function ipacc -d "Query IP info"
     curl -S ip-api.com/json 2>/dev/null | jq '.'
-end
-
-function qip -d "Query IP info"
-    curl -S ip-api.com/json/$argv[1] 2>/dev/null | jq '.'
 end
 
 function rlip4 -d "List routed and VPN IPv4 addresses"
@@ -757,10 +894,6 @@ else
     _dotzsh_append_buffer << 'EOF'
 function ipacc -d "Query IP info"
     curl -v ipinfo.io
-end
-
-function qip -d "Query IP info"
-    curl -S ip-api.com/json/$argv[1] 2>/dev/null
 end
 
 EOF

@@ -671,6 +671,151 @@ if [[ -n "$BASH_VERSION" ]]; then
     export HISTTIMEFORMAT='%F %T '
 fi
 
+_qip_is_ipv4() {
+    local rest=$1 octet
+    local octet_count=0
+
+    while [[ "$rest" == *.* ]]; do
+        octet=${rest%%.*}
+        rest=${rest#*.}
+        [[ "$octet" =~ ^[0-9]{1,3}$ && ( "$octet" == 0 || "$octet" != 0* ) ]] && ((10#$octet <= 255)) || return 1
+        ((octet_count += 1))
+    done
+
+    [[ "$rest" =~ ^[0-9]{1,3}$ && ( "$rest" == 0 || "$rest" != 0* ) ]] && ((10#$rest <= 255)) && ((octet_count == 3))
+}
+
+_qip_is_ipv6() {
+    local ip=$1 left right groups group rest
+    local compressed=0 group_count=0
+
+    [[ "$ip" =~ ^[0-9A-Fa-f:.]+$ && "$ip" == *:* ]] || return 1
+    if [[ "$ip" == *::* ]]; then
+        compressed=1
+        left=${ip%%::*}
+        right=${ip#*::}
+        [[ "$right" != *::* ]] || return 1
+        [[ "$left" != :* && "$left" != *: && "$right" != :* && "$right" != *: ]] || return 1
+        if [[ -n "$left" && -n "$right" ]]; then
+            groups="$left:$right"
+        else
+            groups=$left$right
+        fi
+    else
+        [[ "$ip" != :* && "$ip" != *: ]] || return 1
+        groups=$ip
+    fi
+
+    rest=$groups
+    while [[ -n "$rest" ]]; do
+        if [[ "$rest" == *:* ]]; then
+            group=${rest%%:*}
+            rest=${rest#*:}
+        else
+            group=$rest
+            rest=
+        fi
+        [[ -n "$group" ]] || return 1
+
+        if [[ "$group" == *.* ]]; then
+            [[ -z "$rest" && "$ip" == *"$group" ]] && _qip_is_ipv4 "$group" || return 1
+            ((group_count += 2))
+        else
+            [[ "$group" =~ ^[0-9A-Fa-f]{1,4}$ ]] || return 1
+            ((group_count += 1))
+        fi
+    done
+
+    if ((compressed)); then
+        ((group_count < 8))
+    else
+        ((group_count == 8))
+    fi
+}
+
+_qip_response_succeeded() {
+    local source=$1 response=$2
+    case "$source" in
+        ipwho) [[ "$response" =~ \"success\"[[:space:]]*:[[:space:]]*true ]] ;;
+        ip-api) [[ "$response" =~ \"status\"[[:space:]]*:[[:space:]]*\"success\" ]] ;;
+        *) return 1 ;;
+    esac
+}
+
+qip() {
+    if [[ $# -ne 1 ]] || { ! _qip_is_ipv4 "$1" && ! _qip_is_ipv6 "$1"; }; then
+        echo "Usage: qip <IPv4-or-IPv6-address>" >&2
+        return 1
+    fi
+
+    local ip=$1 response
+    local succeeded=0
+
+    echo "=== ipwho.is ==="
+    if response="$(curl -fsS --max-time 10 "https://ipwho.is/$ip")"; then
+        if ! cmd_exists jq; then
+            printf '%s\n' "$response"
+            if _qip_response_succeeded ipwho "$response"; then
+                succeeded=1
+            else
+                echo "Error: ipwho.is returned an invalid response." >&2
+            fi
+        elif printf '%s\n' "$response" | jq -e '
+            select(.success == true)
+            | {
+                ip,
+                country,
+                region,
+                city,
+                location: { latitude, longitude },
+                asn: .connection.asn,
+                organization: .connection.org,
+                isp: .connection.isp,
+                timezone: .timezone.id
+              }
+        '; then
+            succeeded=1
+        else
+            echo "Error: ipwho.is returned an invalid response." >&2
+        fi
+    else
+        echo "Error: ipwho.is query failed." >&2
+    fi
+
+    echo "=== ip-api.com ==="
+    if response="$(curl -fsS --max-time 10 "http://ip-api.com/json/$ip?fields=status,message,query,country,regionName,city,lat,lon,timezone,isp,org,as")"; then
+        if ! cmd_exists jq; then
+            printf '%s\n' "$response"
+            if _qip_response_succeeded ip-api "$response"; then
+                succeeded=1
+            else
+                echo "Error: ip-api.com returned an invalid response." >&2
+            fi
+        elif printf '%s\n' "$response" | jq -e '
+            select(.status == "success")
+            | {
+                ip: .query,
+                country,
+                region: .regionName,
+                city,
+                location: { latitude: .lat, longitude: .lon },
+                asn: (.as | split(" ")[0] | ltrimstr("AS") | tonumber),
+                organization: .org,
+                isp,
+                timezone
+              }
+        '; then
+            succeeded=1
+        else
+            echo "Error: ip-api.com returned an invalid response." >&2
+        fi
+    else
+        echo "Error: ip-api.com query failed." >&2
+    fi
+
+    ((succeeded))
+}
+
 ## ----------------------- conditional shell function ----------------------
 EOF
 
@@ -678,10 +823,6 @@ if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
 ipacc() {
     curl -S ip-api.com/json 2>/dev/null | jq '.'
-}
-
-qip() {
-    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
 
 rlip4() {
@@ -745,10 +886,6 @@ else
     _dotzsh_append_buffer << 'EOF'
 ipacc() {
     curl -v ipinfo.io
-}
-
-qip() {
-    curl -S ip-api.com/json/$1 2>/dev/null
 }
 
 EOF
