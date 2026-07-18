@@ -671,6 +671,37 @@ if [[ -n "$BASH_VERSION" ]]; then
     export HISTTIMEFORMAT='%F %T '
 fi
 
+_qip_query() {
+    local source=$1 url=$2 response
+    echo "=== $source ==="
+
+    if ! response="$(curl -fsS --max-time 10 "$url")"; then
+        echo "Error: $source query failed." >&2
+        return 1
+    fi
+
+    if cmd_exists jq; then
+        printf '%s\n' "$response" | jq '.' || {
+            echo "Error: $source returned invalid JSON." >&2
+            return 1
+        }
+    else
+        printf '%s\n' "$response"
+    fi
+}
+
+qip() {
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: qip <IP-address>" >&2
+        return 1
+    fi
+
+    local succeeded=0
+    _qip_query ipwho.is "https://ipwho.is/$1" && succeeded=1
+    _qip_query ip-api.com "http://ip-api.com/json/$1" && succeeded=1
+    ((succeeded))
+}
+
 ## ----------------------- conditional shell function ----------------------
 EOF
 
@@ -678,10 +709,6 @@ if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
 ipacc() {
     curl -S ip-api.com/json 2>/dev/null | jq '.'
-}
-
-qip() {
-    curl -S ip-api.com/json/$1 2>/dev/null | jq '.'
 }
 
 rlip4() {
@@ -745,10 +772,6 @@ else
     _dotzsh_append_buffer << 'EOF'
 ipacc() {
     curl -v ipinfo.io
-}
-
-qip() {
-    curl -S ip-api.com/json/$1 2>/dev/null
 }
 
 EOF

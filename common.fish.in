@@ -684,6 +684,40 @@ end
 function hurs -d "Secure URL check"
     curl --proto '=https' --tlsv1.2 -LSv https://$argv[1]
 end
+
+function _qip_query
+    set -l source $argv[1]
+    set -l url $argv[2]
+    echo "=== $source ==="
+
+    set -l response (curl -fsS --max-time 10 "$url")
+    if test $status -ne 0
+        echo "Error: $source query failed." >&2
+        return 1
+    end
+
+    if cmd_exists jq
+        printf '%s\n' "$response" | jq '.'
+        or begin
+            echo "Error: $source returned invalid JSON." >&2
+            return 1
+        end
+    else
+        printf '%s\n' "$response"
+    end
+end
+
+function qip -d "Query IP info"
+    if test (count $argv) -ne 1
+        echo "Usage: qip <IP-address>" >&2
+        return 1
+    end
+
+    set -l succeeded 0
+    _qip_query ipwho.is "https://ipwho.is/$argv[1]"; and set succeeded 1
+    _qip_query ip-api.com "http://ip-api.com/json/$argv[1]"; and set succeeded 1
+    test $succeeded -eq 1
+end
 ## ----------------------- alias ---------------------- ]]]
 
 EOF
@@ -692,10 +726,6 @@ if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
 function ipacc -d "Query IP info"
     curl -S ip-api.com/json 2>/dev/null | jq '.'
-end
-
-function qip -d "Query IP info"
-    curl -S ip-api.com/json/$argv[1] 2>/dev/null | jq '.'
 end
 
 function rlip4 -d "List routed and VPN IPv4 addresses"
@@ -757,10 +787,6 @@ else
     _dotzsh_append_buffer << 'EOF'
 function ipacc -d "Query IP info"
     curl -v ipinfo.io
-end
-
-function qip -d "Query IP info"
-    curl -S ip-api.com/json/$argv[1] 2>/dev/null
 end
 
 EOF
