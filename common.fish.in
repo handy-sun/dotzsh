@@ -1026,7 +1026,7 @@ if _dotzsh_cmd_exists systemctl; then
     _dotzsh_append_buffer << 'EOF'
 ## systemctl
 alias syta="systemctl status"
-alias syca="systemctl cat"
+alias syca="systemctl cat --no-pager"
 alias syst="sudo systemctl start"
 alias syrs="sudo systemctl restart"
 alias syte="sudo systemctl stop"
