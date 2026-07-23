@@ -1378,7 +1378,7 @@ fi
 if _dotzsh_cmd_exists nix; then
     some_al+=$'\nalias nxsc="nix config show"\nalias nxlg="sudo nix-env -p /nix/var/nix/profiles/system --list-generations"\nalias nxgc="sudo nix-collect-garbage --delete-older-than 4d"'
     if [ -n "$_dotzsh_is_linux" ]; then
-        some_al+=$'\nalias nxcs="readlink /run/current-system"'
+        some_al+=$'\nalias nxcs="readlink /run/current-system"\nalias nxclsz="nix path-info /run/current-system --closure-size --human-readable"'
     fi
 fi
 if _dotzsh_cmd_exists nix-info; then
