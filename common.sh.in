@@ -1520,6 +1520,12 @@ _dotzsh_append_buffer << EOF
 $some_al
 EOF
 
+_dotzsh_append_buffer << 'EOF'
+if [[ -n ${BASH_VERSION:-} ]] && command -v zoxide &>/dev/null; then
+    eval "$(zoxide init bash)"
+fi
+EOF
+
 if [[ "$generate_file" == "/dev/stdout" ]]; then
     echo -n "$SH_BUFFER"
 else

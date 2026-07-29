@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for argument in "$@"; do
+    printf '[%s]' "$argument"
+done >> "${MOCK_ZOXIDE_LOG:?}"
+printf '\n' >> "$MOCK_ZOXIDE_LOG"
+
+if [[ "$*" == "init bash" ]]; then
+    printf 'export ZOXIDE_BASH_INITIALIZED=1\n'
+fi
