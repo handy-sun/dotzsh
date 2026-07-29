@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${1:-} != -u ]]; then
+    printf 'unexpected mock id arguments: %s\n' "$*" >&2
+    exit 64
+fi
+
+printf '%s\n' "${MOCK_UID:?}"

@@ -1240,21 +1240,34 @@ fi
 ## eza/ls ]]]
 
 ## package management command [[[
+_pkg_uid=0
+_pkg_admin=''
+if _dotzsh_cmd_exists pacman || _dotzsh_cmd_exists apt || _dotzsh_cmd_exists apk; then
+    _pkg_uid=$(id -u)
+    if [ "$_pkg_uid" -ne 0 ]; then
+        if _dotzsh_cmd_exists sudo; then
+            _pkg_admin='sudo '
+        elif _dotzsh_cmd_exists doas; then
+            _pkg_admin='doas '
+        fi
+    fi
+fi
+
 if _dotzsh_cmd_exists pacman; then
-    if [ $(id -u) -eq 0 ]; then
-        _cmd=pacman
-    else
+    _cmd=pacman
+    _pkg_write_cmd="${_pkg_admin}${_cmd}"
+    if [ "$_pkg_uid" -ne 0 ]; then
         if _dotzsh_cmd_exists yay; then
             _cmd=yay
+            _pkg_write_cmd=yay
         elif _dotzsh_cmd_exists paru; then
             _cmd=paru
-        else
-            _cmd=pacman
+            _pkg_write_cmd=paru
         fi
     fi
     _dotzsh_append_buffer << EOF
-alias pkgsy="$_cmd -S --noconfirm"
-alias pkgr="$_cmd -R"
+alias pkgsy="$_pkg_write_cmd -S --noconfirm"
+alias pkgr="$_pkg_write_cmd -R"
 alias pkgssq="$_cmd -Ssq"
 alias pkgss="$_cmd -Ss"
 alias pkgsi="$_cmd -Si"
@@ -1272,9 +1285,10 @@ pkgssw() {
 EOF
 elif _dotzsh_cmd_exists apt; then
     _cmd=apt
+    _pkg_write_cmd="${_pkg_admin}${_cmd}"
     _dotzsh_append_buffer << EOF
-alias pkgsy="$_cmd install -y"
-alias pkgr="$_cmd remove"
+alias pkgsy="$_pkg_write_cmd install -y"
+alias pkgr="$_pkg_write_cmd remove"
 alias pkgss="$_cmd search"
 alias pkgsi="$_cmd show"
 alias pkgqi="dpkg -s"
@@ -1291,10 +1305,11 @@ pkgqs() {
 EOF
 elif _dotzsh_cmd_exists apk; then
     _cmd=apk
+    _pkg_write_cmd="${_pkg_admin}${_cmd}"
     ## TODO: May be need improve
     _dotzsh_append_buffer << EOF
-alias pkgsy="$_cmd add"
-alias pkgr="$_cmd del"
+alias pkgsy="$_pkg_write_cmd add"
+alias pkgr="$_pkg_write_cmd del"
 alias pkgss="$_cmd search"
 EOF
 elif _dotzsh_cmd_exists brew; then
