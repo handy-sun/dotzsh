@@ -2,13 +2,22 @@
 set -euo pipefail
 
 route_mode=${MOCK_ROUTE_MODE:-success}
+platform=${MOCK_PLATFORM:-linux}
 
 case "$*" in
     '-j -6 route get 2400:3200::1')
         [[ "$route_mode" == success ]] || exit 2
-        printf '%s\n' '[{"dst":"2400:3200::1","gateway":"fe80::1","dev":"enp4s0","prefsrc":"2001:db8:1::abcd"}]'
+        if [[ "$platform" == darwin ]]; then
+            printf '%s\n' '[{"dst":"2400:3200::1","gateway":"fe80::1","dev":"en0","prefsrc":"2001:db8:1::50"}]'
+        else
+            printf '%s\n' '[{"dst":"2400:3200::1","gateway":"fe80::1","dev":"enp4s0","prefsrc":"2001:db8:1::abcd"}]'
+        fi
         ;;
     '-j -d -6 addr')
+        if [[ "$platform" == darwin ]]; then
+            printf 'Option "-d" is unknown, try "ip -help"\n' >&2
+            exit 255
+        fi
         printf '%s\n' '[
           {"ifname":"lo","link_type":"loopback","addr_info":[{"family":"inet6","local":"::1","prefixlen":128,"scope":"host"}]},
           {"ifname":"enp4s0","link_type":"ether","addr_info":[
@@ -31,7 +40,20 @@ case "$*" in
             {"family":"inet6","local":"fd7a:115c:a1e0::2","prefixlen":128,"scope":"global"},
             {"family":"inet6","local":"fd7a:115c:a1e0::bad","prefixlen":128,"scope":"global","tentative":true}
           ]},
+          {"ifname":"utun9","link_type":"none","addr_info":[{"family":"inet6","local":"fd99::2","prefixlen":128,"scope":"global"}]},
           {"ifname":"docker0","link_type":"ether","linkinfo":{"info_kind":"bridge"},"addr_info":[{"family":"inet6","local":"fd17::1","prefixlen":64,"scope":"global"}]}
+        ]'
+        ;;
+    '-j -6 addr')
+        [[ "$platform" == darwin ]] || exit 64
+        printf '%s\n' '[
+          {"ifname":"lo0","link_type":"loopback","addr_info":[{"family":"inet6","local":"::1","prefixlen":128,"scope":"host"}]},
+          {"ifname":"en0","link_type":"ether","addr_info":[
+            {"family":"inet6","local":"2001:db8:1::50","prefixlen":64,"scope":"global"},
+            {"family":"inet6","local":"fe80::1","prefixlen":64,"scope":"link"}
+          ]},
+          {"ifname":"en1","link_type":"ether","addr_info":[{"family":"inet6","local":"2001:db8:2::2","prefixlen":64,"scope":"global"}]},
+          {"ifname":"utun3","link_type":"none","addr_info":[{"family":"inet6","local":"fd00:8::2","prefixlen":128,"scope":"global"}]}
         ]'
         ;;
     '-6 route get 2400:3200::1')
@@ -59,7 +81,8 @@ case "$*" in
             '6: vpn42 inet6 fd77::2/128 scope global' \
             '7: tailscale0 inet6 fd7a:115c:a1e0::2/128 scope global' \
             '7: tailscale0 inet6 fd7a:115c:a1e0::bad/128 scope global tentative' \
-            '8: docker0 inet6 fd17::1/64 scope global'
+            '8: utun9 inet6 fd99::2/128 scope global' \
+            '9: docker0 inet6 fd17::1/64 scope global'
         ;;
     *)
         printf 'unexpected mock ip arguments: %s\n' "$*" >&2

@@ -2,13 +2,22 @@
 set -euo pipefail
 
 route_mode=${MOCK_ROUTE_MODE:-success}
+platform=${MOCK_PLATFORM:-linux}
 
 case "$*" in
     '-j route get 223.5.5.5')
         [[ "$route_mode" == success ]] || exit 2
-        printf '%s\n' '[{"dst":"223.5.5.5","gateway":"192.168.1.1","dev":"enp4s0","prefsrc":"192.168.1.29"}]'
+        if [[ "$platform" == darwin ]]; then
+            printf '%s\n' '[{"dst":"223.5.5.5","gateway":"192.168.1.1","dev":"en0","prefsrc":"192.168.1.50"}]'
+        else
+            printf '%s\n' '[{"dst":"223.5.5.5","gateway":"192.168.1.1","dev":"enp4s0","prefsrc":"192.168.1.29"}]'
+        fi
         ;;
     '-j -d addr')
+        if [[ "$platform" == darwin ]]; then
+            printf 'Option "-d" is unknown, try "ip -help"\n' >&2
+            exit 255
+        fi
         printf '%s\n' '[
           {"ifname":"lo","link_type":"loopback","addr_info":[{"family":"inet","local":"127.0.0.1","prefixlen":8,"label":"lo"}]},
           {"ifname":"enp4s0","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.1.29","prefixlen":24,"label":"enp4s0"}]},
@@ -17,7 +26,17 @@ case "$*" in
           {"ifname":"corp0","link_type":"none","linkinfo":{"info_kind":"wireguard"},"addr_info":[{"family":"inet","local":"10.66.0.2","prefixlen":24,"label":"corp0"}]},
           {"ifname":"vpn42","link_type":"ppp","addr_info":[{"family":"inet","local":"10.77.0.2","prefixlen":32,"label":"vpn42"}]},
           {"ifname":"tailscale0","link_type":"none","addr_info":[{"family":"inet","local":"100.64.0.2","prefixlen":32,"label":"tailscale0"}]},
+          {"ifname":"utun9","link_type":"none","addr_info":[{"family":"inet","local":"10.99.0.2","prefixlen":32,"label":"utun9"}]},
           {"ifname":"docker0","link_type":"ether","linkinfo":{"info_kind":"bridge"},"addr_info":[{"family":"inet","local":"172.17.0.1","prefixlen":16,"label":"docker0"}]}
+        ]'
+        ;;
+    '-j addr')
+        [[ "$platform" == darwin ]] || exit 64
+        printf '%s\n' '[
+          {"ifname":"lo0","link_type":"loopback","addr_info":[{"family":"inet","local":"127.0.0.1","prefixlen":8}]},
+          {"ifname":"en0","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.1.50","prefixlen":24}]},
+          {"ifname":"en1","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.50.2","prefixlen":24}]},
+          {"ifname":"utun3","link_type":"none","addr_info":[{"family":"inet","local":"10.8.0.2","prefixlen":32}]}
         ]'
         ;;
     '-4 route get 223.5.5.5')
@@ -42,7 +61,8 @@ case "$*" in
             '5: corp0 inet 10.66.0.2/24 scope global corp0' \
             '6: vpn42 inet 10.77.0.2/32 scope global vpn42' \
             '7: tailscale0 inet 100.64.0.2/32 scope global tailscale0' \
-            '8: docker0 inet 172.17.0.1/16 scope global docker0'
+            '8: utun9 inet 10.99.0.2/32 scope global utun9' \
+            '9: docker0 inet 172.17.0.1/16 scope global docker0'
         ;;
     *)
         printf 'unexpected mock ip arguments: %s\n' "$*" >&2

@@ -729,8 +729,15 @@ function ipacc -d "Query IP info"
 end
 
 function rlip4 -d "List routed and VPN IPv4 addresses"
+    set -l addr_args -j addr
+    set -l vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp)'
+    if test (uname) = Linux
+        set addr_args -j -d addr
+    else
+        set vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp|utun)'
+    end
     set -l route_ip (ip -j route get 223.5.5.5 2>/dev/null | jq -r '.[0] | .prefsrc // .src // empty' 2>/dev/null)
-    ip -j -d addr | jq -r --arg route_ip "$route_ip" '
+    ip $addr_args | jq -r --arg route_ip "$route_ip" --arg vpn_name_pattern "$vpn_name_pattern" '
         [
             .[]
             | .ifname as $name
@@ -739,7 +746,7 @@ function rlip4 -d "List routed and VPN IPv4 addresses"
             | (
                 ($link_type | test("^(tun|tap|wireguard|ppp)$"; "i"))
                 or ($kind | test("^(tun|tap|wireguard|ppp)$"; "i"))
-                or ($name | test("^(zt|tailscale|wg|tun|tap|ppp)"; "i"))
+                or ($name | test($vpn_name_pattern; "i"))
               ) as $is_vpn
             | .addr_info[]?
             | select(.family == "inet" and (.local == $route_ip or $is_vpn))
@@ -753,8 +760,15 @@ function rlip4 -d "List routed and VPN IPv4 addresses"
 end
 
 function rlip6 -d "List routed and VPN IPv6 addresses"
+    set -l addr_args -j -6 addr
+    set -l vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp)'
+    if test (uname) = Linux
+        set addr_args -j -d -6 addr
+    else
+        set vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp|utun)'
+    end
     set -l route_ip (ip -j -6 route get 2400:3200::1 2>/dev/null | jq -r '.[0] | .prefsrc // .src // empty' 2>/dev/null)
-    ip -j -d -6 addr | jq -r --arg route_ip "$route_ip" '
+    ip $addr_args | jq -r --arg route_ip "$route_ip" --arg vpn_name_pattern "$vpn_name_pattern" '
         [
             .[]
             | .ifname as $name
@@ -763,7 +777,7 @@ function rlip6 -d "List routed and VPN IPv6 addresses"
             | (
                 ($link_type | test("^(tun|tap|wireguard|ppp)$"; "i"))
                 or ($kind | test("^(tun|tap|wireguard|ppp)$"; "i"))
-                or ($name | test("^(zt|tailscale|wg|tun|tap|ppp)"; "i"))
+                or ($name | test($vpn_name_pattern; "i"))
               ) as $is_vpn
             | .addr_info[]?
             | select(

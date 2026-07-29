@@ -11,13 +11,20 @@ jq_bin="$(command -v jq)"
 
 make_bin() {
     local mode=$1
-    local bin_dir="$tmpdir/bin-$mode"
+    local platform=${2:-linux}
+    local bin_dir="$tmpdir/bin-$mode-$platform"
     mkdir -p "$bin_dir"
 
     local command_name
-    for command_name in awk bash cat column dirname readlink uname; do
+    for command_name in awk bash cat column dirname readlink; do
         ln -s "$(command -v "$command_name")" "$bin_dir/$command_name"
     done
+    if [[ "$platform" == darwin ]]; then
+        cp "$repo_root/tests/fixtures/uname-darwin" "$bin_dir/uname"
+        chmod +x "$bin_dir/uname"
+    else
+        ln -s "$(command -v uname)" "$bin_dir/uname"
+    fi
     if [[ "$mode" == jq ]]; then
         ln -s "$jq_bin" "$bin_dir/jq"
     fi
@@ -31,7 +38,8 @@ generate_config() {
     local shell_name=$1
     local mode=$2
     local bin_dir=$3
-    local generated="$tmpdir/common-$shell_name-$mode"
+    local platform=$4
+    local generated="$tmpdir/common-$shell_name-$mode-$platform"
 
     if [[ "$shell_name" == sh ]]; then
         PATH="$bin_dir" "$bash_bin" "$repo_root/common.sh.in" stdout > "$generated"
@@ -46,16 +54,17 @@ run_rlip6() {
     local generated=$2
     local bin_dir=$3
     local route_mode=$4
+    local platform=$5
 
     if [[ "$shell_name" == sh ]]; then
         # Expanded by the child Bash process, not by this test script.
         # shellcheck disable=SC2016
-        PATH="$bin_dir" MOCK_ROUTE_MODE="$route_mode" GENERATED="$generated" \
+        PATH="$bin_dir" MOCK_ROUTE_MODE="$route_mode" MOCK_PLATFORM="$platform" GENERATED="$generated" \
             "$bash_bin" --noprofile --norc -c 'source "$GENERATED"; rlip6'
     else
         # Expanded by the child fish process, not by this test script.
         # shellcheck disable=SC2016
-        PATH="$bin_dir" MOCK_ROUTE_MODE="$route_mode" GENERATED="$generated" \
+        PATH="$bin_dir" MOCK_ROUTE_MODE="$route_mode" MOCK_PLATFORM="$platform" GENERATED="$generated" \
             "$fish_bin" --no-config -c 'source "$GENERATED"; rlip6'
     fi
 }
@@ -76,8 +85,9 @@ assert_output() {
     fi
 }
 
-jq_bin_dir="$(make_bin jq)"
-fallback_bin_dir="$(make_bin fallback)"
+jq_bin_dir="$(make_bin jq linux)"
+fallback_bin_dir="$(make_bin fallback linux)"
+darwin_jq_bin_dir="$(make_bin jq darwin)"
 
 expected_routed=$'2001:db8:1::abcd 64 enp4s0\nfd00:144::9 64 zt6\nfd66::2 64 corp0\nfd77::2 128 vpn42\nfd7a:115c:a1e0::2 128 tailscale0'
 expected_vpn_only=$'fd00:144::9 64 zt6\nfd66::2 64 corp0\nfd77::2 128 vpn42\nfd7a:115c:a1e0::2 128 tailscale0'
@@ -89,12 +99,24 @@ for mode in jq fallback; do
         else
             bin_dir=$fallback_bin_dir
         fi
-        generated="$(generate_config "$shell_name" "$mode" "$bin_dir")"
+        generated="$(generate_config "$shell_name" "$mode" "$bin_dir" linux)"
 
-        actual="$(run_rlip6 "$shell_name" "$generated" "$bin_dir" success | normalize)"
+        actual="$(run_rlip6 "$shell_name" "$generated" "$bin_dir" success linux | normalize)"
         assert_output "$expected_routed" "$actual" "$shell_name/$mode route success"
 
-        actual="$(run_rlip6 "$shell_name" "$generated" "$bin_dir" failure | normalize)"
+        actual="$(run_rlip6 "$shell_name" "$generated" "$bin_dir" failure linux | normalize)"
         assert_output "$expected_vpn_only" "$actual" "$shell_name/$mode route failure"
     done
+done
+
+expected_darwin=$'2001:db8:1::50 64 en0\nfd00:8::2 128 utun3'
+expected_darwin_vpn_only='fd00:8::2 128 utun3'
+
+for shell_name in sh fish; do
+    generated="$(generate_config "$shell_name" jq "$darwin_jq_bin_dir" darwin)"
+    actual="$(run_rlip6 "$shell_name" "$generated" "$darwin_jq_bin_dir" success darwin | normalize)"
+    assert_output "$expected_darwin" "$actual" "$shell_name/jq Darwin"
+
+    actual="$(run_rlip6 "$shell_name" "$generated" "$darwin_jq_bin_dir" failure darwin | normalize)"
+    assert_output "$expected_darwin_vpn_only" "$actual" "$shell_name/jq Darwin route failure"
 done
