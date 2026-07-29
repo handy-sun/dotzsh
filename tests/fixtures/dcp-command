@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for argument in "$@"; do
+    printf '[%s]' "$argument"
+done >> "${MOCK_COMMAND_LOG:?}"
+printf '\n' >> "$MOCK_COMMAND_LOG"

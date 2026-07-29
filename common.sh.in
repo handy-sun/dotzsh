@@ -1194,6 +1194,103 @@ alias dpa="docker ps -a --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Stat
 EOF
 fi
 
+if _dotzsh_cmd_exists docker-compose; then
+    _dotzsh_append_buffer << 'EOF'
+if [[ -n ${BASH_VERSION:-} ]]; then
+    if [[ -z ${DKCP_DIR:-} ]]; then
+        if [[ -d /var/dkcmpo ]]; then
+            export DKCP_DIR=/var/dkcmpo
+        else
+            export DKCP_DIR="$HOME/.local/share/dkcmpo"
+            mkdir -p "$DKCP_DIR"
+        fi
+    fi
+
+    _dotzsh_dcp_file() {
+        if [[ $# -ne 1 || -z ${1:-} ]]; then
+            printf 'Usage: %s <service>\n' "${FUNCNAME[1]}" >&2
+            return 2
+        fi
+
+        local dcp_file="$DKCP_DIR/$1/docker-compose.yml"
+        if [[ ! -f $dcp_file ]]; then
+            printf 'Error: %s not found\n' "$dcp_file" >&2
+            return 1
+        fi
+
+        printf '%s\n' "$dcp_file"
+    }
+
+    dcpupd() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" up -d
+    }
+
+    dcpfru() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" up -d --force-recreate --remove-orphans
+    }
+
+    dcpdown() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" down --remove-orphans
+    }
+
+    dcpte() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" stop
+    }
+
+    dcprs() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" restart
+    }
+
+    dcppl() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        docker-compose -f "$dcp_file" pull
+    }
+
+    dcppal() {
+        local dcp_file
+        for dcp_file in "$DKCP_DIR"/*/docker-compose.yml; do
+            [[ -f $dcp_file ]] || continue
+            if ! grep -iq 'restart: no' "$dcp_file"; then
+                docker-compose -f "$dcp_file" pull
+            fi
+        done
+    }
+
+    dcpca() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        if command -v bat &>/dev/null; then
+            bat "$dcp_file"
+        else
+            cat "$dcp_file"
+        fi
+    }
+
+    dcped() {
+        local dcp_file
+        dcp_file=$(_dotzsh_dcp_file "$@") || return
+        if [[ -n ${EDITOR:-} ]]; then
+            "$EDITOR" "$dcp_file"
+        else
+            vi "$dcp_file"
+        fi
+    }
+fi
+
+EOF
+fi
+
 ## eza/ls [[[
 if _dotzsh_cmd_exists eza; then
     eza_al='alias ls="eza --group-directories-first -A"'
