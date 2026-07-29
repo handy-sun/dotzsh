@@ -975,6 +975,10 @@ if _dotzsh_cmd_exists rsync; then
 function cpv -d "Copy with rsync progress"
     rsync -pogbr -hhh --backup-dir="/tmp/rsync-$USER" -e /dev/null --progress $argv
 end
+
+function rsyca -d "Rsync archive with full metadata and progress"
+    rsync -aHAX --numeric-ids --info=progress2 $argv
+end
 EOF
 fi
 

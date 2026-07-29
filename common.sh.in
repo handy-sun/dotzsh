@@ -989,6 +989,9 @@ if _dotzsh_cmd_exists rsync; then
 cpv() {
     rsync -pogbr -hhh --backup-dir="/tmp/rsync-${USERNAME}" -e /dev/null --progress "$@"
 }
+rsyca() {
+    rsync -aHAX --numeric-ids --info=progress2 "$@"
+}
 EOF
 fi
 

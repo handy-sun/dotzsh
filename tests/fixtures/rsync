@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for argument in "$@"; do
+    printf '[%s]' "$argument"
+done >> "${MOCK_RSYNC_LOG:?}"
+printf '\n' >> "$MOCK_RSYNC_LOG"
