@@ -501,6 +501,7 @@ alias gro="git restore"
 alias grg="git restore --staged"
 
 alias glg="git log --pretty=format:'%Cred%h%Creset %Cgreen(%ad) %Creset%s %C(bold blue)<%an>%Creset%C(yellow)%d' --date=format:'%Y-%m-%d %H:%M' --abbrev-commit --color"
+alias glgd="git log --graph --decorate"
 alias glp="glg --graph"
 glh() {
     local output_lines=30
