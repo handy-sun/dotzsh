@@ -26,6 +26,7 @@ case "$*" in
           {"ifname":"corp0","link_type":"none","linkinfo":{"info_kind":"wireguard"},"addr_info":[{"family":"inet","local":"10.66.0.2","prefixlen":24,"label":"corp0"}]},
           {"ifname":"vpn42","link_type":"ppp","addr_info":[{"family":"inet","local":"10.77.0.2","prefixlen":32,"label":"vpn42"}]},
           {"ifname":"tailscale0","link_type":"none","addr_info":[{"family":"inet","local":"100.64.0.2","prefixlen":32,"label":"tailscale0"}]},
+          {"ifname":"wlp0s20f3","link_type":"ether","addr_info":[{"family":"inet","local":"192.168.48.114","prefixlen":16,"label":"wlp0s20f3"}]},
           {"ifname":"utun9","link_type":"none","addr_info":[{"family":"inet","local":"10.99.0.2","prefixlen":32,"label":"utun9"}]},
           {"ifname":"docker0","link_type":"ether","linkinfo":{"info_kind":"bridge"},"addr_info":[{"family":"inet","local":"172.17.0.1","prefixlen":16,"label":"docker0"}]}
         ]'
@@ -61,8 +62,9 @@ case "$*" in
             '5: corp0 inet 10.66.0.2/24 scope global corp0' \
             '6: vpn42 inet 10.77.0.2/32 scope global vpn42' \
             '7: tailscale0 inet 100.64.0.2/32 scope global tailscale0' \
-            '8: utun9 inet 10.99.0.2/32 scope global utun9' \
-            '9: docker0 inet 172.17.0.1/16 scope global docker0'
+            '8: wlp0s20f3 inet 192.168.48.114/16 scope global wlp0s20f3' \
+            '9: utun9 inet 10.99.0.2/32 scope global utun9' \
+            '10: docker0 inet 172.17.0.1/16 scope global docker0'
         ;;
     *)
         printf 'unexpected mock ip arguments: %s\n' "$*" >&2

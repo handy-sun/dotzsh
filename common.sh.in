@@ -733,7 +733,7 @@ rlip4() {
                 or ($name | test($vpn_name_pattern; "i"))
               ) as $is_vpn
             | .addr_info[]?
-            | select(.family == "inet" and (.local == $route_ip or $is_vpn))
+            | select(.family == "inet" and (.local == $route_ip or $is_vpn or ($name | test("^wl"; "i"))))
             | { local, prefixlen, label: (.label // $name) }
         ]
         | unique_by(.local)
@@ -808,7 +808,7 @@ rlip4() {
             sub(/@.*/, "", interface)
             split($4, cidr, "/")
             ip_address = cidr[1]
-            if (ip_address == route_ip || is_vpn[interface] || tolower(interface) ~ /^(zt|tailscale|wg|tun|tap|ppp)/) {
+            if (ip_address == route_ip || is_vpn[interface] || tolower(interface) ~ /^(wl|zt|tailscale|wg|tun|tap|ppp)/) {
                 if (!(ip_address in selected)) {
                     order[++selected_count] = ip_address
                     selected[ip_address] = ip_address " " cidr[2] " " interface

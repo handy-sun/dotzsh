@@ -89,8 +89,8 @@ jq_bin_dir="$(make_bin jq linux)"
 fallback_bin_dir="$(make_bin fallback linux)"
 darwin_jq_bin_dir="$(make_bin jq darwin)"
 
-expected_routed=$'192.168.1.29 24 enp4s0\n10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0'
-expected_vpn_only=$'10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0'
+expected_routed=$'192.168.1.29 24 enp4s0\n10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0\n192.168.48.114 16 wlp0s20f3'
+expected_vpn_only=$'10.144.2.9 16 ztmosdpe46\n10.66.0.2 24 corp0\n10.77.0.2 32 vpn42\n100.64.0.2 32 tailscale0\n192.168.48.114 16 wlp0s20f3'
 
 for mode in jq fallback; do
     for shell_name in sh fish; do
