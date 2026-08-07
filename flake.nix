@@ -120,7 +120,7 @@
                 pkgs.coreutils
               ];
               text = ''
-                ${pkgs.bash}/bin/bash ${./common.sh.in} "$@"
+                DOTZSH_PLUGSFILE_DIR=${./plugsfile} ${pkgs.bash}/bin/bash ${./common.sh.in} "$@"
               '';
             };
             fish-init = pkgs.writeShellApplication {

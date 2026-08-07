@@ -11,19 +11,21 @@
 ├── zsh-config.zsh         # Zsh 选项、按键绑定、补全、提示符、钩子
 ├── common.sh.in           # 模板 → 生成 common.sh（bash/zsh 共用 alias 和函数）
 ├── common.fish.in         # 模板 → 生成 common.fish（fish 共用 alias、函数、tide 辅助）
-├── plugins/               # 内置 zsh 插件（git submodule 或 vendor）
+├── plugins/               # 内置 Zsh 专用插件（git submodule 或 vendor）
 │   ├── fast-syntax-highlighting/
 │   ├── zsh-autosuggestions/
 │   ├── zsh-history-substring-search/
 │   └── zsh-syntax-highlighting/
-├── plugsfile/             # 小型 zsh 插件片段（自动加载）
+├── plugsfile/             # 小型插件片段（.plugin.sh 共享，.plugin.zsh 仅 Zsh）
 │   ├── colored-man-pages.plugin.zsh
 │   ├── copypath.plugin.zsh
-│   ├── docker-compose.plugin.zsh
+│   ├── docker-compose.plugin.sh
 │   └── zsh-copybuffer.plugin.zsh
 └── scripts/
     └── newuser            # Zsh 新用户引导脚本 （基本废弃）
 ```
+
+`plugins/` 仅供 Zsh 使用。`plugsfile/*.plugin.sh` 必须同时兼容 Bash 和 Zsh，两种 shell 会直接加载同一文件；需要 Zsh 专属语法的片段使用 `.plugin.zsh`。
 
 ## 安装
 

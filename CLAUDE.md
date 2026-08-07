@@ -11,19 +11,21 @@ Shell configuration dotfiles for zsh, fish, and bash, distributed as a Nix flake
 ├── zsh-config.zsh         # Zsh options, keybindings, completion, prompt, hooks
 ├── common.sh.in           # Template: generates common.sh (bash/zsh shared aliases & functions)
 ├── common.fish.in         # Template: generates common.fish (fish shared aliases & functions)
-├── plugins/               # Bundled zsh plugins (git submodules or vendored)
+├── plugins/               # Bundled Zsh-only plugins (git submodules or vendored)
 │   ├── fast-syntax-highlighting/
 │   ├── zsh-autosuggestions/
 │   ├── zsh-history-substring-search/
 │   └── zsh-syntax-highlighting/
-├── plugsfile/             # Custom small zsh plugin files (auto-sourced)
+├── plugsfile/             # Custom plugins (.plugin.sh shared, .plugin.zsh Zsh-only)
 │   ├── colored-man-pages.plugin.zsh
 │   ├── copypath.plugin.zsh
-│   ├── docker-compose.plugin.zsh
+│   ├── docker-compose.plugin.sh
 │   └── zsh-copybuffer.plugin.zsh
 └── scripts/
     └── newuser            # Zsh new-user install script
 ```
+
+`plugins/` is Zsh-only. Files named `plugsfile/*.plugin.sh` must remain source-compatible with both Bash and Zsh; both shells load the same file directly. Use `.plugin.zsh` for fragments that require Zsh-specific syntax.
 
 ## Architecture
 
@@ -47,7 +49,7 @@ They use a buffer pattern (`_dotzsh_append_buffer << 'EOF'`) to assemble output,
 1. `zshrc` resolves its own real path (handles symlinks)
 2. Sources `localpre/*.sh` from `./localpre/` or `~/.cache/dotzsh/localpre/`
 3. Loads plugins: `zsh-autosuggestions`, `fast-syntax-highlighting`
-4. Sources all `plugsfile/*.zsh`
+4. Sources shared `plugsfile/*.plugin.sh` and Zsh-only `plugsfile/*.plugin.zsh`
 5. Sources `zsh-config.zsh` (options, keybindings, prompt, hooks)
 6. Sources generated `common.sh` from `./common.sh`, `~/.cache/dotzsh/common.sh`, or `/tmp/common.sh`
 7. Sources `localpost/*.sh`

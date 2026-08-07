@@ -56,7 +56,7 @@ done
 
 plugsfile=$cur_dir/plugsfile
 if [ -d $plugsfile ]; then
-  for i in $plugsfile/*.zsh(N); do
+  for i in "$plugsfile"/*.plugin.sh(N) "$plugsfile"/*.plugin.zsh(N); do
     if [ -r $i ]; then
       source $i
     fi
