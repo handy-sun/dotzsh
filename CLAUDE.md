@@ -17,10 +17,10 @@ Shell configuration dotfiles for zsh, fish, and bash, distributed as a Nix flake
 │   ├── zsh-history-substring-search/
 │   └── zsh-syntax-highlighting/
 ├── plugsfile/             # Custom plugins (.plugin.sh shared, .plugin.zsh Zsh-only)
-│   ├── colored-man-pages.plugin.zsh
-│   ├── copypath.plugin.zsh
-│   ├── docker-compose.plugin.sh
-│   └── zsh-copybuffer.plugin.zsh
+│   ├── colored-man-pages.plugin.sh
+│   ├── copybuffer.plugin.sh
+│   ├── copypath.plugin.sh
+│   └── docker-compose.plugin.sh
 └── scripts/
     └── newuser            # Zsh new-user install script
 ```

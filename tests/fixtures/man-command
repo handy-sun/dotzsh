@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{
+    printf 'PAGER=[%s]\n' "${PAGER:-}"
+    printf 'GROFF_NO_SGR=[%s]\n' "${GROFF_NO_SGR:-}"
+    for variable_name in mb md me so se us ue; do
+        variable_name="LESS_TERMCAP_$variable_name"
+        printf '%s=[%s]\n' "$variable_name" "${!variable_name:-}"
+    done
+    for argument in "$@"; do
+        printf 'ARG=[%s]\n' "$argument"
+    done
+} >> "${MOCK_MAN_LOG:?}"

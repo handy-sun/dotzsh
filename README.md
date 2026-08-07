@@ -17,10 +17,10 @@
 │   ├── zsh-history-substring-search/
 │   └── zsh-syntax-highlighting/
 ├── plugsfile/             # 小型插件片段（.plugin.sh 共享，.plugin.zsh 仅 Zsh）
-│   ├── colored-man-pages.plugin.zsh
-│   ├── copypath.plugin.zsh
-│   ├── docker-compose.plugin.sh
-│   └── zsh-copybuffer.plugin.zsh
+│   ├── colored-man-pages.plugin.sh
+│   ├── copybuffer.plugin.sh
+│   ├── copypath.plugin.sh
+│   └── docker-compose.plugin.sh
 └── scripts/
     └── newuser            # Zsh 新用户引导脚本 （基本废弃）
 ```
