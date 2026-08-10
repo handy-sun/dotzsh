@@ -1307,7 +1307,7 @@ pkgql() {
     $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs $_list_cmd
 }
 pkgssw() {
-    $_cmd -Ss "^\${1}$"
+    $_cmd -Ss "^\${1}\\$"
 }
 
 EOF
