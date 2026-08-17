@@ -34,10 +34,9 @@ setopt hist_ignore_space      # Don't save commands that start with space
 
 # zsh 4.3.6 doesn't have this option
 setopt hist_fcntl_lock 2>/dev/null
-if [[ $_has_re -eq 1 && ! ( $ZSH_VERSION =~ '^[0-4]\.' || $ZSH_VERSION =~ '^5\.0\.[0-4]' ) ]]; then
+autoload -Uz is-at-least
+if is-at-least 5.0.5; then
   setopt hist_reduce_blanks
-else
-  # This may cause the command messed up due to a memcpy bug
 fi
 
 # print options

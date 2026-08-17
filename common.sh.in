@@ -145,13 +145,13 @@ ggi() {
 
     local tmp
     tmp="$(mktemp)" || return 1
-    if ! curl -fsSL "https://www.gitignore.io/api/${templates}" > "$tmp"; then
+    if ! curl -fsSL "https://www.toptal.com/developers/gitignore/api/${templates}" > "$tmp"; then
         rm -f "$tmp"
         return 1
     fi
 
     mv "$tmp" .gitignore
-    echo ">>> Wrote .gitignore from gitignore.io"
+    echo ">>> Wrote .gitignore from Toptal gitignore API"
 }
 ## List all untracked files/directories in current git repo and decide whether to delete it.
 gcldi() {

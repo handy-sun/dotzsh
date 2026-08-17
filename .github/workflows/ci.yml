@@ -34,9 +34,9 @@ jobs:
         run: nix run .#fish-init -- -3gp
 
       - name: Syntax check common.sh
-        run: bash -n /tmp/common.sh && nix shell nixpkgs#zsh --command zsh -n /tmp/common.sh
+        run: nix develop --command bash -c 'bash -n /tmp/common.sh && zsh -n /tmp/common.sh'
       - name: Syntax check common.fish
-        run: nix shell nixpkgs#fish --command fish --no-execute /tmp/common.fish
+        run: nix develop --command fish --no-execute /tmp/common.fish
 
   lint:
     runs-on: ubuntu-latest
@@ -44,7 +44,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v14
 
+      - name: Run consistency tests
+        run: nix develop --command bash tests/consistency_fixes.sh
+
       - name: shellcheck common.sh.in
-        run: nix shell nixpkgs#shellcheck --command shellcheck -S warning common.sh.in || true
+        run: nix develop --command shellcheck -S warning common.sh.in
       - name: shellcheck common.fish.in
-        run: nix shell nixpkgs#shellcheck --command shellcheck -S warning common.fish.in || true
+        run: nix develop --command shellcheck -S warning common.fish.in

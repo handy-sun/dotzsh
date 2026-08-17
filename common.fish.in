@@ -28,7 +28,7 @@ _dotzsh_gen_in_cur() {
 }
 
 real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-current_dir=`cd $(dirname "$real_location");pwd`
+current_dir="$(cd "$(dirname "$real_location")" && pwd)"
 
 while getopts "0123gph" opt; do
     case $opt in
@@ -114,7 +114,7 @@ function gitur -d "Git update and rebase"
     end
 end
 
-function ggi -d "Write .gitignore from gitignore.io if it does not exist"
+function ggi -d "Write .gitignore from Toptal gitignore API if it does not exist"
     if test -e .gitignore
         echo "Error: .gitignore already exists in "(pwd)
         return 1
@@ -134,13 +134,13 @@ function ggi -d "Write .gitignore from gitignore.io if it does not exist"
     set -l tmp (mktemp)
     or return 1
 
-    if not curl -fsSL "https://www.gitignore.io/api/$templates" > "$tmp"
+    if not curl -fsSL "https://www.toptal.com/developers/gitignore/api/$templates" > "$tmp"
         rm -f "$tmp"
         return 1
     end
 
     mv "$tmp" .gitignore
-    echo ">>> Wrote .gitignore from gitignore.io"
+    echo ">>> Wrote .gitignore from Toptal gitignore API"
 end
 
 ## List all untracked files/directories in current git repo and decide whether to delete it.
@@ -878,10 +878,29 @@ fi
 _dotzsh_append_buffer << 'EOF'
 function htdel -d "Delete history entries matching pattern"
     set -l file
+    set -l data_home ~/.local/share
+    if set -q XDG_DATA_HOME; and test -n "$XDG_DATA_HOME"
+        set data_home "$XDG_DATA_HOME"
+    end
+
     if set -q fish_history
-        set file ~/.local/share/fish/$fish_history.history
-    else if test -e ~/.local/share/fish/fish_history
-        set file ~/.local/share/fish/fish_history
+        if test (count $fish_history) -eq 0
+            return 1
+        end
+        set -l history_name fish
+        if test (count $fish_history) -eq 1
+            if test -z "$fish_history"
+                return 1
+            end
+            set history_name $fish_history
+            set --show -- "$history_name" >/dev/null 2>&1
+            if test $status -ne 0
+                set history_name fish
+            end
+        end
+        set file "$data_home/fish/"$history_name"_history"
+    else if test -e "$data_home/fish/fish_history"
+        set file "$data_home/fish/fish_history"
     else if test -e ~/.bash_history
         set file ~/.bash_history
     else
@@ -1111,7 +1130,7 @@ function syte -d "launchctl unload"
     else
         set -l user_lib_path (fd "$argv[1]" ~/Library/LaunchAgents | head -n 1)
         if test -n "$user_lib_path"
-            echo "launchctl unload "$root_lib_path
+            echo "launchctl unload "$user_lib_path
             launchctl unload $user_lib_path
         end
     end

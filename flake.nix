@@ -136,6 +136,14 @@
           };
 
           devshells.default = {
+            packages = [
+              pkgs.bash
+              pkgs.coreutils
+              pkgs.fish
+              pkgs.ripgrep
+              pkgs.shellcheck
+              pkgs.zsh
+            ];
             commands = [
               {
                 help = "no";
