@@ -14,15 +14,16 @@ _dotzsh_cmd_exists() {
 real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 current_dir="$(cd "$(dirname "$real_location")" && pwd)"
 
-if [[ $1 == "-1" ]]; then
+if [[ $1 == "-0" || "$1" == "stdout" ]]; then
+    generate_file=/dev/stdout
+elif [[ $1 == "-1" ]]; then
     test ! -d ~/.cache/dotzsh/localpre && mkdir -pv ~/.cache/dotzsh/localpre
     test ! -d ~/.cache/dotzsh/localpost && mkdir -pv ~/.cache/dotzsh/localpost
     generate_file=~/.cache/dotzsh/common.sh
-elif [[ $1 == "-2" || $1 == "-3" ]]; then
+elif [[ $1 == "-3" ]]; then
     generate_file=/tmp/common.sh
-elif [[ "$1" == "stdout" ]]; then
-    generate_file=/dev/stdout
 else
+    # -2 or no argument: generate into the current directory
     full_filename=`echo ${real_location##*/}`
     strip_in_name=`echo ${full_filename%.*}`
     generate_file=${current_dir}/${strip_in_name}
@@ -119,7 +120,7 @@ gitur() {
 
     remote_arr=(`git remote`)
     for var in ${remote_arr[*]}; do
-        git push $1 $var
+        git push "$var"
     done
 }
 ggi() {
@@ -245,12 +246,12 @@ upd() {
 swap2file() {
     if [[ ! -f "$1" || ! -f "$2" ]]; then
         echo "$1 or $2 is not existed." >&2
-        exit 1
+        return 1
     fi
 
     if [[ "$1" -ef "$2" ]]; then
         echo "$1 and $2 is same file" >&2
-        exit 2
+        return 2
     fi
 
     tempfile=`mktemp ./swap2file.$$.XXXXXXXXXX`
@@ -302,7 +303,7 @@ dkex() {
 
     if [ "$shell_path" = "unknown" ]; then
         echo "ERROR: No valid shell found in $container"
-        exit 1
+        return 1
     else
         docker exec -it "$container" "$shell_path"
     fi
@@ -542,7 +543,7 @@ alias gcln="git clean -n"
 alias gclfd="git clean -fd"
 ## alias not working well, use function instead
 gpar() {
-    git remote | xargs bash -c 'for rmt do git push $rmt $1; done ' {}
+    git remote | xargs -I{} git push {} "$@"
 }
 gts() {
     local d="$1"

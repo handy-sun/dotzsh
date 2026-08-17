@@ -112,7 +112,7 @@ function gitur -d "Git update and rebase"
 
     set -l remote_arr (git remote)
     for var in $remote_arr
-        git push $var $argv[1]
+        git push $var
     end
 end
 
