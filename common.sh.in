@@ -911,7 +911,7 @@ fi
 if [ -n "$_dotzsh_is_linux" ] && _dotzsh_cmd_exists ldd; then
     _dotzsh_append_buffer << 'EOF'
 qlibc() {
-    strings $1 | grep -E '^GLIBC_'
+    strings $1 | grep -E '^GLIBC_' | sort -Vu
 }
 EOF
 fi
