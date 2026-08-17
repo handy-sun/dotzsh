@@ -24,9 +24,7 @@ _dotzsh_usage() {
 }
 
 _dotzsh_gen_in_cur() {
-    full_filename=`echo ${real_location##*/}`
-    strip_in_name=`echo ${full_filename%.*}`
-    generate_file=${current_dir}/${strip_in_name}
+    generate_file="$(pwd)/common.fish"
 }
 
 real_location="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
@@ -112,7 +110,7 @@ function gitur -d "Git update and rebase"
 
     set -l remote_arr (git remote)
     for var in $remote_arr
-        git push $var
+        git push $var $argv
     end
 end
 

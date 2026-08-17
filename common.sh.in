@@ -24,9 +24,7 @@ elif [[ $1 == "-3" ]]; then
     generate_file=/tmp/common.sh
 else
     # -2 or no argument: generate into the current directory
-    full_filename=`echo ${real_location##*/}`
-    strip_in_name=`echo ${full_filename%.*}`
-    generate_file=${current_dir}/${strip_in_name}
+    generate_file="$(pwd)/common.sh"
 fi
 
 SH_BUFFER=""
@@ -120,7 +118,7 @@ gitur() {
 
     remote_arr=(`git remote`)
     for var in ${remote_arr[*]}; do
-        git push "$var"
+        git push "$var" "$@"
     done
 }
 ggi() {
