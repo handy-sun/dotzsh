@@ -43,6 +43,15 @@ _dotzsh_bash_prompt_hook() {
     else
         _dotzsh_bash_prompt_ssh=""
     fi
+
+    local shlvl_threshold=${DOTZSH_SHLVL_THRESHOLD:-1}
+    [[ $shlvl_threshold =~ ^[0-9]+$ ]] || shlvl_threshold=1
+    if [[ ${SHLVL:-} =~ ^[0-9]+$ ]] &&
+        (( SHLVL > shlvl_threshold )); then
+        _dotzsh_bash_prompt_shlvl="L${SHLVL}"
+    else
+        _dotzsh_bash_prompt_shlvl=""
+    fi
 }
 
 _dotzsh_flyline_setup() {
@@ -53,7 +62,7 @@ _dotzsh_flyline_setup() {
 
     # Keep the Bash prompt aligned with zsh-config.zsh's left/right prompt.
     PS1='\e[0;36m${_dotzsh_bash_prompt_path}\e[0m \e[0;${_dotzsh_bash_prompt_status_fg}m${_dotzsh_bash_prompt_status}\e[1m${_dotzsh_bash_prompt_prefix}\e[0m '
-    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[0;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m'
+    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[0;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
     PS1_FILL=' '
     PS2='\e[0;33mFLYLINE_PROMPT_LINE_NUMBER>\e[0m '
 

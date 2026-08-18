@@ -31,4 +31,14 @@ PATH="$bin_dir:$PATH" GENERATED="$generated" PLUGIN="$repo_root/plugsfile/flylin
 
     [[ $RPS1 == *"FLYLINE_LAST_COMMAND_DURATION\\e[0m "* ]]
     [[ $RPS1 != *"FLYLINE_LAST_COMMAND_DURATION\\e[0m\\e[0;245m\\A"* ]]
+
+    SHLVL=2 DOTZSH_SHLVL_THRESHOLD=1
+    true
+    _bash_prompt_cmd
+    [[ $_dotzsh_bash_prompt_shlvl == "L2" ]]
+
+    DOTZSH_SHLVL_THRESHOLD=2
+    true
+    _bash_prompt_cmd
+    [[ -z $_dotzsh_bash_prompt_shlvl ]]
     '

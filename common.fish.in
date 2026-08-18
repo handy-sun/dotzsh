@@ -1847,7 +1847,10 @@ function fish_right_prompt --description "Right prompt"
     echo -n -s (prompt_login) (set_color normal)
     echo -n -s (set_color white) ' ' (date +%H:%M:%S) (set_color normal)
     ## ------ SHLVL (when >= threshold) ------
-    set -l _dotzsh_shlvl_threshold 1
+    set -l _dotzsh_shlvl_threshold "$DOTZSH_SHLVL_THRESHOLD"
+    if not string match -rq '^[0-9]+$' -- "$_dotzsh_shlvl_threshold"
+        set _dotzsh_shlvl_threshold 1
+    end
     if test $SHLVL -gt $_dotzsh_shlvl_threshold
         echo -n -s (set_color -o bryellow) ' L' $SHLVL (set_color normal)
     end
