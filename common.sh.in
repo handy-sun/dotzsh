@@ -466,37 +466,8 @@ _bash_prompt_cmd() {
     local shortPwd=`_get_short_pwd`
     local jobIdx=`_get_jobs_name`
 
-    if [[ -n "${FLYLINE_VERSION:-}" ]]; then
-        _dotzsh_flyline_setup
-
-        if (( EUID == 0 )); then
-            _dotzsh_bash_prompt_prefix="#"
-        elif [[ -n "${HTTP_PROXY:-}${HTTPS_PROXY:-}${ALL_PROXY:-}" ]]; then
-            _dotzsh_bash_prompt_prefix=">>"
-        else
-            _dotzsh_bash_prompt_prefix=">"
-        fi
-
-        _dotzsh_bash_prompt_path="$shortPwd"
-        _dotzsh_bash_prompt_status_fg="$promFg"
-        if (( exitStatus == 0 )); then
-            _dotzsh_bash_prompt_status=""
-        else
-            _dotzsh_bash_prompt_status="${exitStatus} "
-        fi
-
-        local jobCount=$(jobs -p | wc -l)
-        if (( jobCount > 0 )); then
-            _dotzsh_bash_prompt_jobs="%${jobCount} "
-        else
-            _dotzsh_bash_prompt_jobs=""
-        fi
-
-        if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
-            _dotzsh_bash_prompt_ssh="${USER:-${LOGNAME:-user}}@${HOSTNAME:-$(hostname)} "
-        else
-            _dotzsh_bash_prompt_ssh=""
-        fi
+    if declare -F _dotzsh_bash_prompt_hook >/dev/null && \
+        _dotzsh_bash_prompt_hook "$exitStatus" "$promFg" "$shortPwd"; then
         return
     fi
 
@@ -707,26 +678,6 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T '
 fi
-
-_dotzsh_flyline_setup() {
-    [[ -n "${_DOTZSH_FLYLINE_READY:-}" ]] && return
-    command -v flyline &>/dev/null || return
-
-    flyline create-prompt-widget last-command-duration
-
-    # Keep the Bash prompt aligned with zsh-config.zsh's left/right prompt.
-    PS1='\e[0;36m${_dotzsh_bash_prompt_path}\e[0m \e[0;${_dotzsh_bash_prompt_status_fg}m${_dotzsh_bash_prompt_status}\e[1m${_dotzsh_bash_prompt_prefix}\e[0m '
-    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[0;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m'
-    PS1_FILL=' '
-    PS2='\e[0;33mFLYLINE_PROMPT_LINE_NUMBER>\e[0m '
-
-    PS1_FINAL='\e[2m${_dotzsh_bash_prompt_prefix}\e[0m '
-    RPS1_FINAL=""
-    PS1_FILL_FINAL=""
-    PROMPT_RULER_FINAL=""
-
-    _DOTZSH_FLYLINE_READY=1
-}
 
 _qip_query() {
     local source=$1 url=$2 response
