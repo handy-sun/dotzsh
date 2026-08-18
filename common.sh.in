@@ -670,6 +670,10 @@ PS4="${_PRE}1;2m+${_PRE}0;33m$0:${_PRE}0;92m$LINENO${_PRE}m${_PRE}1;2m> ${_PRE}m
 unset _PRE
 
 if [[ -n "$BASH_VERSION" ]]; then
+    export HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/.bash_history"
+    if [[ ! -d ${HISTFILE%/*} ]] && command -v mkdir &>/dev/null; then
+        mkdir -p -- "${HISTFILE%/*}"
+    fi
     PROMPT_COMMAND=_bash_prompt_cmd
     HISTCONTROL=ignoreboth
     shopt -s histappend
