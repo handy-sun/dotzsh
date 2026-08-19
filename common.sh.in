@@ -783,7 +783,9 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s checkwinsize
     shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T '
-    bind '"\\C-w": shell-backward-kill-word'
+    if [[ $- == *i* ]]; then
+        bind '"\C-w": unix-filename-rubout'
+    fi
 
 fi
 

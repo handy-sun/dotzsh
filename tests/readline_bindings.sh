@@ -11,7 +11,13 @@ bash "$repo_root/common.sh.in" stdout > "$generated"
 binding_output="$(HOME="$tmpdir/home" GENERATED="$generated" \
     LC_ALL=C bash --noprofile --norc -ic '
         source "$GENERATED"
-        bind -q shell-backward-kill-word
+        bind -p
     ' 2>/dev/null)"
 
-[[ "$binding_output" == *'shell-backward-kill-word can be found on "\\C-w".'* ]]
+grep -Fq '"\C-w": unix-filename-rubout' <<< "$binding_output"
+
+noninteractive_stderr="$(
+    HOME="$tmpdir/home" GENERATED="$generated" \
+        bash --noprofile --norc -c 'source "$GENERATED"' 2>&1 >/dev/null
+)"
+[[ -z "$noninteractive_stderr" ]]
