@@ -784,7 +784,13 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T '
     if [[ $- == *i* ]]; then
-        bind '"\C-w": unix-filename-rubout'
+        # Plain-readline fallback (Flyline rebinds Ctrl+w itself, see
+        # flyline.plugin.sh): kill the previous alphanumeric word part so
+        # punctuation like / - . _ acts as a boundary — matching zsh's
+        # backward-kill-word with a trimmed WORDCHARS and fish's kill-word.
+        bind '"\C-w": backward-kill-word'
+        # Keep Readline from replacing this binding with the tty's whitespace rebout
+        bind 'set bind-tty-special-chars off'
     fi
 
 fi

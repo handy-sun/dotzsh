@@ -109,7 +109,7 @@ colors
 
 export HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/.zhistory"
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump"
-export WORDCHARS=${WORDCHARS//\/[&.;]}                          # Don't consider certain characters part of the word
+export WORDCHARS=${WORDCHARS//[\/&.;-]}                         # Don't consider certain characters part of the word
 
 compinit -d "$ZSH_COMPDUMP"
 zmodload zsh/terminfo

@@ -60,6 +60,12 @@ _dotzsh_flyline_setup() {
 
     flyline create-prompt-widget last-command-duration || return 1
 
+    # Ctrl+W: delete one fine-grained word part — stops at punctuation and
+    # path-segment boundaries (/ - . _ etc.) instead of Flyline's default
+    # whitespace-delimited deleteLeftOneWord, matching zsh's WORDCHARS-tuned
+    # backward-kill-word (zsh-config.zsh) and fish's precise word deletion.
+    flyline key bind Ctrl+w always=deleteLeftOneWordPart &>/dev/null || true
+
     # Keep the Bash prompt aligned with zsh-config.zsh's left/right prompt.
     PS1='\e[0;36m${_dotzsh_bash_prompt_path}\e[0m \e[0;${_dotzsh_bash_prompt_status_fg}m${_dotzsh_bash_prompt_status}\e[1m${_dotzsh_bash_prompt_prefix}\e[0m '
     RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[0;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
