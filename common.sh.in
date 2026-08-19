@@ -460,8 +460,104 @@ _get_jobs_name() {
     echo "${content}"
 }
 
+_dotzsh_title_set() {
+    [[ "${DISABLE_AUTO_TITLE:-}" == true ]] && return
+
+    local title=${1:-}
+    title=${title//$'\033'/}
+    title=${title//$'\007'/}
+    title=${title//$'\n'/ }
+    title=${title//$'\r'/ }
+
+    case ${TERM:-} in
+        screen*|tmux*) printf '\033k%s\033\\' "$title" ;;
+        ""|dumb|linux|cons25|emacs) return ;;
+        *) printf '\033]0;%s\007' "$title" ;;
+    esac
+}
+
+_dotzsh_title_pwd() {
+    if [[ $PWD == "$HOME" ]]; then
+        printf '~'
+    elif [[ $PWD == "$HOME"/* ]]; then
+        printf '~%s' "${PWD#"$HOME"}"
+    else
+        printf '%s' "$PWD"
+    fi
+}
+
+_dotzsh_title_precmd() {
+    _dotzsh_title_set "$(_dotzsh_title_pwd)"
+}
+
+_dotzsh_title_preexec() {
+    local command_line=${1:-}
+    local title_pwd
+    title_pwd=$(_dotzsh_title_pwd)
+    if [[ -n "$command_line" ]]; then
+        _dotzsh_title_set "$command_line:$title_pwd"
+    else
+        _dotzsh_title_set "$title_pwd"
+    fi
+}
+
+_dotzsh_bash_prompt_command_active() {
+    [[ -n ${BASH_COMMAND:-} && ${PROMPT_COMMAND[*]:-} == *"${BASH_COMMAND}"* ]]
+}
+
+_dotzsh_bash_preexec_debug() {
+    [[ $- == *i* ]] || return
+    _dotzsh_bash_prompt_command_active && return
+    [[ "${_dotzsh_preexec_seen:-0}" == 1 ]] && return
+    [[ "${_dotzsh_preexec_busy:-0}" == 1 ]] && return
+
+    _dotzsh_preexec_busy=1
+    _dotzsh_preexec_seen=1
+    _dotzsh_title_preexec "${BASH_COMMAND:-}"
+    _dotzsh_preexec_busy=0
+}
+
+_dotzsh_bash_preexec_arm() {
+    _dotzsh_preexec_seen=0
+}
+
+_dotzsh_bash_title_install() {
+    local previous_debug_trap=
+    if [[ -n ${_dotzsh_title_trap_string:-} ]]; then
+        previous_debug_trap=${_dotzsh_title_trap_string#trap -- }
+        previous_debug_trap=${previous_debug_trap% DEBUG}
+        previous_debug_trap=${previous_debug_trap#\'}
+        previous_debug_trap=${previous_debug_trap%\'}
+    fi
+    unset _dotzsh_title_trap_string
+
+    _dotzsh_preexec_seen=1
+    if [[ $previous_debug_trap == *'_dotzsh_bash_preexec_debug'* ]]; then
+        trap "$previous_debug_trap" DEBUG
+    else
+        trap "${previous_debug_trap:+$previous_debug_trap; }_dotzsh_bash_preexec_debug" DEBUG
+    fi
+    _dotzsh_title_hook_installed=1
+
+    local installer='_dotzsh_title_trap_string="$(trap -p DEBUG)";trap - DEBUG;_dotzsh_bash_title_install'
+    if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
+        local -a prompt_commands=()
+        local prompt_command
+        for prompt_command in "${PROMPT_COMMAND[@]}"; do
+            [[ $prompt_command == "$installer" ]] || prompt_commands+=("$prompt_command")
+        done
+        PROMPT_COMMAND=("${prompt_commands[@]}")
+    else
+        PROMPT_COMMAND=${PROMPT_COMMAND//$installer/}
+        PROMPT_COMMAND=${PROMPT_COMMAND#;}
+        PROMPT_COMMAND=${PROMPT_COMMAND%;}
+        PROMPT_COMMAND=${PROMPT_COMMAND//;;/;}
+    fi
+}
+
 _bash_prompt_cmd() {
     local exitStatus=$?
+    _dotzsh_title_precmd
     [[ $exitStatus -eq 0 ]] && local promFg="92" || local promFg="91"
     local shortPwd=`_get_short_pwd`
     local jobIdx=`_get_jobs_name`
@@ -674,13 +770,20 @@ if [[ -n "$BASH_VERSION" ]]; then
     if [[ ! -d ${HISTFILE%/*} ]] && command -v mkdir &>/dev/null; then
         mkdir -p -- "${HISTFILE%/*}"
     fi
-    PROMPT_COMMAND=_bash_prompt_cmd
+    if [[ ${PROMPT_COMMAND[*]:-} != *'_bash_prompt_cmd'* ]]; then
+        if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
+            PROMPT_COMMAND=(_bash_prompt_cmd "${PROMPT_COMMAND[@]}")
+        else
+            PROMPT_COMMAND="_bash_prompt_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+        fi
+    fi
     HISTCONTROL=ignoreboth
     shopt -s histappend
     shopt -s autocd
     shopt -s checkwinsize
     shopt -s expand_aliases
     export HISTTIMEFORMAT='%F %T '
+
 fi
 
 _qip_query() {
@@ -1461,6 +1564,25 @@ EOF
 _dotzsh_append_buffer << 'EOF'
 if [[ -n ${BASH_VERSION:-} ]] && command -v zoxide &>/dev/null; then
     eval "$(zoxide init bash)"
+fi
+
+if [[ -n ${BASH_VERSION:-} && $- == *i* ]]; then
+    _dotzsh_title_installer='_dotzsh_title_trap_string="$(trap -p DEBUG)";trap - DEBUG;_dotzsh_bash_title_install'
+    if [[ ${_dotzsh_title_hook_installed:-0} != 1 && ${PROMPT_COMMAND[*]:-} != *'_dotzsh_bash_title_install'* ]]; then
+        if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
+            PROMPT_COMMAND+=("$_dotzsh_title_installer")
+        else
+            PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}$_dotzsh_title_installer"
+        fi
+    fi
+    if [[ ${PROMPT_COMMAND[*]:-} != *'_dotzsh_bash_preexec_arm'* ]]; then
+        if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
+            PROMPT_COMMAND+=(_dotzsh_bash_preexec_arm)
+        else
+            PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}_dotzsh_bash_preexec_arm"
+        fi
+    fi
+    unset _dotzsh_title_installer
 fi
 EOF
 
