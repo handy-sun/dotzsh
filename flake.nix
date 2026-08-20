@@ -140,6 +140,7 @@
               pkgs.bash
               pkgs.coreutils
               pkgs.fish
+              pkgs.python3
               pkgs.ripgrep
               pkgs.shellcheck
               pkgs.zsh
