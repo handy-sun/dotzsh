@@ -1077,7 +1077,7 @@ alias sylss="sudo systemctl list-units -t service"
 alias sylsa="sudo systemctl list-units -t service --all"
 
 alias suta="systemctl --user status"
-alias suca="systemctl --user cat"
+alias suca="systemctl --user cat --no-pager"
 alias sust="systemctl --user start"
 alias surs="systemctl --user restart"
 alias sute="systemctl --user stop"
