@@ -10,21 +10,30 @@ bash "$repo_root/common.sh.in" stdout > "$generated"
 
 HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -c '
     set -euo pipefail
-    mkdir -p "$HOME/project"
+    mkdir -p "$HOME/project/deep"
     source "$GENERATED"
-    cd "$HOME/project"
+    cd "$HOME/project/deep"
 
     idle="$(TERM=xterm-256color _dotzsh_title_precmd)"
-    [[ "$idle" == $'"'"'\033]0;~/project\007'"'"' ]]
+    [[ "$idle" == $'"'"'\033]0;deep\007'"'"' ]]
 
     running="$(TERM=xterm-256color _dotzsh_title_preexec "sleep 2")"
-    [[ "$running" == $'"'"'\033]0;sleep 2:~/project\007'"'"' ]]
+    [[ "$running" == $'"'"'\033]0;sleep 2:deep\007'"'"' ]]
 
     running="$(TERM=tmux-256color _dotzsh_title_preexec "sleep 2")"
-    [[ "$running" == $'"'"'\033ksleep 2:~/project\033\\'"'"' ]]
+    [[ "$running" == $'"'"'\033ksleep 2:deep\033\\'"'"' ]]
+
+    running="$(DOTZSH_TITLE_MAX_LENGTH=10 TERM=tmux-256color _dotzsh_title_preexec "1234567890ABCDEFGHIJ")"
+    [[ "$running" == $'"'"'\033k123456789…:deep\033\\'"'"' ]]
+
+    cd /
+    idle="$(TERM=tmux-256color _dotzsh_title_precmd)"
+    [[ "$idle" == $'"'"'\033k/\033\\'"'"' ]]
+
+    cd "$HOME/project/deep"
 
     running="$(TERM=xterm-256color _dotzsh_title_preexec $'"'"'printf bad\033]0;injected\007\ncommand'"'"')"
-    [[ "$running" == $'"'"'\033]0;printf bad]0;injected command:~/project\007'"'"' ]]
+    [[ "$running" == $'"'"'\033]0;printf bad]0;injected command:deep\007'"'"' ]]
 
     DISABLE_AUTO_TITLE=true
     [[ -z "$(_dotzsh_title_precmd)" ]]

@@ -476,13 +476,29 @@ _dotzsh_title_set() {
     esac
 }
 
+_dotzsh_title_limit_command() {
+    local command_line=${1:-}
+    local max_length=${DOTZSH_TITLE_MAX_LENGTH:-64}
+
+    if [[ $max_length =~ ^[1-9][0-9]*$ ]] && (( ${#command_line} > max_length )); then
+        if (( max_length == 1 )); then
+            command_line='…'
+        else
+            command_line="${command_line:0:max_length - 1}…"
+        fi
+    fi
+
+    printf '%s' "$command_line"
+}
+
 _dotzsh_title_pwd() {
     if [[ $PWD == "$HOME" ]]; then
         printf '~'
-    elif [[ $PWD == "$HOME"/* ]]; then
-        printf '~%s' "${PWD#"$HOME"}"
+    elif [[ $PWD == / ]]; then
+        printf '/'
     else
-        printf '%s' "$PWD"
+        local directory=${PWD%/}
+        printf '%s' "${directory##*/}"
     fi
 }
 
@@ -495,7 +511,7 @@ _dotzsh_title_preexec() {
     local title_pwd
     title_pwd=$(_dotzsh_title_pwd)
     if [[ -n "$command_line" ]]; then
-        _dotzsh_title_set "$command_line:$title_pwd"
+        _dotzsh_title_set "$(_dotzsh_title_limit_command "$command_line"):$title_pwd"
     else
         _dotzsh_title_set "$title_pwd"
     fi
