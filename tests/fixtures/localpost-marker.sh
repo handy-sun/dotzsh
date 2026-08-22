@@ -1,0 +1,1 @@
+export DOTZSH_LOCALPOST_BASH=loaded

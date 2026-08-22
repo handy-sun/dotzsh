@@ -51,9 +51,8 @@ They use a buffer pattern (`_dotzsh_append_buffer << 'EOF'`) to assemble output,
 3. Loads plugins: `zsh-autosuggestions`, `fast-syntax-highlighting`
 4. Sources shared `plugsfile/*.plugin.sh` and Zsh-only `plugsfile/*.plugin.zsh`
 5. Sources `zsh-config.zsh` (options, keybindings, prompt, hooks)
-6. Sources generated `common.sh` from `./common.sh`, `~/.cache/dotzsh/common.sh`, or `/tmp/common.sh`
-7. Sources `localpost/*.sh`
-8. Initializes zoxide if available
+6. Sources generated `common.sh` from `./common.sh`, `~/.cache/dotzsh/common.sh`, or `/tmp/common.sh` (which loads `localpost/*.sh`)
+7. Initializes zoxide if available
 
 ### Fish Loading Order
 

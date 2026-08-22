@@ -47,6 +47,9 @@ jobs:
       - name: Run consistency tests
         run: nix develop --command bash tests/consistency_fixes.sh
 
+      - name: Run localpost Bash regression test
+        run: nix develop --command bash tests/localpost_bash.sh
+
       - name: shellcheck common.sh.in
         run: nix develop --command shellcheck -S warning common.sh.in
       - name: shellcheck common.fish.in

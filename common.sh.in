@@ -1571,6 +1571,33 @@ $some_al
 EOF
 
 _dotzsh_append_buffer << 'EOF'
+_dotzsh_source_localpost() {
+    local _dotzsh_localpost_dir="$1" _dotzsh_localpost_file
+    if [[ -n ${ZSH_VERSION:-} ]]; then
+        setopt localoptions null_glob
+    fi
+    for _dotzsh_localpost_file in "$_dotzsh_localpost_dir"/*.sh; do
+        if [[ -r "$_dotzsh_localpost_file" ]]; then
+            source "$_dotzsh_localpost_file"
+        fi
+    done
+}
+
+EOF
+
+_dotzsh_append_buffer << EOF
+_dotzsh_localpost_arr=("\${_dotzsh_localpost_base_dir:-${current_dir}/localpost}" "\$HOME/.cache/dotzsh/localpost" "/tmp/localpost")
+for _dotzsh_localpost_dir in "\${_dotzsh_localpost_arr[@]}"; do
+    if [[ -d "\$_dotzsh_localpost_dir" ]]; then
+        _dotzsh_source_localpost "\$_dotzsh_localpost_dir"
+        break
+    fi
+done
+unset _dotzsh_localpost_arr _dotzsh_localpost_dir
+
+EOF
+
+_dotzsh_append_buffer << 'EOF'
 if [[ -n ${BASH_VERSION:-} ]] && command -v zoxide &>/dev/null; then
     eval "$(zoxide init bash)"
 fi

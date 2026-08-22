@@ -95,6 +95,7 @@ unset real_dir plugins plug_arr plugsfile i localpre_arr localpre
 source ${cur_dir}/zsh-config.zsh
 
 gen_common=("${cur_dir}/common.sh" "$HOME/.cache/dotzsh/common.sh" "/tmp/common.sh")
+_dotzsh_localpost_base_dir="$cur_dir"
 for file in ${gen_common[*]}; do
   if [ -e $file ]; then
     # echo "Internal sourcing $file"
@@ -103,19 +104,7 @@ for file in ${gen_common[*]}; do
   fi
 done
 
-localpost_arr=("$cur_dir/localpost" "$HOME/.cache/dotzsh/localpost" "/tmp/localpost")
-for localpost in ${localpost_arr[*]}; do
-  if [ -d $localpost ]; then
-    for i in $localpost/*.sh(N); do
-      if [ -r $i ]; then
-        source $i
-      fi
-    done
-    break
-  fi
-done
-
-unset real_location cur_dir gen_common file localpost_arr
+unset real_location cur_dir gen_common file _dotzsh_localpost_base_dir
 
 if (( $+commands[zoxide] )); then
     eval "$(zoxide init zsh)"
