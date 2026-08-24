@@ -33,7 +33,14 @@ colored() {
     )
 
     local pager=${PAGER:-}
-    if command -v less &>/dev/null; then
+    if [[ -n ${ZSH_VERSION:-} ]]; then
+        # `command -v` reports an alias in Zsh (for example, the shared
+        # `alias less="command less -R"`) rather than the executable path.
+        pager=$(whence -p less 2>/dev/null || :)
+    elif [[ -n ${BASH_VERSION:-} ]]; then
+        # `type -P` skips aliases and functions in Bash.
+        pager=$(type -P less 2>/dev/null || :)
+    elif command -v less &>/dev/null; then
         pager=$(command -v less)
     fi
     [[ -n $pager ]] && environment+=("PAGER=$pager")

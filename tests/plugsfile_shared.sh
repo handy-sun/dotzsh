@@ -115,6 +115,11 @@ test_colored_man_shell() {
             typeset -f "$function_name" >/dev/null
         done
 
+        # `common.sh` defines this alias before `colored` is invoked.  In Zsh,
+        # `command -v` reports the alias text instead of the executable path,
+        # which used to leak `alias less=...` into PAGER.
+        alias less="command less -R"
+
         if [[ -n ${BASH_VERSION:-} ]]; then
             shopt -s extdebug
             function_origin=$(declare -F man)
