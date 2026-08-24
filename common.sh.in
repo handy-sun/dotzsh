@@ -44,6 +44,30 @@ cmd_exists() {
     command -v "$@" &>/dev/null
 }
 
+## Show the current Nix environment, system generation, and Nix version.
+nxosv() {
+    local drv_info sys_path profile_link cur_ver nix_ver
+    if [[ -n ${IN_NIX_SHELL:-} ]]; then
+        drv_info="nix-shell (${name:-}), SHLVL: ${SHLVL:-}"
+    elif [[ -n ${DIRENV_DIR:-} ]]; then
+        drv_info="direnv environment, SHLVL: ${SHLVL:-}"
+    else
+        sys_path="$(readlink -f /run/current-system)"
+        drv_info="${sys_path#/nix/store/}"
+        drv_info="${drv_info#*-}"
+    fi
+
+    profile_link="$(readlink /nix/var/nix/profiles/system)"
+    cur_ver="${profile_link%-link}"
+    cur_ver="${cur_ver##*-}"
+
+    nix_ver="$(nix --version)"
+    nix_ver="${nix_ver#nix }"
+
+    printf '\033[34m❄️ Derivation: \033[36m%s\033[0m | \033[34mGeneration: \033[33m%s\033[0m | \033[90m%s\033[0m\n' \
+        "$drv_info" "$cur_ver" "$nix_ver"
+}
+
 getcopycmd() {
     local os=$(uname -s)
     if [[ -f /proc/version ]] && grep -iq Microsoft /proc/version; then
