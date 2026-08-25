@@ -1377,6 +1377,22 @@ function nxqa -d "Nix why-depends --all against current system"
     which $argv[1] | xargs realpath | xargs nix why-depends --all /run/current-system
 end
 EOF
+    if _dotzsh_cmd_exists jq; then
+        _dotzsh_append_buffer << 'EOF'
+function nxph -d "Prefetch a URL and print its Nix hash"
+    if test (count $argv) -ne 1
+        echo "Usage: nxph <url>" >&2
+        return 1
+    end
+
+    set -l prefetch_json (nix store prefetch-file --json "$argv[1]")
+    if test $status -ne 0
+        return 1
+    end
+    printf '%s\n' "$prefetch_json" | jq -er '.hash'
+end
+EOF
+    fi
     if [ -n "$_dotzsh_is_linux" ]; then
         if _dotzsh_cmd_exists nix-tree; then
             _dotzsh_append_buffer << 'EOF'

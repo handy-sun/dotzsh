@@ -1522,6 +1522,22 @@ nxqa() {
     which "$1" | xargs realpath | xargs nix why-depends --all /run/current-system
 }
 EOF
+    if _dotzsh_cmd_exists jq; then
+        _dotzsh_append_buffer << 'EOF'
+nxph() {
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: nxph <url>" >&2
+        return 1
+    fi
+
+    local prefetch_json
+    if ! prefetch_json="$(nix store prefetch-file --json "$1")"; then
+        return 1
+    fi
+    printf '%s\n' "$prefetch_json" | jq -er '.hash'
+}
+EOF
+    fi
     if [ -n "$_dotzsh_is_linux" ]; then
         if _dotzsh_cmd_exists nix-tree; then
             _dotzsh_append_buffer << 'EOF'
