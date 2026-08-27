@@ -32,6 +32,7 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     _bash_prompt_cmd
 
     [[ $RPS1 == *"FLYLINE_LAST_COMMAND_DURATION\\e[0m "* ]]
+    [[ $RPS1 == *"\\e[38;5;245m\\A\\e[0m"* ]]
     [[ $RPS1 != *"FLYLINE_LAST_COMMAND_DURATION\\e[0m\\e[0;245m\\A"* ]]
 
     grep -Fqx "create-prompt-widget last-command-duration" "$FLYLINE_CALLS"

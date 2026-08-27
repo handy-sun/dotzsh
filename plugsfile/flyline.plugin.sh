@@ -68,7 +68,7 @@ _dotzsh_flyline_setup() {
 
     # Keep the Bash prompt aligned with zsh-config.zsh's left/right prompt.
     PS1='\e[0;36m${_dotzsh_bash_prompt_path}\e[0m \e[0;${_dotzsh_bash_prompt_status_fg}m${_dotzsh_bash_prompt_status}\e[1m${_dotzsh_bash_prompt_prefix}\e[0m '
-    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[0;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
+    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[38;5;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
     PS1_FILL=' '
     PS2='\e[0;33mFLYLINE_PROMPT_LINE_NUMBER>\e[0m '
 
