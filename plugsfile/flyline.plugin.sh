@@ -56,24 +56,84 @@ _dotzsh_bash_prompt_hook() {
 }
 
 _dotzsh_gitstatus_setup() {
-    [[ ${_DOTZSH_GITSTATUS_ATTEMPTED:-0} == 1 ]] &&
+    if [[ ${_DOTZSH_GITSTATUS_ATTEMPTED:-0} == 1 ]]; then
         [[ ${_DOTZSH_GITSTATUS_READY:-0} == 1 ]]
+        return
+    fi
     _DOTZSH_GITSTATUS_ATTEMPTED=1
 
     local gitstatus_dir=${DOTZSH_GITSTATUS_DIR:-}
     if [[ -z $gitstatus_dir ]] && command -v gitstatus-share &>/dev/null; then
-        gitstatus_dir=$(gitstatus-share 2>/dev/null) || return 1
+        gitstatus_dir=$(gitstatus-share 2>/dev/null) || gitstatus_dir=
     fi
-    [[ -r $gitstatus_dir/gitstatus.plugin.sh ]] || return 1
-    source "$gitstatus_dir/gitstatus.plugin.sh" || return 1
-    gitstatus_start -s -1 -u -1 -c -1 -d -1 || return 1
-    _DOTZSH_GITSTATUS_READY=1
+    if [[ -r $gitstatus_dir/gitstatus.plugin.sh ]] &&
+        source "$gitstatus_dir/gitstatus.plugin.sh" &&
+        gitstatus_start -s -1 -u -1 -c -1 -d -1; then
+        _DOTZSH_GITSTATUS_BACKEND=gitstatus
+        _DOTZSH_GITSTATUS_READY=1
+        return 0
+    fi
+
+    if command -v git &>/dev/null; then
+        _DOTZSH_GITSTATUS_BACKEND=fallback
+        _DOTZSH_GITSTATUS_READY=1
+        return 0
+    fi
+
+    _DOTZSH_GITSTATUS_READY=0
+    return 1
+}
+
+_dotzsh_git_fallback_query() {
+    VCS_STATUS_RESULT=norepo-sync
+    VCS_STATUS_LOCAL_BRANCH=
+    VCS_STATUS_TAG=
+    VCS_STATUS_COMMIT=
+    VCS_STATUS_COMMITS_AHEAD=0
+    VCS_STATUS_COMMITS_BEHIND=0
+    VCS_STATUS_PUSH_COMMITS_AHEAD=0
+    VCS_STATUS_PUSH_COMMITS_BEHIND=0
+    VCS_STATUS_STASHES=0
+    VCS_STATUS_ACTION=
+    VCS_STATUS_NUM_CONFLICTED=0
+    VCS_STATUS_NUM_STAGED=0
+    VCS_STATUS_NUM_UNSTAGED=0
+    VCS_STATUS_NUM_UNTRACKED=0
+
+    local line record xy ahead behind
+    while IFS= read -r line; do
+        case $line in
+        '# branch.oid '*) VCS_STATUS_COMMIT=${line#\# branch.oid } ;;
+        '# branch.head '*) VCS_STATUS_LOCAL_BRANCH=${line#\# branch.head } ;;
+        '# branch.ab '*)
+            read -r _ _ ahead behind <<< "$line"
+            VCS_STATUS_COMMITS_AHEAD=${ahead#+}
+            VCS_STATUS_COMMITS_BEHIND=${behind#-}
+            ;;
+        '# stash '*) VCS_STATUS_STASHES=${line#\# stash } ;;
+        '1 '*|'2 '*)
+            read -r record xy _ <<< "$line"
+            [[ ${xy:0:1} == . ]] || ((VCS_STATUS_NUM_STAGED += 1))
+            [[ ${xy:1:1} == . ]] || ((VCS_STATUS_NUM_UNSTAGED += 1))
+            ;;
+        'u '*) ((VCS_STATUS_NUM_CONFLICTED += 1)) ;;
+        '? '*) ((VCS_STATUS_NUM_UNTRACKED += 1)) ;;
+        esac
+    done < <(git status --porcelain=v2 --branch --show-stash 2>/dev/null) || return 1
+
+    [[ -n $VCS_STATUS_COMMIT ]] || return 1
+    [[ $VCS_STATUS_LOCAL_BRANCH == '(detached)' ]] && VCS_STATUS_LOCAL_BRANCH=
+    VCS_STATUS_RESULT=ok-sync
 }
 
 _dotzsh_gitstatus_prompt() {
     _dotzsh_bash_prompt_gitstatus=
     [[ ${_DOTZSH_GITSTATUS_READY:-0} == 1 ]] || return 0
-    gitstatus_query || return 0
+    if [[ ${_DOTZSH_GITSTATUS_BACKEND:-} == gitstatus ]]; then
+        gitstatus_query || return 0
+    else
+        _dotzsh_git_fallback_query || return 0
+    fi
     [[ ${VCS_STATUS_RESULT:-} == ok-sync ]] || return 0
 
     local reset=$'\e[0m'

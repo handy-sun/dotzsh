@@ -78,3 +78,38 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     _bash_prompt_cmd
     [[ -z $_dotzsh_bash_prompt_shlvl ]]
     '
+
+fallback_repo="$tmpdir/fallback-repo"
+fallback_remote="$tmpdir/fallback-remote.git"
+fallback_bin="$tmpdir/fallback-bin"
+mkdir -p "$fallback_bin"
+cp "$bin_dir/flyline" "$fallback_bin/flyline"
+git init --bare "$fallback_remote" >/dev/null
+git init -b master "$fallback_repo" >/dev/null
+git -C "$fallback_repo" config user.email test@example.com
+git -C "$fallback_repo" config user.name test
+printf 'initial\n' > "$fallback_repo/file"
+git -C "$fallback_repo" add file
+git -C "$fallback_repo" commit -m initial >/dev/null
+git -C "$fallback_repo" remote add origin "$fallback_remote"
+git -C "$fallback_repo" push -u origin master >/dev/null
+printf 'ahead\n' >> "$fallback_repo/file"
+git -C "$fallback_repo" commit -am ahead >/dev/null
+
+PATH="$fallback_bin:$PATH" FLYLINE_CALLS="$tmpdir/fallback.calls" \
+    GENERATED="$generated" PLUGIN="$repo_root/plugsfile/flyline.plugin.sh" \
+    FALLBACK_REPO="$fallback_repo" \
+    bash --noprofile --norc -c '
+    set -euo pipefail
+    cd "$FALLBACK_REPO"
+    source "$GENERATED"
+
+    FLYLINE_VERSION=1
+    DOTZSH_GITSTATUS_DIR="$FALLBACK_REPO/missing-gitstatus"
+    true
+    _bash_prompt_cmd
+
+    [[ ${_DOTZSH_GITSTATUS_BACKEND:-} == fallback ]]
+    [[ $_dotzsh_bash_prompt_gitstatus == *"master"* ]]
+    [[ $_dotzsh_bash_prompt_gitstatus == *"⇡1"* ]]
+    '
