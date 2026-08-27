@@ -71,7 +71,10 @@
             })
 
             (mkIf (cfg.enableBashIntegration && cfg.enable) {
-              home.packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init ];
+              home.packages = [
+                self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init
+              ]
+              ++ lib.optional (lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.gitstatus) pkgs.gitstatus;
               home.activation.runMyBashShellInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
                 ${setPathScript}
                 ${self.packages.${pkgs.stdenv.hostPlatform.system}.cm-init}/bin/dotzsh-cm -1
