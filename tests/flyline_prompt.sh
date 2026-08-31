@@ -54,6 +54,7 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
 
     FLYLINE_VERSION=1
     DOTZSH_GITSTATUS_DIR="$GITSTATUS_DIR"
+    IN_NIX_SHELL=pure
     true
     _bash_prompt_cmd
 
@@ -61,8 +62,11 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     [[ $_dotzsh_bash_prompt_gitstatus == *"feature/flyline"* ]]
     [[ $_dotzsh_bash_prompt_gitstatus == *"⇣1"* && $_dotzsh_bash_prompt_gitstatus == *"⇡2"* ]]
     [[ $_dotzsh_bash_prompt_gitstatus == *"*1"* && $_dotzsh_bash_prompt_gitstatus == *"+3"* && $_dotzsh_bash_prompt_gitstatus == *"!4"* && $_dotzsh_bash_prompt_gitstatus == *"?5"* ]]
+    [[ $_dotzsh_bash_prompt_nix_shell == "nix:pure " ]]
+    [[ $RPS1 == *\$\{_dotzsh_bash_prompt_nix_shell\}* ]]
+    [[ $RPS1 == *\$\{_dotzsh_bash_prompt_gitstatus\}\$\{_dotzsh_bash_prompt_nix_shell\}* ]]
     [[ $RPS1 == *\$\{_dotzsh_bash_prompt_gitstatus\}* ]]
-    [[ $RPS1 == *"\\e[38;5;245m\\A\\e[0m"* ]]
+    [[ $RPS1 == *"\\e[38;5;245m"* && $RPS1 == *"\\A\\e[0m"* ]]
     [[ $RPS1 != *"FLYLINE_LAST_COMMAND_DURATION\\e[0m\\e[0;245m\\A"* ]]
 
     grep -Fqx "create-prompt-widget last-command-duration" "$FLYLINE_CALLS"

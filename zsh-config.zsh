@@ -346,6 +346,11 @@ function _dotzsh_zsh_prompt_prefix() {
   fi
 }
 
+function _dotzsh_zsh_nix_shell_prompt() {
+  (( ${+IN_NIX_SHELL} )) || return
+  print -r -- "nix:${IN_NIX_SHELL} "
+}
+
 function _dotzsh_zsh_prompt_pwd() {
   local path=${PWD:-}
   [[ -n "$path" ]] || return
@@ -392,7 +397,9 @@ function _dotzsh_zsh_prompt_pwd() {
 function pre_set_prompt() {
   local prompt_prefix=$(_dotzsh_zsh_prompt_prefix)
   local prompt_pwd=$(_dotzsh_zsh_prompt_pwd)
+  local nix_shell_prompt=$(_dotzsh_zsh_nix_shell_prompt)
   prompt_pwd=${prompt_pwd//\%/%%}
+  nix_shell_prompt=${nix_shell_prompt//\%/%%}
   PROMPT="%F{cyan}${prompt_pwd}%f %(?.%F{green}.%F{red}%? )%B${prompt_prefix}%b%f "
 
   local prompt_timer=
@@ -425,7 +432,7 @@ function pre_set_prompt() {
   if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
     ssh_context="%F{3}%n@%m%f "
   fi
-  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{245}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
+  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{245}${nix_shell_prompt}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
 }
 
 # autoload -Uz add-zsh-hook

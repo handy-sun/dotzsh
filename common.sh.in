@@ -463,6 +463,11 @@ fi
 
 
 ## about bash prompt
+_dotzsh_nix_shell_prompt() {
+    [[ -v IN_NIX_SHELL ]] || return 0
+    printf 'nix:%s ' "${IN_NIX_SHELL:-}"
+}
+
 _get_short_pwd() {
     local path prefix= result part i
     local -a parts
@@ -628,6 +633,7 @@ _bash_prompt_cmd() {
     [[ $exitStatus -eq 0 ]] && local promFg="92" || local promFg="91"
     local shortPwd=`_get_short_pwd`
     local jobIdx=`_get_jobs_name`
+    _dotzsh_bash_prompt_nix_shell=$(_dotzsh_nix_shell_prompt)
 
     if declare -F _dotzsh_bash_prompt_hook >/dev/null && \
         _dotzsh_bash_prompt_hook "$exitStatus" "$promFg" "$shortPwd"; then
