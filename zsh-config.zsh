@@ -346,9 +346,54 @@ function _dotzsh_zsh_prompt_prefix() {
   fi
 }
 
+function _dotzsh_zsh_prompt_pwd() {
+  local path=${PWD:-}
+  [[ -n "$path" ]] || return
+
+  if [[ "$path" == / ]]; then
+    print -r -- /
+    return
+  fi
+
+  local prefix=
+  if [[ -n "${HOME:-}" && "$HOME" != / && "$path" == "$HOME" ]]; then
+    print -r -- '~'
+    return
+  elif [[ -n "${HOME:-}" && "$HOME" != / && "$path" == "$HOME"/* ]]; then
+    prefix='~'
+    path="${path#$HOME}"
+  fi
+
+  path=${path#/}
+
+  local -a parts
+  parts=("${(@s:/:)path}")
+  local last_index=${#parts}
+  local result=${prefix:-/}
+  [[ -n "$prefix" ]] && result+='/'
+
+  local i
+  for ((i = 1; i <= last_index; i++)); do
+    if (( i < last_index )); then
+      if [[ "${parts[i]}" == .* && ${#parts[i]} -gt 1 ]]; then
+        result+="${parts[i][1,2]}"
+      else
+        result+="${parts[i][1]}"
+      fi
+    else
+      result+="${parts[i]}"
+    fi
+    (( i < last_index )) && result+='/'
+  done
+
+  print -r -- "$result"
+}
+
 function pre_set_prompt() {
   local prompt_prefix=$(_dotzsh_zsh_prompt_prefix)
-  PROMPT="%F{cyan}%(6~|%-1~/…/%4~|%5~)%f %(?.%F{green}.%F{red}%? )%B${prompt_prefix}%b%f "
+  local prompt_pwd=$(_dotzsh_zsh_prompt_pwd)
+  prompt_pwd=${prompt_pwd//\%/%%}
+  PROMPT="%F{cyan}${prompt_pwd}%f %(?.%F{green}.%F{red}%? )%B${prompt_prefix}%b%f "
 
   local prompt_timer=
   if [[ -n "${timer:-}" ]]; then

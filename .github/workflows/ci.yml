@@ -50,6 +50,9 @@ jobs:
       - name: Run localpost Bash regression test
         run: nix develop --command bash tests/localpost_bash.sh
 
+      - name: Run Zsh prompt path regression test
+        run: nix develop --command bash tests/zsh_prompt_pwd.sh
+
       - name: shellcheck common.sh.in
         run: nix develop --command shellcheck -S warning common.sh.in
       - name: shellcheck common.fish.in
