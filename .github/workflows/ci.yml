@@ -53,6 +53,9 @@ jobs:
       - name: Run Zsh prompt path regression test
         run: nix develop --command bash tests/zsh_prompt_pwd.sh
 
+      - name: Run Bash prompt path regression test
+        run: nix develop --command bash tests/bash_prompt_pwd.sh
+
       - name: shellcheck common.sh.in
         run: nix develop --command shellcheck -S warning common.sh.in
       - name: shellcheck common.fish.in

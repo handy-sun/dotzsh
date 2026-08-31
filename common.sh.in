@@ -464,15 +464,42 @@ fi
 
 ## about bash prompt
 _get_short_pwd() {
-    split=5
-    W=$(pwd | sed -e "s!$HOME!~!")
-    total_cnt=$(echo $W | grep -o '/' | wc -l)
-    last_cnt=$(($total_cnt-1))
-    if [ $total_cnt -gt $split ]; then
-        echo $W | cut -d/ -f1-2 | xargs -I{} echo {}"/…/$(echo $W | cut -d/ -f${last_cnt}-)"
-    else
-        echo $W
+    local path prefix= result part i
+    local -a parts
+    path=$(pwd) || return
+
+    if [[ -n ${HOME:-} && $HOME != / && $path == "$HOME" ]]; then
+        printf '~\n'
+        return
+    elif [[ -n ${HOME:-} && $HOME != / && $path == "$HOME"/* ]]; then
+        prefix='~'
+        path=${path#"$HOME"}
     fi
+
+    path=${path#/}
+    if [[ -z $path ]]; then
+        printf '%s\n' "${prefix:-/}"
+        return
+    fi
+
+    IFS=/ read -r -a parts <<< "$path"
+    result=${prefix:-/}
+    [[ -n $prefix ]] && result+='/'
+    for ((i = 0; i < ${#parts[@]}; i++)); do
+        part=${parts[i]}
+        if (( i < ${#parts[@]} - 1 )); then
+            if [[ $part == .* && ${#part} -gt 1 ]]; then
+                result+=${part:0:2}
+            else
+                result+=${part:0:1}
+            fi
+        else
+            result+=$part
+        fi
+        (( i < ${#parts[@]} - 1 )) && result+='/'
+    done
+
+    printf '%s\n' "$result"
 }
 
 _get_jobs_name() {
