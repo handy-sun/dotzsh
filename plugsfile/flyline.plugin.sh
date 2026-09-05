@@ -156,18 +156,16 @@ _dotzsh_gitstatus_prompt() {
     (( ${#where} > 32 )) && where="${where:0:12}…${where: -12}"
     prompt+="${clean}${where}"
 
-    (( ${VCS_STATUS_COMMITS_BEHIND:-0} )) && prompt+=" ${clean}⇣${VCS_STATUS_COMMITS_BEHIND}"
-    (( ${VCS_STATUS_COMMITS_AHEAD:-0} && !${VCS_STATUS_COMMITS_BEHIND:-0} )) && prompt+=' '
+    (( ${VCS_STATUS_COMMITS_BEHIND:-0} )) && prompt+="${clean}⇣${VCS_STATUS_COMMITS_BEHIND}"
     (( ${VCS_STATUS_COMMITS_AHEAD:-0} )) && prompt+="${clean}⇡${VCS_STATUS_COMMITS_AHEAD}"
-    (( ${VCS_STATUS_PUSH_COMMITS_BEHIND:-0} )) && prompt+=" ${clean}⇠${VCS_STATUS_PUSH_COMMITS_BEHIND}"
-    (( ${VCS_STATUS_PUSH_COMMITS_AHEAD:-0} && !${VCS_STATUS_PUSH_COMMITS_BEHIND:-0} )) && prompt+=' '
+    (( ${VCS_STATUS_PUSH_COMMITS_BEHIND:-0} )) && prompt+="${clean}⇠${VCS_STATUS_PUSH_COMMITS_BEHIND}"
     (( ${VCS_STATUS_PUSH_COMMITS_AHEAD:-0} )) && prompt+="${clean}⇢${VCS_STATUS_PUSH_COMMITS_AHEAD}"
-    (( ${VCS_STATUS_STASHES:-0} )) && prompt+=" ${clean}*${VCS_STATUS_STASHES}"
-    [[ -n ${VCS_STATUS_ACTION:-} ]] && prompt+=" ${conflicted}${VCS_STATUS_ACTION}"
-    (( ${VCS_STATUS_NUM_CONFLICTED:-0} )) && prompt+=" ${conflicted}~${VCS_STATUS_NUM_CONFLICTED}"
-    (( ${VCS_STATUS_NUM_STAGED:-0} )) && prompt+=" ${modified}+${VCS_STATUS_NUM_STAGED}"
-    (( ${VCS_STATUS_NUM_UNSTAGED:-0} )) && prompt+=" ${modified}!${VCS_STATUS_NUM_UNSTAGED}"
-    (( ${VCS_STATUS_NUM_UNTRACKED:-0} )) && prompt+=" ${untracked}?${VCS_STATUS_NUM_UNTRACKED}"
+    (( ${VCS_STATUS_STASHES:-0} )) && prompt+="${clean}*${VCS_STATUS_STASHES}"
+    [[ -n ${VCS_STATUS_ACTION:-} ]] && prompt+="${conflicted}${VCS_STATUS_ACTION}"
+    (( ${VCS_STATUS_NUM_CONFLICTED:-0} )) && prompt+="${conflicted}~${VCS_STATUS_NUM_CONFLICTED}"
+    (( ${VCS_STATUS_NUM_STAGED:-0} )) && prompt+="${modified}+${VCS_STATUS_NUM_STAGED}"
+    (( ${VCS_STATUS_NUM_UNSTAGED:-0} )) && prompt+="${modified}!${VCS_STATUS_NUM_UNSTAGED}"
+    (( ${VCS_STATUS_NUM_UNTRACKED:-0} )) && prompt+="${untracked}?${VCS_STATUS_NUM_UNTRACKED}"
 
     _dotzsh_bash_prompt_gitstatus="${prompt}${reset} "
 }
