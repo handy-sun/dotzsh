@@ -348,7 +348,7 @@ function _dotzsh_zsh_prompt_prefix() {
 
 function _dotzsh_zsh_nix_shell_prompt() {
   (( ${+IN_NIX_SHELL} )) || return
-  print -r -- "nix:${IN_NIX_SHELL} "
+  print -r -- "${IN_NIX_SHELL} "
 }
 
 function _dotzsh_zsh_prompt_pwd() {
@@ -432,7 +432,7 @@ function pre_set_prompt() {
   if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
     ssh_context="%F{3}%n@%m%f "
   fi
-  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{245}${nix_shell_prompt}%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
+  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{#7EBAE4}${nix_shell_prompt}%f%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
 }
 
 # autoload -Uz add-zsh-hook

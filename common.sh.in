@@ -465,7 +465,7 @@ fi
 ## about bash prompt
 _dotzsh_nix_shell_prompt() {
     [[ -v IN_NIX_SHELL ]] || return 0
-    printf 'nix:%s ' "${IN_NIX_SHELL:-}"
+    printf '%s ' "${IN_NIX_SHELL:-}"
 }
 
 _get_short_pwd() {

@@ -64,9 +64,10 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     [[ $_dotzsh_bash_prompt_gitstatus == *"*1"* && $_dotzsh_bash_prompt_gitstatus == *"+3"* && $_dotzsh_bash_prompt_gitstatus == *"!4"* && $_dotzsh_bash_prompt_gitstatus == *"?5"* ]]
     gitstatus_block=${_dotzsh_bash_prompt_gitstatus% }
     [[ $gitstatus_block != *" "* ]]
-    [[ $_dotzsh_bash_prompt_nix_shell == "nix:pure " ]]
+    [[ $_dotzsh_bash_prompt_nix_shell == "pure " ]]
     [[ $RPS1 == *\$\{_dotzsh_bash_prompt_nix_shell\}* ]]
-    [[ $RPS1 == *\$\{_dotzsh_bash_prompt_gitstatus\}\$\{_dotzsh_bash_prompt_nix_shell\}* ]]
+    expected_git_nix="\${_dotzsh_bash_prompt_gitstatus}\\e[38;2;126;186;228m\${_dotzsh_bash_prompt_nix_shell}\\e[0m"
+    [[ $RPS1 == *"$expected_git_nix"* ]]
     [[ $RPS1 == *\$\{_dotzsh_bash_prompt_gitstatus\}* ]]
     [[ $RPS1 == *"\\e[38;5;245m"* && $RPS1 == *"\\A\\e[0m"* ]]
     [[ $RPS1 != *"FLYLINE_LAST_COMMAND_DURATION\\e[0m\\e[0;245m\\A"* ]]
