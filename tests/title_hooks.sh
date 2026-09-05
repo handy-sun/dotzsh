@@ -69,6 +69,59 @@ trap_output="$(
 [[ $(grep -o _dotzsh_bash_preexec_debug <<< "$trap_output" | wc -l) -eq 1 ]]
 [[ $(grep -o _dotzsh_bash_preexec_arm <<< "$trap_output" | wc -l) -eq 1 ]]
 
+trailing_separator_output="$(
+    HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -ic '
+        PROMPT_COMMAND="history -a; "
+        source "$GENERATED"
+        eval "$PROMPT_COMMAND"
+        printf "PROMPT_COMMAND=%s\\n" "$PROMPT_COMMAND"
+    ' 2>/dev/null
+)"
+
+[[ "$trailing_separator_output" == *'PROMPT_COMMAND=_bash_prompt_cmd;history -a;_'* ]]
+[[ "$trailing_separator_output" != *'; ;'* ]]
+
+## A PROMPT_COMMAND corrupted by the old append (never parsed, so the
+## self-removing installer stayed embedded) must be repaired on re-source.
+broken_prompt_output="$(
+    HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -ic '
+        PROMPT_COMMAND="_bash_prompt_cmd;history -a; ;_dotzsh_title_trap_string=\"\$(trap -p DEBUG)\";trap - DEBUG;_dotzsh_bash_title_install;_dotzsh_bash_preexec_arm"
+        source "$GENERATED"
+        eval "$PROMPT_COMMAND" || printf "EVAL_FAILED\n"
+        printf "PROMPT_COMMAND=%s\\n" "$PROMPT_COMMAND"
+    ' 2>/dev/null
+)"
+
+[[ "$broken_prompt_output" != *EVAL_FAILED* ]]
+[[ "$broken_prompt_output" == *'PROMPT_COMMAND=_bash_prompt_cmd;history -a;'* ]]
+[[ "$broken_prompt_output" == *'_dotzsh_bash_preexec_arm'* ]]
+[[ "$broken_prompt_output" != *'; ;'* ]]
+[[ "$broken_prompt_output" != *'_dotzsh_title_trap_string'* ]]
+
+leading_junk_output="$(
+    HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -ic '
+        PROMPT_COMMAND=" ; history -n  "
+        source "$GENERATED"
+        printf "PROMPT_COMMAND=%s\\n" "$PROMPT_COMMAND"
+    ' 2>/dev/null
+)"
+[[ "$leading_junk_output" == *'PROMPT_COMMAND=_bash_prompt_cmd;history -n;'* ]]
+[[ "$leading_junk_output" == *'_dotzsh_title_trap_string='* ]]
+[[ "$leading_junk_output" != *';;'* ]]
+
+double_separator_output="$(
+    HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -ic '
+        PROMPT_COMMAND="history -a;;history -n"
+        source "$GENERATED"
+        eval "$PROMPT_COMMAND" || printf "EVAL_FAILED\n"
+        printf "PROMPT_COMMAND=%s\\n" "$PROMPT_COMMAND"
+    ' 2>/dev/null
+)"
+
+[[ "$double_separator_output" != *EVAL_FAILED* ]]
+[[ "$double_separator_output" != *';;'* ]]
+[[ "$double_separator_output" == *'history -a;history -n'* ]]
+
 array_prompt_output="$(
     HOME="$tmpdir/home" GENERATED="$generated" bash --noprofile --norc -ic '
         user_prompt() { :; }
