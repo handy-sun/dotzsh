@@ -604,7 +604,7 @@ _dotzsh_bash_prompt_command_append() {
 _dotzsh_bash_prompt_command_prepend() {
     local current
     current=$(_dotzsh_bash_prompt_command_normalize "${PROMPT_COMMAND:-}")
-    PROMPT_COMMAND="${current:+$1;$current}"
+    PROMPT_COMMAND="$1${current:+;$current}"
 }
 
 ## Drop stale dotzsh hook fragments left by an older common.sh — or by a
