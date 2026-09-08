@@ -577,6 +577,58 @@ _dotzsh_bash_prompt_command_active() {
     [[ -n ${BASH_COMMAND:-} && ${PROMPT_COMMAND[*]:-} == *"${BASH_COMMAND}"* ]]
 }
 
+_dotzsh_bash_prompt_command_normalize() {
+    local normalized=${1:-} separator_re=';[[:space:]]*;'
+    while [[ $normalized == ';'* || $normalized == [[:space:]]* ]]; do
+        normalized=${normalized:1}
+    done
+    while [[ $normalized == *';' || $normalized == *[[:space:]] ]]; do
+        normalized=${normalized%?}
+    done
+    while [[ $normalized =~ $separator_re ]]; do
+        normalized=${normalized/${BASH_REMATCH[0]}/;}
+    done
+    printf '%s' "$normalized"
+}
+
+## Append/prepend to a *string* PROMPT_COMMAND only (call sites keep array
+## PROMPT_COMMANDs as arrays). The existing value is normalized first so
+## fragments like 'history -a; ' don't grow '; ;' / ';;' separators that make
+## bash abort the whole PROMPT_COMMAND with a syntax error.
+_dotzsh_bash_prompt_command_append() {
+    local current
+    current=$(_dotzsh_bash_prompt_command_normalize "${PROMPT_COMMAND:-}")
+    PROMPT_COMMAND="${current:+$current;}$1"
+}
+
+_dotzsh_bash_prompt_command_prepend() {
+    local current
+    current=$(_dotzsh_bash_prompt_command_normalize "${PROMPT_COMMAND:-}")
+    PROMPT_COMMAND="${current:+$1;$current}"
+}
+
+## Drop stale dotzsh hook fragments left by an older common.sh — or by a
+## PROMPT_COMMAND that never parsed, so its self-removing installer stayed
+## embedded — and repair broken separators, so the guards below re-add
+## exactly one copy of each hook.
+_dotzsh_bash_prompt_command_drop_stale() {
+    local stale_installer=$1 cleaned entry
+    [[ -n ${PROMPT_COMMAND[*]:-} ]] || return 0
+    if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
+        local -a kept=()
+        for entry in "${PROMPT_COMMAND[@]}"; do
+            [[ $entry == *'_dotzsh_bash_title_install'* || $entry == '_dotzsh_bash_preexec_arm' ]] && continue
+            kept+=("$entry")
+        done
+        PROMPT_COMMAND=("${kept[@]}")
+    else
+        cleaned=$(_dotzsh_bash_prompt_command_normalize "${PROMPT_COMMAND:-}")
+        cleaned=${cleaned//"$stale_installer"/}
+        cleaned=${cleaned//_dotzsh_bash_preexec_arm/}
+        PROMPT_COMMAND=$(_dotzsh_bash_prompt_command_normalize "$cleaned")
+    fi
+}
+
 _dotzsh_bash_preexec_debug() {
     [[ $- == *i* ]] || return
     _dotzsh_bash_prompt_command_active && return
@@ -616,14 +668,12 @@ _dotzsh_bash_title_install() {
         local -a prompt_commands=()
         local prompt_command
         for prompt_command in "${PROMPT_COMMAND[@]}"; do
-            [[ $prompt_command == "$installer" ]] || prompt_commands+=("$prompt_command")
+            [[ $prompt_command == *'_dotzsh_bash_title_install'* ]] || prompt_commands+=("$prompt_command")
         done
         PROMPT_COMMAND=("${prompt_commands[@]}")
     else
-        PROMPT_COMMAND=${PROMPT_COMMAND//$installer/}
-        PROMPT_COMMAND=${PROMPT_COMMAND#;}
-        PROMPT_COMMAND=${PROMPT_COMMAND%;}
-        PROMPT_COMMAND=${PROMPT_COMMAND//;;/;}
+        PROMPT_COMMAND=${PROMPT_COMMAND//"$installer"/}
+        PROMPT_COMMAND=$(_dotzsh_bash_prompt_command_normalize "$PROMPT_COMMAND")
     fi
 }
 
@@ -847,7 +897,7 @@ if [[ -n "$BASH_VERSION" ]]; then
         if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
             PROMPT_COMMAND=(_bash_prompt_cmd "${PROMPT_COMMAND[@]}")
         else
-            PROMPT_COMMAND="_bash_prompt_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+            _dotzsh_bash_prompt_command_prepend _bash_prompt_cmd
         fi
     fi
     HISTCONTROL=ignoreboth
@@ -1693,18 +1743,19 @@ fi
 
 if [[ -n ${BASH_VERSION:-} && $- == *i* ]]; then
     _dotzsh_title_installer='_dotzsh_title_trap_string="$(trap -p DEBUG)";trap - DEBUG;_dotzsh_bash_title_install'
+    _dotzsh_bash_prompt_command_drop_stale "$_dotzsh_title_installer"
     if [[ ${_dotzsh_title_hook_installed:-0} != 1 && ${PROMPT_COMMAND[*]:-} != *'_dotzsh_bash_title_install'* ]]; then
         if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
             PROMPT_COMMAND+=("$_dotzsh_title_installer")
         else
-            PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}$_dotzsh_title_installer"
+            _dotzsh_bash_prompt_command_append "$_dotzsh_title_installer"
         fi
     fi
     if [[ ${PROMPT_COMMAND[*]:-} != *'_dotzsh_bash_preexec_arm'* ]]; then
         if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a '* ]]; then
             PROMPT_COMMAND+=(_dotzsh_bash_preexec_arm)
         else
-            PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}_dotzsh_bash_preexec_arm"
+            _dotzsh_bash_prompt_command_append _dotzsh_bash_preexec_arm
         fi
     fi
     unset _dotzsh_title_installer
