@@ -185,11 +185,23 @@ _dotzsh_flyline_setup() {
     # Use gitstatusd for fast Git state queries without replacing Flyline's prompt.
     _dotzsh_gitstatus_setup || true
 
+    # FLYLINE_PROMPT_LINE_NUMBER exists only since flyline v1.4.0. Older
+    # builds (e.g. a distribution where libflyline.so was installed
+    # manually, like Proxmox/Debian) leave the placeholder unsubstituted
+    # and print it verbatim in the right prompt, so emit it conditionally.
+    # Pure-bash compare: no sort -V (missing on BSD/macOS), no extra tools.
+    local prompt_line_number=
+    if [[ ${FLYLINE_VERSION:-} =~ ^([0-9]+)\.([0-9]+) ]] &&
+        (( 10#${BASH_REMATCH[1]} > 1 ||
+           (10#${BASH_REMATCH[1]} == 1 && 10#${BASH_REMATCH[2]} >= 4) )); then
+        prompt_line_number='FLYLINE_PROMPT_LINE_NUMBER'
+    fi
+
     # Keep the Bash prompt aligned with zsh-config.zsh's left/right prompt.
     PS1='\e[0;36m${_dotzsh_bash_prompt_path}\e[0m \e[0;${_dotzsh_bash_prompt_status_fg}m${_dotzsh_bash_prompt_status}\e[1m${_dotzsh_bash_prompt_prefix}\e[0m '
-    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_gitstatus}\e[38;2;126;186;228m${_dotzsh_bash_prompt_nix_shell}\e[0m${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[38;5;245m\A\e[0m \e[0;33mFLYLINE_PROMPT_LINE_NUMBER\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
+    RPS1='\e[0;36mFLYLINE_LAST_COMMAND_DURATION\e[0m ${_dotzsh_bash_prompt_gitstatus}\e[38;2;126;186;228m${_dotzsh_bash_prompt_nix_shell}\e[0m${_dotzsh_bash_prompt_jobs}${_dotzsh_bash_prompt_ssh}\e[38;5;245m\A\e[0m \e[0;33m'"${prompt_line_number}"'\e[0m\e[93;1m${_dotzsh_bash_prompt_shlvl}\e[0m'
     PS1_FILL=' '
-    PS2='\e[0;33mFLYLINE_PROMPT_LINE_NUMBER>\e[0m '
+    PS2="\e[0;33m${prompt_line_number}>\e[0m "
 
     PS1_FINAL='\e[2m${_dotzsh_bash_prompt_prefix}\e[0m '
     RPS1_FINAL=""
