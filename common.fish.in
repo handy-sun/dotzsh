@@ -1348,6 +1348,10 @@ end
 function pkgqs -d "Query installed packages"
     $_cmd list --installed 2>/dev/null | grep \$argv[1]
 end
+
+function pkgssw -d "Search package exact match"
+    $_cmd search "^\$argv[1]\\$"
+end
 EOF
 elif _dotzsh_cmd_exists apk; then
     _cmd=apk

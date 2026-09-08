@@ -1552,7 +1552,7 @@ pkgql() {
     $_cmd -Ql \$1 | grep -Ev '/\$' | awk '{print\$NF}' | xargs $_list_cmd
 }
 pkgssw() {
-    $_cmd -Ss "^\${1}$"
+    $_cmd -Ss "^\${1}\\$"
 }
 
 EOF
@@ -1574,6 +1574,9 @@ pkgql() {
 }
 pkgqs() {
     $_cmd list --installed 2>/dev/null | grep \$1
+}
+pkgssw() {
+    $_cmd search "^\${1}$"
 }
 EOF
 elif _dotzsh_cmd_exists apk; then
