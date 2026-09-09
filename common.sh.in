@@ -1515,7 +1515,7 @@ fi
 ## package management command [[[
 _pkg_uid=0
 _pkg_admin=''
-if _dotzsh_cmd_exists pacman || _dotzsh_cmd_exists apt || _dotzsh_cmd_exists apk; then
+if _dotzsh_cmd_exists pacman || _dotzsh_cmd_exists apt || _dotzsh_cmd_exists apk || _dotzsh_cmd_exists yum || _dotzsh_cmd_exists dnf; then
     _pkg_uid=$(id -u)
     if [ "$_pkg_uid" -ne 0 ]; then
         if _dotzsh_cmd_exists sudo; then
@@ -1588,6 +1588,35 @@ alias pkgsy="$_pkg_write_cmd add"
 alias pkgr="$_pkg_write_cmd del"
 alias pkgss="$_cmd search"
 EOF
+elif _dotzsh_cmd_exists dnf || _dotzsh_cmd_exists yum; then
+    if _dotzsh_cmd_exists dnf; then
+        _cmd=dnf
+    else
+        _cmd=yum
+    fi
+    _pkg_write_cmd="${_pkg_admin}${_cmd}"
+    _dotzsh_append_buffer << EOF
+alias pkgsy="$_pkg_write_cmd install -y"
+alias pkgr="$_pkg_write_cmd remove"
+alias pkgss="$_cmd search"
+alias pkgsi="$_cmd info"
+EOF
+    if _dotzsh_cmd_exists rpm; then
+        _dotzsh_append_buffer << 'EOF'
+pkgqs() {
+    rpm -qa | grep "$1"
+}
+alias pkgls="rpm -qa"
+alias pkgqi="rpm -qi"
+alias pkgqo="rpm -qf"
+alias pkgql="rpm -ql"
+EOF
+    else
+        _dotzsh_append_buffer << EOF
+alias pkgqs="$_cmd list installed"
+alias pkgls="$_cmd list installed"
+EOF
+    fi
 elif _dotzsh_cmd_exists brew; then
     _cmd=brew
     _dotzsh_append_buffer << EOF

@@ -115,6 +115,20 @@ run_case apk-sudo 1000 'apk sudo' \
     'alias pkgr="sudo apk del"' \
     'alias pkgss="apk search"'
 
+run_case dnf-sudo 1000 'dnf sudo rpm' \
+    'alias pkgsy="sudo dnf install -y"' \
+    'alias pkgr="sudo dnf remove"' \
+    'alias pkgss="dnf search"' \
+    'alias pkgls="rpm -qa"' \
+    'alias pkgqi="rpm -qi"'
+
+run_case yum-root 0 'yum rpm' \
+    'alias pkgsy="yum install -y"' \
+    'alias pkgr="yum remove"' \
+    'alias pkgss="yum search"' \
+    'alias pkgls="rpm -qa"' \
+    'alias pkgql="rpm -ql"'
+
 run_case brew-sudo 1000 'brew sudo' \
     'alias pkgsy="brew install"' \
     'alias pkgr="brew uninstall"' \
