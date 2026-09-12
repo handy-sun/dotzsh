@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+## scripts/install-bash — set up dotzsh for Bash on non-NixOS machines.
+##
+## Runs the official Flyline installer, generates ~/.cache/dotzsh/common.sh
+## via `common.sh.in -1`, and appends an idempotent source line to ~/.bashrc.
+## Safe to re-run: existing Flyline and dotzsh entries are detected and kept.
+##
+## Usage:
+##   scripts/install-bash
+##
+## Environment:
+##   DOTZSH_INSTALL_BASH_FORCE=1  skip the NixOS guard (for testing)
+set -euo pipefail
+
+FLYLINE_INSTALL_URL="https://github.com/HalFrgrd/flyline/releases/latest/download/install.sh"
+BASHRC="$HOME/.bashrc"
+
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "Error: this script must run under bash"
+    exit 1
+fi
+: "${HOME:?Error: HOME is not set}"
+
+# On NixOS the home-manager module (programs.dotzsh.enableBashIntegration)
+# owns this wiring; a manual install would fight it.
+if [ "${DOTZSH_INSTALL_BASH_FORCE:-0}" != "1" ] &&
+   grep -Eq '^ID="?nixos"?$' /etc/os-release 2>/dev/null; then
+    echo "Error: NixOS detected; use the dotzsh home-manager module instead"
+    exit 1
+fi
+
+script_path=$(readlink -f "$0" 2>/dev/null || echo "$0")
+repo_root=$(cd "$(dirname "$script_path")/.." && pwd)
+
+if [ ! -f "$repo_root/common.sh.in" ]; then
+    echo "Error: common.sh.in not found under $repo_root"
+    exit 1
+fi
+if [ ! -d "$repo_root/plugsfile" ]; then
+    echo "Error: plugsfile/ not found under $repo_root (shared plugins would be missing)"
+    exit 1
+fi
+
+# --- Flyline -----------------------------------------------------------------
+# The official installer appends its `enable flyline ...` line to ~/.bashrc,
+# but its own duplicate check only sees an already-enabled *interactive*
+# shell, so a plain re-run would append the line again. Gate it ourselves.
+if grep -q 'flyline' "$BASHRC" 2>/dev/null; then
+    echo ">>> Flyline already referenced in ~/.bashrc, skipping installation"
+else
+    echo ">>> Installing Flyline via official installer..."
+    if command -v curl >/dev/null 2>&1; then
+        fetch=(curl -sSfL)
+    elif command -v wget >/dev/null 2>&1; then
+        fetch=(wget -qO-)
+    else
+        echo "Error: neither curl nor wget is available to download Flyline"
+        exit 1
+    fi
+    if ! "${fetch[@]}" "$FLYLINE_INSTALL_URL" | bash; then
+        echo "Error: Flyline installer failed"
+        exit 1
+    fi
+    if ! grep -q 'flyline' "$BASHRC" 2>/dev/null; then
+        echo "Warning: Flyline did not add its enable line to ~/.bashrc (old or locked-down bash?); the prompt falls back to the plain dotzsh PS1"
+    fi
+fi
+
+# --- common.sh ---------------------------------------------------------------
+echo ">>> Generating ~/.cache/dotzsh/common.sh ..."
+"$repo_root/common.sh.in" -1
+
+# --- ~/.bashrc wiring --------------------------------------------------------
+if grep -q 'dotzsh/common\.sh' "$BASHRC" 2>/dev/null; then
+    echo ">>> ~/.bashrc already sources dotzsh common.sh, nothing to add"
+else
+    cat >>"$BASHRC" << 'EOF'
+
+# --- github:handy-sun/dotzsh scripts/install-bash auto-sourced ---
+[ -f "$HOME/.cache/dotzsh/common.sh" ] && source "$HOME/.cache/dotzsh/common.sh"
+EOF
+    echo ">>> Added dotzsh source line to ~/.bashrc"
+fi
+
+flyline_lib=""
+for lib in "$HOME/.local/lib/libflyline.so" "$HOME/.local/lib/libflyline.dylib"; do
+    [ -e "$lib" ] && flyline_lib=$lib && break
+done
+
+echo ""
+echo ">>> Summary:"
+echo "    Flyline lib:  ${flyline_lib:-not installed}"
+echo "    Generated:    $HOME/.cache/dotzsh/common.sh"
+echo "    Wired:        $BASHRC"
+echo ""
+echo "Note: keep this checkout at $repo_root — the generated file loads"
+echo "      shared plugins (flyline prompt hook, etc.) from there."
+echo ""
+echo "Next: open a new Bash shell, then optionally run: flyline run-tutorial"

@@ -22,6 +22,7 @@ Shell configuration dotfiles for zsh, fish, and bash, distributed as a Nix flake
 │   ├── copypath.plugin.sh
 │   └── docker-compose.plugin.sh
 └── scripts/
+    ├── install-bash       # Non-NixOS Bash setup: Flyline + common.sh + ~/.bashrc wiring
     └── newuser            # Zsh new-user install script
 ```
 
