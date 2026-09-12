@@ -109,8 +109,10 @@ for mode in jq fallback; do
     done
 done
 
-expected_darwin=$'192.168.1.50 24 en0\n10.8.0.2 32 utun3'
-expected_darwin_vpn_only='10.8.0.2 32 utun3'
+## Non-route entries keep unique_by()'s string order after the routed entry
+## floats to the front, so 10.8.0.2 sorts before 192.168.50.2.
+expected_darwin=$'192.168.1.50 24 en0\n10.8.0.2 32 utun3\n192.168.50.2 24 en1'
+expected_darwin_route_failure=$'10.8.0.2 32 utun3\n192.168.1.50 24 en0\n192.168.50.2 24 en1'
 
 for shell_name in sh fish; do
     generated="$(generate_config "$shell_name" jq "$darwin_jq_bin_dir" darwin)"
@@ -118,5 +120,5 @@ for shell_name in sh fish; do
     assert_output "$expected_darwin" "$actual" "$shell_name/jq Darwin"
 
     actual="$(run_rlip4 "$shell_name" "$generated" "$darwin_jq_bin_dir" failure darwin | normalize)"
-    assert_output "$expected_darwin_vpn_only" "$actual" "$shell_name/jq Darwin route failure"
+    assert_output "$expected_darwin_route_failure" "$actual" "$shell_name/jq Darwin route failure"
 done

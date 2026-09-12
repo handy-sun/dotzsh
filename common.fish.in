@@ -756,13 +756,17 @@ end
 function rlip4 -d "List routed, Wi-Fi, and VPN IPv4 addresses"
     set -l addr_args -j addr
     set -l vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp)'
+    set -l nic_name_pattern '^wl'
     if test (uname) = Linux
         set addr_args -j -d addr
     else
         set vpn_name_pattern '^(zt|tailscale|wg|tun|tap|ppp|utun)'
+        # darwin names wired and Wi-Fi NICs alike (en0, en1, ...), and the
+        # default route may sit on a VPN utun, hiding them from $route_ip
+        set nic_name_pattern '^en'
     end
     set -l route_ip (ip -j route get 223.5.5.5 2>/dev/null | jq -r '.[0] | .prefsrc // .src // empty' 2>/dev/null)
-    ip $addr_args | jq -r --arg route_ip "$route_ip" --arg vpn_name_pattern "$vpn_name_pattern" '
+    ip $addr_args | jq -r --arg route_ip "$route_ip" --arg vpn_name_pattern "$vpn_name_pattern" --arg nic_name_pattern "$nic_name_pattern" '
         [
             .[]
             | .ifname as $name
@@ -774,7 +778,7 @@ function rlip4 -d "List routed, Wi-Fi, and VPN IPv4 addresses"
                 or ($name | test($vpn_name_pattern; "i"))
               ) as $is_vpn
             | .addr_info[]?
-            | select(.family == "inet" and (.local == $route_ip or $is_vpn or ($name | test("^wl"; "i"))))
+            | select(.family == "inet" and (.local == $route_ip or $is_vpn or ($name | test($nic_name_pattern; "i"))))
             | { local, prefixlen, label: (.label // $name) }
         ]
         | unique_by(.local)
