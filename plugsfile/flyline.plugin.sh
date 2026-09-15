@@ -66,6 +66,10 @@ _dotzsh_gitstatus_setup() {
     if [[ -z $gitstatus_dir ]] && command -v gitstatus-share &>/dev/null; then
         gitstatus_dir=$(gitstatus-share 2>/dev/null) || gitstatus_dir=
     fi
+    # Drop fd/pid state exported by an outer shell's gitstatus: nested shells
+    # (zellij/tmux panes, plain `bash`) inherit the vars without their fds,
+    # making gitstatus_query's `read -u` fail with "invalid file descriptor".
+    unset _GITSTATUS_REQ_FD _GITSTATUS_RESP_FD _GITSTATUS_CLIENT_PID GITSTATUS_DAEMON_PID
     if [[ -r $gitstatus_dir/gitstatus.plugin.sh ]] &&
         source "$gitstatus_dir/gitstatus.plugin.sh" &&
         gitstatus_start -s -1 -u -1 -c -1 -d -1; then

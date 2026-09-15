@@ -86,6 +86,27 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     [[ -z $_dotzsh_bash_prompt_shlvl ]]
     '
 
+# gitstatus.plugin.sh exports its fd/pid numbers; a nested shell (zellij/tmux
+# pane) inherits the vars without the fds. Setup must drop them before start.
+PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/stale.calls" \
+    GENERATED="$generated" PLUGIN="$repo_root/plugsfile/flyline.plugin.sh" \
+    GITSTATUS_DIR="$gitstatus_dir" \
+    _GITSTATUS_REQ_FD=10 _GITSTATUS_RESP_FD=11 \
+    _GITSTATUS_CLIENT_PID=99999 GITSTATUS_DAEMON_PID=99999 \
+    bash --noprofile --norc -c '
+    set -euo pipefail
+    source "$GENERATED"
+
+    FLYLINE_VERSION=1
+    DOTZSH_GITSTATUS_DIR="$GITSTATUS_DIR"
+    true
+    _bash_prompt_cmd
+
+    [[ -z ${_GITSTATUS_REQ_FD:-} && -z ${_GITSTATUS_RESP_FD:-} ]]
+    [[ -z ${_GITSTATUS_CLIENT_PID:-} && -z ${GITSTATUS_DAEMON_PID:-} ]]
+    [[ $_dotzsh_bash_prompt_gitstatus == *"feature/flyline"* ]]
+    '
+
 fallback_repo="$tmpdir/fallback-repo"
 fallback_remote="$tmpdir/fallback-remote.git"
 fallback_bin="$tmpdir/fallback-bin"
