@@ -952,28 +952,16 @@ qip() {
 ## ----------------------- conditional shell function ----------------------
 EOF
 
-## git -C may be unsupported by old git, use cd fallback helper
-if _dotzsh_cmd_exists git; then
-    if git -C "$HOME" --version >/dev/null 2>&1; then
-        _dotzsh_append_buffer << 'EOF'
-## run git in given directory, git -C when supported
-git_in_dir() {
-    local d="$1"
-    shift
-    git -C "$d" "$@"
-}
-EOF
-    else
-        _dotzsh_append_buffer << 'EOF'
-## run git in given directory, cd fallback for old git without -C
+## git_in_dir must always be emitted (call sites are unconditional);
+## generation env may lack git or -C support, so use the cd-subshell form
+_dotzsh_append_buffer << 'EOF'
+## run git in given directory
 git_in_dir() {
     local d="$1"
     shift
     ( cd "$d" && git "$@" )
 }
 EOF
-    fi
-fi
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'

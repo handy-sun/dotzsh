@@ -747,20 +747,10 @@ end
 
 EOF
 
-## git -C may be unsupported by old git, use cd fallback helper
-if _dotzsh_cmd_exists git; then
-    if git -C "$HOME" --version >/dev/null 2>&1; then
-        _dotzsh_append_buffer << 'EOF'
-## run git in given directory, git -C when supported
-function git_in_dir -d "Run git inside given directory"
-    set -l d $argv[1]
-    set -e argv[1]
-    git -C $d $argv
-end
-EOF
-    else
-        _dotzsh_append_buffer << 'EOF'
-## run git in given directory, cd fallback for old git without -C
+## git_in_dir must always be emitted (call sites are unconditional);
+## generation env may lack git or -C support, so use the cd form
+_dotzsh_append_buffer << 'EOF'
+## run git in given directory
 function git_in_dir -d "Run git inside given directory"
     set -l d $argv[1]
     set -e argv[1]
@@ -774,8 +764,6 @@ function git_in_dir -d "Run git inside given directory"
     return $st
 end
 EOF
-    fi
-fi
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
