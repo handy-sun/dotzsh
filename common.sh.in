@@ -184,7 +184,7 @@ gcldi() {
         return 1
     fi
 
-    local untracked_files=`git -C "$root_dir" ls-files --directory --others --exclude-standard`
+    local untracked_files=`git_in_dir "$root_dir" ls-files --directory --others --exclude-standard`
     if [[ -z "$untracked_files" ]]; then
         echo "No untracked files or directories found."
         return 0
@@ -217,7 +217,7 @@ gclii() {
         return 1
     fi
 
-    local ignored_files=`git -C "$root_dir" ls-files --directory --others --ignored --exclude-standard`
+    local ignored_files=`git_in_dir "$root_dir" ls-files --directory --others --ignored --exclude-standard`
     if [[ -z "$ignored_files" ]]; then
         echo "No ignored files or directories found."
         return 0
@@ -772,14 +772,14 @@ gpar() {
 gts() {
     local d="$1"
     [ -z "$d" ] && d="."
-    git -C "$d" status -s
+    git_in_dir "$d" status -s
 }
 grt() {
     local work_dir="."
     if [ -n "$1" ]; then
         work_dir="$1"
     fi
-    git -C "$work_dir" remote -v
+    git_in_dir "$work_dir" remote -v
 }
 
 ## Find git repository root directory
@@ -813,7 +813,7 @@ gaa() {
     fi
     local root_dir=$(git_root_dir)
     if [[ $? -eq 0 ]]; then
-        git -C "$root_dir" add . -v
+        git_in_dir "$root_dir" add . -v
     else
         return 1
     fi
@@ -822,7 +822,7 @@ gaa() {
 groa() {
     local root_dir=$(git_root_dir)
     if [[ $? -eq 0 ]]; then
-        git -C "$root_dir" restore . "$@"
+        git_in_dir "$root_dir" restore . "$@"
     else
         return 1
     fi
@@ -831,7 +831,7 @@ groa() {
 grga() {
     local root_dir=$(git_root_dir)
     if [[ $? -eq 0 ]]; then
-        git -C "$root_dir" restore --staged . "$@"
+        git_in_dir "$root_dir" restore --staged . "$@"
     else
         return 1
     fi
@@ -951,6 +951,29 @@ qip() {
 
 ## ----------------------- conditional shell function ----------------------
 EOF
+
+## git -C may be unsupported by old git, use cd fallback helper
+if _dotzsh_cmd_exists git; then
+    if git -C "$HOME" --version >/dev/null 2>&1; then
+        _dotzsh_append_buffer << 'EOF'
+## run git in given directory, git -C when supported
+git_in_dir() {
+    local d="$1"
+    shift
+    git -C "$d" "$@"
+}
+EOF
+    else
+        _dotzsh_append_buffer << 'EOF'
+## run git in given directory, cd fallback for old git without -C
+git_in_dir() {
+    local d="$1"
+    shift
+    ( cd "$d" && git "$@" )
+}
+EOF
+    fi
+fi
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'

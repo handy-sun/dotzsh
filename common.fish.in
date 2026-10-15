@@ -176,7 +176,7 @@ function gcldi -d "Clean untracked files interactively"
         return 1
     end
 
-    set -l untracked_files (git -C "$root_dir" ls-files --directory --others --exclude-standard)
+    set -l untracked_files (git_in_dir "$root_dir" ls-files --directory --others --exclude-standard)
     if test (count $untracked_files) -eq 0
         echo "No untracked files or directories found."
         return 0
@@ -204,7 +204,7 @@ function gclii -d "Clean git-ignored files/directories interactively"
         return 1
     end
 
-    set -l ignored_files (git -C "$root_dir" ls-files --directory --others --ignored --exclude-standard)
+    set -l ignored_files (git_in_dir "$root_dir" ls-files --directory --others --ignored --exclude-standard)
     if test (count $ignored_files) -eq 0
         echo "No ignored files or directories found."
         return 0
@@ -615,13 +615,13 @@ end
 function gts -d "Get dir's git status short"
     set -l d $argv[1]
     test -z "$d"; and set d .
-    git -C $d status -s
+    git_in_dir $d status -s
 end
 
 function grt -d "Get dir's git remote verbose"
     set -l d $argv[1]
     test -z "$d"; and set d .
-    git -C $d remote -v
+    git_in_dir $d remote -v
 end
 
 function git_root_dir -d "Find and return the root directory of the current git repository"
@@ -654,7 +654,7 @@ function gaa -d "git add . -v in the git repository root directory"
     end
     set -l root_dir (git_root_dir)
     if test $status -eq 0
-        git -C "$root_dir" add . -v
+        git_in_dir "$root_dir" add . -v
     else
         return 1
     end
@@ -663,7 +663,7 @@ end
 function groa -d "git restore . in the git repository root directory"
     set -l root_dir (git_root_dir)
     if test $status -eq 0
-        git -C "$root_dir" restore .
+        git_in_dir "$root_dir" restore .
     else
         return 1
     end
@@ -672,7 +672,7 @@ end
 function grga -d "git restore --staged . in the git repository root directory"
     set -l root_dir (git_root_dir)
     if test $status -eq 0
-        git -C "$root_dir" restore --staged .
+        git_in_dir "$root_dir" restore --staged .
     else
         return 1
     end
@@ -746,6 +746,36 @@ end
 ## ----------------------- alias ---------------------- ]]]
 
 EOF
+
+## git -C may be unsupported by old git, use cd fallback helper
+if _dotzsh_cmd_exists git; then
+    if git -C "$HOME" --version >/dev/null 2>&1; then
+        _dotzsh_append_buffer << 'EOF'
+## run git in given directory, git -C when supported
+function git_in_dir -d "Run git inside given directory"
+    set -l d $argv[1]
+    set -e argv[1]
+    git -C $d $argv
+end
+EOF
+    else
+        _dotzsh_append_buffer << 'EOF'
+## run git in given directory, cd fallback for old git without -C
+function git_in_dir -d "Run git inside given directory"
+    set -l d $argv[1]
+    set -e argv[1]
+    set -l old_dir $PWD
+    if not cd $d
+        return 1
+    end
+    git $argv
+    set -l st $status
+    cd $old_dir
+    return $st
+end
+EOF
+    fi
+fi
 
 if _dotzsh_cmd_exists jq; then
     _dotzsh_append_buffer << 'EOF'
