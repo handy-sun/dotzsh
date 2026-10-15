@@ -1364,6 +1364,21 @@ elif _dotzsh_cmd_exists apk; then
 alias pkgsy="$_pkg_write_cmd add"
 alias pkgr="$_pkg_write_cmd del"
 alias pkgss="$_cmd search"
+alias pkgssw="$_cmd search -x"
+alias pkgsi="$_cmd info"
+alias pkgqi="$_cmd info -a"
+
+function pkgqo -d "Query package owner"
+    type -p \$argv[1] | xargs $_cmd info -W
+end
+
+function pkgql -d "List package files"
+    $_cmd info -L \$argv[1] | awk '!/(:|\/)\$/ {print "/" \$0}' | xargs $_list_cmd
+end
+
+function pkgqs -d "Query installed packages"
+    $_cmd list -I | grep \$argv[1]
+end
 EOF
 elif _dotzsh_cmd_exists dnf || _dotzsh_cmd_exists yum; then
     if _dotzsh_cmd_exists dnf; then

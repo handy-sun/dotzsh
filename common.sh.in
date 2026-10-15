@@ -1585,11 +1585,23 @@ EOF
 elif _dotzsh_cmd_exists apk; then
     _cmd=apk
     _pkg_write_cmd="${_pkg_admin}${_cmd}"
-    ## TODO: May be need improve
     _dotzsh_append_buffer << EOF
 alias pkgsy="$_pkg_write_cmd add"
 alias pkgr="$_pkg_write_cmd del"
 alias pkgss="$_cmd search"
+alias pkgssw="$_cmd search -x"
+alias pkgsi="$_cmd info"
+alias pkgqi="$_cmd info -a"
+pkgqo() {
+    which \$1 | xargs $_cmd info -W
+}
+## list files of local package without directory
+pkgql() {
+    $_cmd info -L \$1 | awk '!/(:|\/)\$/ {print "/" \$0}' | xargs $_list_cmd
+}
+pkgqs() {
+    $_cmd list -I | grep \$1
+}
 EOF
 elif _dotzsh_cmd_exists dnf || _dotzsh_cmd_exists yum; then
     if _dotzsh_cmd_exists dnf; then
