@@ -121,6 +121,7 @@ echo 'source ~/.cache/dotzsh/common.sh' >> ~/.bashrc
 | `htdel` | 按模式删除历史条目 |
 | `dus` | 排序的磁盘使用量 |
 | `qip` | 查询 IP 地理位置（需 jq） |
+| `lanscan` | 扫描局域网存活主机（`nmap -sn` 主机发现，不扫端口；自动探测网段、自动 sudo，需 nmap） |
 | `ppre` | 搜索进程（`ps -ef | grep -i`） |
 | `shpo` / `shap` / `shsw` / `shdr` | 按索引操作 git stash（pop / apply / show / drop） |
 

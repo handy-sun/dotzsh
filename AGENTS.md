@@ -89,6 +89,7 @@ Both `common.sh.in` and `common.fish.in` define equivalent functions:
 | `htdel` | Delete history entries matching pattern |
 | `dus` | Disk usage sorted |
 | `qip` | Query IP geolocation (requires jq for formatted output) |
+| `lanscan` | Discover live LAN hosts via `nmap -sn` (no port scan; auto-detects subnet, auto-sudo for ARP ping) |
 
 ## Conventions
 

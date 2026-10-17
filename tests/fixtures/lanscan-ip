@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${MOCK_IP_MODE:-default} == empty ]]; then
+    exit 0
+fi
+
+case "$*" in
+    '-4 route show default')
+        printf '%s\n' \
+            'default via 192.168.168.1 dev enp3s0 proto dhcp src 192.168.168.23 metric 100'
+        ;;
+    '-o -4 route show dev enp3s0 scope link')
+        printf '%s\n' \
+            '192.168.168.0/22 proto kernel scope link src 192.168.168.23 metric 100'
+        ;;
+    *)
+        exit 1
+        ;;
+esac

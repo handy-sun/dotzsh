@@ -1122,6 +1122,112 @@ EOF
     fi
 fi
 
+if _dotzsh_cmd_exists nmap; then
+    _dotzsh_append_buffer << 'EOF'
+## Detect the LAN subnet (network CIDR) of the default-route interface.
+_lanscan_cidr() {
+    local dev
+    if [[ $(uname) == Linux ]]; then
+        dev=$(ip -4 route show default 2>/dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "dev") { print $(i + 1); exit } }')
+        [[ -n $dev ]] || return 1
+        ip -o -4 route show dev "$dev" scope link 2>/dev/null | awk '$1 ~ /\// { print $1; exit }'
+    else
+        dev=$(route -n get default 2>/dev/null | awk '/interface:/ { print $2; exit }')
+        [[ -n $dev ]] || return 1
+        ## darwin ifconfig reports the netmask in hex (0xffffff00); derive the network CIDR
+        ifconfig "$dev" 2>/dev/null | awk '
+            /^[ \t]*inet / {
+                ip = $2
+                nm = ""
+                for (i = 1; i < NF; i++) if ($i == "netmask") nm = $(i + 1)
+                if (nm == "") next
+                sub(/^0[xX]/, "", nm)
+                split("0 1 1 2 1 2 2 3 1 2 2 3 2 3 3 4", pc, " ")
+                bits = 0
+                for (i = 1; i <= length(nm); i++) bits += pc[index("0123456789abcdef", tolower(substr(nm, i, 1)))]
+                split(ip, o, ".")
+                addr = o[1] * 16777216 + o[2] * 65536 + o[3] * 256 + o[4]
+                block = 2 ^ (32 - bits)
+                net = int(addr / block) * block
+                printf "%d.%d.%d.%d/%d\n", int(net / 16777216) % 256, int(net / 65536) % 256, int(net / 256) % 256, net % 256, bits
+                exit
+            }'
+    fi
+}
+
+## Discover live LAN hosts: 'nmap -sn' host discovery only, no port scan.
+## sudo is applied automatically when not root: with root nmap ARP-pings the
+## LAN, which also finds devices that drop ICMP/TCP (phones, TVs, IoT, ...).
+lanscan() {
+    if [[ $1 == -h || $1 == --help ]]; then
+        echo "Usage: lanscan [CIDR]" >&2
+        echo "Discover live LAN hosts via 'nmap -sn' (host discovery only, no port scan)." >&2
+        echo "CIDR defaults to the subnet of the default-route interface." >&2
+        return 0
+    fi
+
+    local cidr=$1
+    if [[ -z $cidr ]]; then
+        cidr=$(_lanscan_cidr)
+    fi
+    if [[ -z $cidr ]]; then
+        echo "lanscan: cannot detect the local subnet; pass one explicitly, e.g. lanscan 192.168.1.0/24" >&2
+        return 1
+    fi
+
+    local -a cmd=(nmap -sn "$cidr")
+    if [[ $(id -u) != 0 ]] && cmd_exists sudo; then
+        cmd=(sudo "${cmd[@]}")
+    fi
+
+    echo "# lanscan: ${cmd[*]}" >&2
+    "${cmd[@]}" | awk -v cidr="$cidr" '
+        function addhost() {
+            split(ip, o, ".")
+            key[++n] = sprintf("%03d.%03d.%03d.%03d", o[1], o[2], o[3], o[4])
+            val[n] = sprintf("%-15s  %-25s  %-17s  %s", ip, (host == "" ? "-" : host), (mac == "" ? "-" : mac), vendor)
+            ip = ""; host = ""; mac = ""; vendor = ""
+        }
+        /^Nmap scan report for / {
+            if (ip != "") addhost()
+            rest = $0
+            sub(/^Nmap scan report for /, "", rest)
+            ip = rest
+            if (rest ~ /\(/) {
+                host = rest
+                sub(/[[:space:]]*\(.*/, "", host)
+                sub(/.*\(/, "", ip)
+                sub(/\).*/, "", ip)
+            }
+            gsub(/[[:space:]]+$/, "", ip)
+        }
+        /^MAC Address:/ {
+            mac = $3
+            if (match($0, /\(/)) {
+                vendor = substr($0, RSTART + 1)
+                sub(/[[:space:]]*\)[[:space:]]*$/, "", vendor)
+            }
+        }
+        END {
+            if (ip != "") addhost()
+            for (i = 2; i <= n; i++) {
+                k = key[i]
+                v = val[i]
+                for (j = i - 1; j >= 1 && key[j] > k; j--) {
+                    key[j + 1] = key[j]
+                    val[j + 1] = val[j]
+                }
+                key[j + 1] = k
+                val[j + 1] = v
+            }
+            for (i = 1; i <= n; i++) print val[i]
+            printf "# %d host%s up in %s\n", n, (n == 1 ? "" : "s"), cidr
+        }
+    '
+}
+EOF
+fi
+
 _dotzsh_append_buffer << 'EOF'
 htdel() {
     if [[ -n "$HISTFILE" ]]; then

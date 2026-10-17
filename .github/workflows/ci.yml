@@ -59,6 +59,9 @@ jobs:
       - name: Run Nix shell prompt regression test
         run: nix develop --command bash tests/nix_shell_prompt.sh
 
+      - name: Run lanscan regression test
+        run: nix develop --command bash tests/lanscan.sh
+
       - name: shellcheck common.sh.in
         run: nix develop --command shellcheck -S warning common.sh.in
       - name: shellcheck common.fish.in

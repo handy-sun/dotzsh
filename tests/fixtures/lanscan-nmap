@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cat << 'OUT'
+Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for 192.168.1.105
+Host is up (0.0010s latency).
+MAC Address: 11:22:33:44:55:66 (Apple, Inc.)
+
+Nmap scan report for router.lan (192.168.1.1)
+Host is up (0.0020s latency).
+MAC Address: AA:BB:CC:DD:EE:FF (Tp-Link Technologies Co.,Ltd.)
+
+Nmap scan report for 192.168.1.23
+Host is up (0.00050s latency).
+
+Nmap scan report for nas (192.168.1.200)
+Host is up (0.0012s latency).
+MAC Address: 99:88:77:66:55:44 (Synology Incorporated)
+
+Nmap done: 256 IP addresses (4 hosts up) scanned in 2.31 seconds
+OUT
