@@ -89,17 +89,21 @@ assert_contains() {
     }
 }
 
+# widths are content-fitted: longest ip (192.168.1.105 = 13), hostname capped
+# at 12 (a-very-long-hostname.example -> a-very-lo...), longest mac (17)
 expected_table=""
 expected_row() {
     local line
-    printf -v line '%-15s  %-25s  %-17s  %s\n' "$1" "$2" "$3" "$4"
-    expected_table+="$line"
+    printf -v line '%-13s  %-12s  %-17s  %s' "$1" "$2" "$3" "$4"
+    line="${line%"${line##*[! ]}"}"  # trim trailing padding when vendor is empty
+    expected_table+="$line"$'\n'
 }
 expected_row '192.168.1.1' 'router.lan' 'AA:BB:CC:DD:EE:FF' 'Tp-Link Technologies Co.,Ltd.'
+expected_row '192.168.1.7' 'a-very-lo...' '22:22:22:22:22:22' 'Espressif Inc.'
 expected_row '192.168.1.23' '-' '-' ''
 expected_row '192.168.1.105' '-' '11:22:33:44:55:66' 'Apple, Inc.'
 expected_row '192.168.1.200' 'nas' '99:88:77:66:55:44' 'Synology Incorporated'
-expected_table+="# 4 hosts up in 192.168.1.0/24"
+expected_table+="# 5 hosts up in 192.168.1.0/24"
 
 for platform in linux darwin; do
     bin_dir="$(make_bin "$platform")"

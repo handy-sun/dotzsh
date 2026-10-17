@@ -980,10 +980,16 @@ function lanscan -d "Discover live LAN hosts via nmap -sn (no port scan)"
 
     echo "# lanscan: $cmd" >&2
     $cmd | awk -v cidr="$cidr" '
+        # column widths fit the shortest usable width: ip/mac to their longest
+        # value, hostname capped at 12 chars ("..." past that)
         function addhost() {
             split(ip, o, ".")
-            key[++n] = sprintf("%03d.%03d.%03d.%03d", o[1], o[2], o[3], o[4])
-            val[n] = sprintf("%-15s  %-25s  %-17s  %s", ip, (host == "" ? "-" : host), (mac == "" ? "-" : mac), vendor)
+            n++
+            key[n] = sprintf("%03d.%03d.%03d.%03d", o[1], o[2], o[3], o[4])
+            aip[n] = ip
+            ahost[n] = (host == "" ? "-" : host)
+            amac[n] = (mac == "" ? "-" : mac)
+            avendor[n] = vendor
             ip = ""; host = ""; mac = ""; vendor = ""
         }
         /^Nmap scan report for / {
@@ -1010,15 +1016,36 @@ function lanscan -d "Discover live LAN hosts via nmap -sn (no port scan)"
             if (ip != "") addhost()
             for (i = 2; i <= n; i++) {
                 k = key[i]
-                v = val[i]
+                t1 = aip[i]; t2 = ahost[i]; t3 = amac[i]; t4 = avendor[i]
                 for (j = i - 1; j >= 1 && key[j] > k; j--) {
                     key[j + 1] = key[j]
-                    val[j + 1] = val[j]
+                    aip[j + 1] = aip[j]
+                    ahost[j + 1] = ahost[j]
+                    amac[j + 1] = amac[j]
+                    avendor[j + 1] = avendor[j]
                 }
                 key[j + 1] = k
-                val[j + 1] = v
+                aip[j + 1] = t1
+                ahost[j + 1] = t2
+                amac[j + 1] = t3
+                avendor[j + 1] = t4
             }
-            for (i = 1; i <= n; i++) print val[i]
+            wip = 0; whost = 0; wmac = 0
+            for (i = 1; i <= n; i++) {
+                if (length(aip[i]) > wip) wip = length(aip[i])
+                hl = length(ahost[i])
+                if (hl > 12) hl = 12
+                if (hl > whost) whost = hl
+                if (length(amac[i]) > wmac) wmac = length(amac[i])
+            }
+            fmt = "%-" wip "s  %-" whost "s  %-" wmac "s  %s"
+            for (i = 1; i <= n; i++) {
+                h = ahost[i]
+                if (length(h) > 12) h = substr(h, 1, 9) "..."
+                line = sprintf(fmt, aip[i], h, amac[i], avendor[i])
+                sub(/[ \t]+$/, "", line)
+                print line
+            }
             printf "# %d host%s up in %s\n", n, (n == 1 ? "" : "s"), cidr
         }
     '

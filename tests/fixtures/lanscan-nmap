@@ -18,5 +18,9 @@ Nmap scan report for nas (192.168.1.200)
 Host is up (0.0012s latency).
 MAC Address: 99:88:77:66:55:44 (Synology Incorporated)
 
-Nmap done: 256 IP addresses (4 hosts up) scanned in 2.31 seconds
+Nmap scan report for a-very-long-hostname.example (192.168.1.7)
+Host is up (0.0010s latency).
+MAC Address: 22:22:22:22:22:22 (Espressif Inc.)
+
+Nmap done: 256 IP addresses (5 hosts up) scanned in 2.31 seconds
 OUT
