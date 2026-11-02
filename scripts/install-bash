@@ -127,14 +127,27 @@ EOF
     echo ">>> Added dotzsh source line to ~/.bashrc"
 fi
 
-flyline_lib=""
-for lib in "$HOME/.local/lib/libflyline.so" "$HOME/.local/lib/libflyline.dylib"; do
-    [ -e "$lib" ] && flyline_lib=$lib && break
-done
+# Release installs symlink libflyline.{so,dylib} to a versioned file, so resolve
+# the chain and show where the link actually ends up (readlink -f is not on macOS).
+flyline_lib_display="not installed"
+if [ -n "$flyline_lib" ]; then
+    lib_target=$flyline_lib
+    while [ -L "$lib_target" ]; do
+        lib_link=$(readlink "$lib_target")
+        [[ "$lib_link" = /* ]] && lib_target=$lib_link || lib_target="$(dirname "$lib_target")/$lib_link"
+    done
+    if [ "$lib_target" = "$flyline_lib" ]; then
+        flyline_lib_display=$flyline_lib
+    else
+        # Collapse the "dir/../" segments relative links leave behind.
+        lib_target="$(cd "$(dirname "$lib_target")" && pwd -P)/${lib_target##*/}"
+        flyline_lib_display="$flyline_lib -> $lib_target"
+    fi
+fi
 
 echo ""
 echo ">>> Summary:"
-echo "    Flyline lib:  ${flyline_lib:-not installed}"
+echo "    Flyline lib:  $flyline_lib_display"
 echo "    Generated:    $HOME/.cache/dotzsh/common.sh"
 echo "    Wired:        $BASHRC"
 echo ""
