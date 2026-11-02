@@ -42,11 +42,40 @@ if [ ! -d "$repo_root/plugsfile" ]; then
 fi
 
 # --- Flyline -----------------------------------------------------------------
-# The official installer appends its `enable flyline ...` line to ~/.bashrc,
-# but its own duplicate check only sees an already-enabled *interactive*
-# shell, so a plain re-run would append the line again. Gate it ourselves.
-if grep -q 'flyline' "$BASHRC" 2>/dev/null; then
-    echo ">>> Flyline already referenced in ~/.bashrc, skipping installation"
+# The official installer appends its `enable flyline ...` line to ~/.bashrc, but
+# it skips that step — and still exits 0 — when FLYLINE_VERSION or FLYLINE_LOAD_DIR
+# leak in from a shell that already has flyline loaded (it then assumes your
+# setup is complete, and may even install next to the old copy instead), or when
+# its own dlopen probe fails. So detect the line ourselves, give the installer a
+# clean environment, and write the line ourselves if it still did not.
+flyline_in_bashrc() {
+    grep -qE '^[[:space:]]*enable[[:space:]]+(-f[[:space:]]+[^[:space:]]*libflyline[^[:space:]]*[[:space:]]+)?flyline([[:space:]]|$)' "$BASHRC" 2>/dev/null
+}
+
+find_flyline_lib() {
+    local lib
+    for lib in "$HOME/.local/lib/libflyline.so" "$HOME/.local/lib/libflyline.dylib"; do
+        if [ -e "$lib" ]; then
+            printf '%s\n' "$lib"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# The library path an existing `enable -f ...` line points at (empty if the line
+# uses the bare builtin form, in which case there is nothing to verify).
+flyline_bashrc_lib() {
+    sed -nE 's|.*enable[[:space:]]+-f[[:space:]]+"?([^"[:space:]]*libflyline[^"[:space:]]*)"?.*|\1|p' "$BASHRC" 2>/dev/null | head -n 1
+}
+
+flyline_lib=$(find_flyline_lib || true)
+if flyline_in_bashrc; then
+    echo ">>> Flyline already enabled in ~/.bashrc, skipping installation"
+    enabled_lib=$(flyline_bashrc_lib)
+    if [ -n "$enabled_lib" ] && [ ! -e "$enabled_lib" ]; then
+        echo "Warning: ~/.bashrc loads flyline from $enabled_lib, which does not exist; delete that line and re-run to reinstall"
+    fi
 else
     echo ">>> Installing Flyline via official installer..."
     if command -v curl >/dev/null 2>&1; then
@@ -57,12 +86,28 @@ else
         echo "Error: neither curl nor wget is available to download Flyline"
         exit 1
     fi
-    if ! "${fetch[@]}" "$FLYLINE_INSTALL_URL" | bash; then
+    if ! "${fetch[@]}" "$FLYLINE_INSTALL_URL" | env -u FLYLINE_VERSION -u FLYLINE_LOAD_DIR bash; then
         echo "Error: Flyline installer failed"
         exit 1
     fi
-    if ! grep -q 'flyline' "$BASHRC" 2>/dev/null; then
-        echo "Warning: Flyline did not add its enable line to ~/.bashrc (old or locked-down bash?); the prompt falls back to the plain dotzsh PS1"
+    flyline_lib=$(find_flyline_lib || true)
+    if ! flyline_in_bashrc; then
+        # Never write a line for a library this bash cannot load. The probe has to
+        # run interactively: flyline refuses to load in a non-interactive shell,
+        # which would make every `enable -f` look like a failure.
+        load_ok=false
+        if [ -n "$flyline_lib" ] &&
+           bash --norc --noprofile -i -c 'enable -f "$1" flyline' _ "$flyline_lib" >/dev/null 2>&1; then
+            load_ok=true
+        fi
+        if [ -z "$flyline_lib" ]; then
+            echo "Warning: the Flyline installer left no library under $HOME/.local/lib; the prompt falls back to the plain dotzsh PS1"
+        elif [ "$load_ok" = false ]; then
+            echo "Warning: $flyline_lib cannot be loaded by this bash; the prompt falls back to the plain dotzsh PS1"
+        else
+            printf '\n# Flyline - enhanced Bash experience\nenable flyline 2>/dev/null || enable -f "%s" flyline\n' "$flyline_lib" >>"$BASHRC"
+            echo ">>> Added the Flyline enable line ourselves (the installer skipped it)"
+        fi
     fi
 fi
 
