@@ -1645,7 +1645,7 @@ EOF
 else
     if ls --color=auto /dev/null &>/dev/null; then
         _dotzsh_append_buffer << 'EOF'
-[[ -z "$LS_OPTIONS" ]] && export LS_OPTIONS="--color=auto"
+[[ -z "${LS_OPTIONS:-}" ]] && export LS_OPTIONS="--color=auto"
 alias ls="command ls -A $LS_OPTIONS"
 alias ll="ls -AlFh"
 alias l="ls -AlF"
