@@ -84,6 +84,24 @@ PATH="$bin_dir:$PATH" FLYLINE_CALLS="$tmpdir/flyline.calls" \
     true
     _bash_prompt_cmd
     [[ -z $_dotzsh_bash_prompt_shlvl ]]
+
+    # Suspended jobs raise the %<n> badge, running background jobs do not
+    # (`jobs -p` used to count every background job), and the badge clears
+    # once the job is gone.
+    [[ -z $_dotzsh_bash_prompt_jobs ]]
+    set -m
+    sleep 100 &
+    sleep 0.2
+    _bash_prompt_cmd
+    [[ -z $_dotzsh_bash_prompt_jobs ]]
+    kill -STOP %1
+    sleep 0.2
+    _bash_prompt_cmd
+    [[ $_dotzsh_bash_prompt_jobs == "%1 " ]]
+    kill -KILL %1 2>/dev/null || true
+    wait 2>/dev/null || true
+    _bash_prompt_cmd
+    [[ -z $_dotzsh_bash_prompt_jobs ]]
     '
 
 # gitstatus.plugin.sh exports its fd/pid numbers; a nested shell (zellij/tmux

@@ -31,13 +31,8 @@ _dotzsh_bash_prompt_hook() {
         _dotzsh_bash_prompt_status="${exitStatus} "
     fi
 
-    local jobCount
-    jobCount=$(jobs -p | wc -l)
-    if (( jobCount > 0 )); then
-        _dotzsh_bash_prompt_jobs="%${jobCount} "
-    else
-        _dotzsh_bash_prompt_jobs=""
-    fi
+    ## The suspended-jobs badge (_dotzsh_bash_prompt_jobs) is computed by
+    ## _bash_prompt_cmd on every prompt, before this hook can bail out early.
 
     if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
         _dotzsh_bash_prompt_ssh="${USER:-${LOGNAME:-user}}@${HOSTNAME:-$(hostname)} "

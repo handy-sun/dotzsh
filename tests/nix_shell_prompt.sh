@@ -19,6 +19,7 @@ IN_NIX_SHELL=pure GENERATED="$generated_sh" bash --noprofile --norc -c '
 
 IN_NIX_SHELL=impure REPO_ROOT="$repo_root" GENERATED="$generated_sh" \
     "$zsh_bin" -d -f -c '
+    set -e
     source "$REPO_ROOT/zsh-config.zsh"
     source "$GENERATED"
     pre_set_prompt
@@ -26,4 +27,19 @@ IN_NIX_SHELL=impure REPO_ROOT="$repo_root" GENERATED="$generated_sh" \
     unset IN_NIX_SHELL
     pre_set_prompt
     [[ $RPROMPT != *"nix:"* ]]
+
+    # Suspended jobs raise the %<n> badge; running background jobs do not.
+    [[ $RPROMPT != *"%%"* ]]
+    sleep 100 &
+    sleep 0.2
+    pre_set_prompt
+    [[ $RPROMPT != *"%%"* ]]
+    kill -STOP %1
+    sleep 0.2
+    pre_set_prompt
+    [[ $RPROMPT == *"%%1 "* ]]
+    kill -KILL %1
+    sleep 0.2
+    pre_set_prompt
+    [[ $RPROMPT != *"%%"* ]]
 '

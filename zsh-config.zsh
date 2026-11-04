@@ -432,7 +432,19 @@ function pre_set_prompt() {
   if [[ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]]; then
     ssh_context="%F{3}%n@%m%f "
   fi
-  RPROMPT="${timer_prompt}%(1j.%F{cyan}%%%j %f.)${ssh_context}%F{#7EBAE4}${nix_shell_prompt}%f%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
+
+  # Suspended jobs only (same rule as the bash prompt): running background
+  # jobs do not need a fg/bg hint. $jobstates holds shell-internal state
+  # words, so this is not affected by the locale.
+  local -i stopped_jobs=0
+  local job_id
+  for job_id in ${(k)jobstates}; do
+    [[ ${jobstates[$job_id]} == suspended* ]] && (( stopped_jobs += 1 ))
+  done
+  local jobs_prompt=
+  (( stopped_jobs > 0 )) && jobs_prompt="%F{cyan}%%${stopped_jobs} %f"
+
+  RPROMPT="${timer_prompt}${jobs_prompt}${ssh_context}%F{#7EBAE4}${nix_shell_prompt}%f%D{%H:%M:%S}%f%(2L. %B%F{yellow}L%L%b%f.)"
 }
 
 # autoload -Uz add-zsh-hook
